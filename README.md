@@ -21,8 +21,9 @@ Third, Call it!
 
 Options
 -------
+*unfinished yet, will be continue.*
 
-<table class="help"><!--START: PARAMETERS-->
+<table class="help">
         <thead>
           <tr>
             <th scope="col" class="param">Name</th>
