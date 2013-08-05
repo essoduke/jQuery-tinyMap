@@ -1,7 +1,9 @@
 jQuery-tinyMap
 ==============
 
-It is a simple plugin of jQuery for helping you to create the Google Maps on the page.
+This is a simple plugin of jQuery for helping you to create the simple or complex Google Maps on the page.
+
+Supported layers: Marker, Polyline, Polygon, Circle, Direction and KML.
 
 
 How to use?
@@ -9,15 +11,23 @@ How to use?
 
 First, Create the container in HTML like this:
 
-`<div id="map"></div>`
+```html
+<div id="map"></div>
+```
 
 Second, Setting up the style of container:
 
-`#map{width:(WIDTH); height:(HEIGHT)}`
+```css
+#map{width:(WIDTH); height:(HEIGHT)}
+```
 
 Third, Call it!
 
-`$('#map').tinyMap();`
+```javascript
+$(function () {
+    $('#map').tinyMap();
+});
+```
 
 Options
 -------
@@ -91,10 +101,10 @@ Options
             <td class="text">
               <p>Markers group</p>
               <pre>[{
-  addr: 'Address or Latlng', // addr: 'Newyork City' or addr: ['22.652807', '121.483474']
+  addr: 'Address or Latlng', //e.g. 'Newyork City' or ['22.652807', '121.483474']
   text: 'Marker Text',
   icon: 'ICON URL',
-  label: 'Label text, set empty to hide',
+  label: 'Label text', //Label layer
   css: 'Style class name'
 }...]</pre>
               <p>Recommend using LatLng in array format.</p>
