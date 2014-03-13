@@ -20,13 +20,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.0
+ * @version: 2.5.4.1
  *
  * [Changelog]
- * 廢除原有的 tinyMapPanTo, tinyMapModify, tinyMapClear 方法，改為由 tinyMap 以字串參數呼叫。
- * 新增 interval 參數可以設定每次 geocoder 查詢的間隔秒數（毫秒）
+ * 修正使用 center: '地址' 程式會發生錯誤的問題。
  *
- * Last Modify: Wed, 28 August 2013 09:22:01 GMT
+ * Last Modify: Wed, 25 December 2013 10:18:16 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -39,6 +38,7 @@
         defaults = {
             'center': {x: '24', y: '121'},
             'control': true,
+            'disableDefaultUI': false, //2.5.1
             'draggable': true,
             'keyboardShortcuts': true,
             'mapTypeControl': true,
@@ -49,6 +49,12 @@
             'mapTypeId': 'ROADMAP',
             'marker': [],
             'markerFitBounds': false,
+            'maxZoom': null, //2.5.1
+            'minZoom': null, //2.5.1
+            'panControl': true, //2.5.1
+            'panControlOptions': {
+                'position': 'LEFT_TOP'
+            },
             'polyline': [],
             'navigationControl': true,
             'navigationControlOptions': {
@@ -61,7 +67,16 @@
                 'style': 'DEFAULT'
             },
             'scrollwheel': true,
+            'streetViewControl': true, //2.5.1
+            'streetViewControlOptions': {
+                'position': 'LEFT_TOP'
+            },
             'zoom': 4,
+            'zoomControl': true,
+            'zoomControlOptions': {
+                'style': 'LARGE',
+                'position': 'LEFT_TOP'
+            },
             'notfound': '找不到查詢的地點',
             'loading': '讀取中…',
             'kml': {
@@ -69,7 +84,7 @@
                 'viewport': true,
                 'infowindow': false
             },
-            'interval': 200 //v2.5.0
+            'interval': 200 //2.5.0
         };
 
     /**
@@ -79,7 +94,7 @@
      * @return {boolean}
      * @version 2.4.3
      */
-    function _hasOwnProperty(obj, property) {
+    function _hasOwnProperty (obj, property) {
         try {
             return (!window.hasOwnProperty) ? Object.prototype.hasOwnProperty.call(obj, property.toString()) : obj.hasOwnProperty(property.toString());
         } catch (ignore) {
@@ -112,8 +127,7 @@
         var pane = this.getPanes().overlayLayer, me = this;
         this.div.appendTo($(pane));
         this.listeners = [
-            google.maps.event.addListener(this, 'position_changed', function () { me.draw(); }),
-            google.maps.event.addListener(this, 'text_changed', function() { me.draw(); })
+            google.maps.event.addListener(this, 'visible_changed', me.onRemove)
         ];
     };
     /**
@@ -128,6 +142,13 @@
             this.span.html(this.text.toString());
         }
     };
+    /**
+     * Label remove from the map
+     * @this {Label}
+     */
+    Label.prototype.onRemove = function () {
+        $(this.div).remove();
+    };
     //#!#END
     /**
      * tinyMap Constructor
@@ -136,6 +157,7 @@
      * @constructor
      */
     function tinyMap (container, options) {
+    //function tinyMap (container, options) {
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
             return;
@@ -160,7 +182,7 @@
          * @type {number}
          */
         this.interval = parseInt(this.options.interval, 10);
-
+        this.interval = isNaN(this.interval) ? 200 : this.interval;
         /**
          * Google Maps options
          * @type {Object}
@@ -168,6 +190,7 @@
         this.GoogleMapOptions = {
             'center': new google.maps.LatLng(this.options.center.x, this.options.center.y),
             'control': this.options.control,
+            'disableDefaultUI': this.options.disableDefaultUI,
             'draggable': this.options.draggable,
             'keyboardShortcuts': this.options.keyboardShortcuts,
             'mapTypeId': google.maps.MapTypeId[this.options.mapTypeId.toUpperCase()],
@@ -176,19 +199,36 @@
                 'position': google.maps.ControlPosition[this.options.mapTypeControlOptions.position],
                 'style': google.maps.MapTypeControlStyle[this.options.mapTypeControlOptions.style.toUpperCase()]
             },
+            'maxZoom': this.options.maxZoom,
+            'minZoom': this.options.minZoom,
             'navigationControl': this.options.navigationControl,
             'navigationControlOptions': {
                 'position': google.maps.ControlPosition[this.options.navigationControlOptions.position],
                 'style': google.maps.NavigationControlStyle[this.options.navigationControlOptions.style.toUpperCase()]
             },
+            'panControl': this.options.panControl,
+            'panControlOptions': {
+                'position': google.maps.ControlPosition[this.options.panControlOptions.position]
+            },
+            'rotateControl': this.options.rotateControl,
             'scaleControl': this.options.scaleControl,
             'scaleControlOptions': {
                 'position': google.maps.ControlPosition[this.options.scaleControlOptions.position],
                 'style': google.maps.ScaleControlStyle[this.options.scaleControlOptions.style.toUpperCase()]
             },
             'scrollwheel': this.options.scrollwheel,
-            'zoom': this.options.zoom
+            'streetViewControl': this.options.streetViewControl,
+            'streetViewControlOptions': {
+                'position': google.maps.ControlPosition[this.options.streetViewControlOptions.position]
+            },
+            'zoom': this.options.zoom,
+            'zoomControl': this.options.zoomControl,
+            'zoomControlOptions': {
+                'position': google.maps.ControlPosition[this.options.zoomControlOptions.position],
+                'style': google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]
+            }
         };
+        $(this.container).html(this.options.loading);
         this.init();
     }
     /**
@@ -196,7 +236,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.0',
+        VERSION: '2.5.4.1',
 
         // Layers container
         _markers: [],
@@ -209,6 +249,16 @@
 
         // Google Maps LatLngClass
         bounds: new google.maps.LatLngBounds(),
+        /**
+         * Set zoom level of the map
+         * @param {Object} map Map instance
+         * @param {Object} opt tinyMap options
+         */
+        setZoom: function (map, opt) {
+            if (_hasOwnProperty(opt, 'zoom') && map) {
+                map.setZoom(opt.zoom);
+            }
+        },
         //#!#FUNC_KML
         /**
          * KML overlay
@@ -416,9 +466,22 @@
                     'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
                     'title': opt.text.replace(/<([^>]+)>/g, ''),
                     'infoWindow': new google.maps.InfoWindow({content: opt.text})
-                };
+                },
+                icon = {},
+                anchor = {};
             if ('string' === typeof opt.icon) {
                 markerOptions.icon = opt.icon;
+            } else {
+                // 若 opt.icon.url 存在
+                if (_hasOwnProperty(opt.icon, 'url')) {
+                    // 確保 opt.icon.anchor 存在且 array 數組
+                    anchor  = (_hasOwnProperty(opt.icon, 'anchor') && undefined !== opt.icon.anchor[1]) ?
+                              new google.maps.Point(opt.icon.anchor[0], opt.icon.anchor[1]) :
+                              new google.maps.Point(0, 0);
+                            
+                    icon = new google.maps.MarkerImage(opt.icon.url, null, new google.maps.Point(0,0), anchor);
+                    markerOptions.icon = icon;
+                }
             }
 
             marker = new google.maps.Marker(markerOptions);
@@ -441,7 +504,7 @@
             label = new Label(label_opt);
             label.bindTo('position', marker, 'position');
             label.bindTo('text', marker, 'position');
-            this._labels.push(label);
+            label.bindTo('visible', marker);
             google.maps.event.addListener(marker, 'click', function () {
                 marker.infoWindow.open(self.map, marker);
             });
@@ -454,6 +517,9 @@
         MarkerByGeocoder: function (opt) {
             var geocoder = new google.maps.Geocoder(),
                 self = this;
+            if (-1 !== opt.addr.indexOf(',')) {
+				opt.addr = 'loc: ' + opt.addr;
+			}
             geocoder.geocode({'address': opt.addr}, function (results, status) {
                 // if exceeded limit, then call again;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -489,6 +555,7 @@
                     label = new Label(label_opt);
                     label.bindTo('position', marker, 'position');
                     label.bindTo('text', marker, 'position');
+                    label.bindTo('visible', marker);
                     google.maps.event.addListener(marker, 'click', function () {
                         marker.infoWindow.open(self.map, marker);
                     });
@@ -552,20 +619,32 @@
             loop += 1;
             if ('string' === typeof this.options.center) {
                 window.setTimeout(function () {
-                    geocoder = new google.maps.Geocoder(), error = $(self.container), msg = '';
+                    var error = $(self.container),
+                        msg = '';
+                    if (-1 !== self.options.center.indexOf(',')) {
+                        self.options.center = 'loc: ' + self.options.center;
+                    }
+                    geocoder = new google.maps.Geocoder();
                     geocoder.geocode({'address': self.options.center}, function (results, status) {
                         try {
                             if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                                 self.init();
                             } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
-                                self.GoogleMapOptions.center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ? results[0].geometry.location : '';
+                                self.GoogleMapOptions
+                                    .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
+                                              results[0].geometry.location :
+                                              '';
                                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
-                                self.overlay();
-                                if (self.options.marker.length && true === self.options.markerFitBounds) {
-                                    setTimeout(function () {
-                                        self.map.fitBounds(self.bounds);
-                                    }, this.interval);
-                                }
+                                // 若 Map 進入了 idle 事件表示地圖已加載完成。
+                                // 所以可以將建立標記...等事件置於此事件內已確保地圖能正確運行
+                                google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                                    self.overlay();
+                                    if (self.options.marker.length && true === self.options.markerFitBounds) {
+                                        setTimeout(function () {
+                                            self.map.fitBounds(self.bounds);
+                                        }, this.interval);
+                                    }
+                                });
                             } else {
                                 msg = self.options.notfound.text || status;
                                 error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
@@ -577,10 +656,14 @@
                 }, (this.interval * loop));
             } else {
                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
-                self.overlay();
-                if (self.options.marker.length && true === self.options.markerFitBounds) {
-                    self.map.fitBounds(self.bounds);
-                }
+                // 若 Map 進入了 idle 事件表示地圖已加載完成。
+                // 所以可以將建立標記...等事件置於此事件內已確保地圖能正確運行
+                google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                    self.overlay();
+                    if (self.options.marker.length && true === self.options.markerFitBounds) {
+                        self.map.fitBounds(self.bounds);
+                    }
+                });
             }
         },
         /**
@@ -636,6 +719,7 @@
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
                     for (j = 0; j < self[label].length; j += 1) {
+                        self[label][j].set('visible', false);
                         self[label][j].setMap(null);
                     }
                     self[label] = [];
@@ -656,7 +740,8 @@
                     ['direction', 'direction'],
                     ['polyline', 'DrawPolyline'],
                     ['polygon', 'DrawPolygon'],
-                    ['circle', 'DrawCircle']
+                    ['circle', 'DrawCircle'],
+                    ['zoom', 'setZoom']
                 ],
                 i;
             
