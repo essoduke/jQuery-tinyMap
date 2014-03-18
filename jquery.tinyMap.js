@@ -1,6 +1,6 @@
 /**
  * MIT License
- * Copyright(c) 2013 essoduke.org
+ * Copyright(c) 2014 essoduke.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -20,12 +20,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.4.1
+ * @version: 2.5.5
  *
  * [Changelog]
- * 修正使用 center: '地址' 程式會發生錯誤的問題。
+ * 修正 clear 方法會清除所有地圖圖層的錯誤。
  *
- * Last Modify: Wed, 25 December 2013 10:18:16 GMT
+ * Last Modify: Tue, 18 March 2014 05:16:02 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -33,6 +33,7 @@
 
     // Loop counter for geocoder
     var pluginName = 'tinyMap',
+        g = {},
         loop = 0,
     // Plugin default settings
         defaults = {
@@ -236,7 +237,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.4.1',
+        VERSION: '2.5.5',
 
         // Layers container
         _markers: [],
@@ -266,7 +267,10 @@
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
-            var opt = (!opt ? this.options : opt), kml_opt, kml_url, kml;
+            var opt = (!opt ? this.options : opt),
+                kml_opt = {},
+                kml_url = '',
+                kml = {};
             if (undefined !== opt.kml) {
                 kml_opt = {
                     preserveViewport: true,
@@ -286,7 +290,8 @@
          * @param {Object} opt Direction options
          */
         direction: function (map, opt) {
-            var d, opt = !opt ? this.options : opt;
+            var d = '',
+                opt = !opt ? this.options : opt;
             if (undefined !== opt.direction && 0 < opt.direction.length) {
                 for (d in opt.direction) {
                     if (_hasOwnProperty(opt.direction, d)) {
@@ -305,7 +310,8 @@
          * @param {Object} opt Markers options
          */
         markers: function (map, opt) {
-            var m, opt = !opt ? this.options : opt;
+            var m = '',
+                opt = !opt ? this.options : opt;
             if (undefined !== opt.marker) {
                 if (0 < opt.marker.length) {
                     for (m in opt.marker) {
@@ -332,7 +338,11 @@
          * @param {Object} opt Polyline options
          */
         DrawPolyline: function (map, opt) {
-            var polyline, p, c, coords = [], opt = !opt ? this.options : opt;
+            var polyline = {},
+                p = '',
+                c = {},
+                coords = [],
+                opt = !opt ? this.options : opt;
             if (undefined !== opt.polyline) {
                 if (undefined !== opt.polyline.coords) {
                     for (p in opt.polyline.coords) {
@@ -362,7 +372,11 @@
          * @param {Object} opt Polygon options
          */
         DrawPolygon: function (map, opt) {
-            var polygon, p, c, coords = [], opt = !opt ? this.options : opt;
+            var polygon = {},
+                p = '',
+                c = {},
+                coords = [],
+                opt = !opt ? this.options : opt;
             if (undefined !== opt.polygon) {
                 if (undefined !== opt.polygon.coords) {
                     for (p in opt.polygon.coords) {
@@ -397,7 +411,10 @@
          * @param {Object} opt Circle options
          */
         DrawCircle: function (map, opt) {
-            var c, circle, circles, opt = !opt ? this.options : opt;
+            var c = 0,
+                circle = {},
+                circles = {},
+                opt = !opt ? this.options : opt;
             if (undefined !== opt.circle && 0 < opt.circle.length) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
@@ -615,7 +632,9 @@
          * @this {tinyMap}
          */
         init: function () {
-            var self = this, geocoder;
+            var self = this,
+                geocoder = {};
+
             loop += 1;
             if ('string' === typeof this.options.center) {
                 window.setTimeout(function () {
@@ -672,7 +691,9 @@
          * @public
          */
         panto: function (addr) {
-            var self = this, latlng, geocoder;
+            var self = this,
+                latlng = '',
+                geocoder = {};
             if (_hasOwnProperty(self, 'map')) {
                 if (null !== self.map && undefined !== self.map) {
                     if ('string' === typeof addr) {
@@ -711,20 +732,28 @@
          * @public
          */
         clear: function (layer) {
-            var self = this, layers, label, i, j;
+            var self = this,
+                layers = [],
+                label = '',
+                i = 0,
+                j = 0;
             if ('string' === typeof layer) {
                 layers = layer.split(',');
             }
+            
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
                     for (j = 0; j < self[label].length; j += 1) {
-                        self[label][j].set('visible', false);
-                        self[label][j].setMap(null);
+                        if (self.map === self[label][j].getMap()) {
+                            self[label][j].set('visible', false);
+                            self[label][j].setMap(self.map, null);
+                        }
                     }
                     self[label] = [];
                 }
             }
+            
         },
         /**
          * Method:  Google Maps dynamic add layers
@@ -767,7 +796,9 @@
      * @public
      */
     $.fn[pluginName] = function (options) {
-        var args = arguments, result, instance;
+        var args = arguments,
+            result = [],
+            instance = {};
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, pluginName);
