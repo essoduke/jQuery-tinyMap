@@ -20,12 +20,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.5
+ * @version: 2.5.6
  *
  * [Changelog]
- * 修正 clear 方法會清除所有地圖圖層的錯誤。
+ * marker 新增綁定事件參數 event。
  *
- * Last Modify: Tue, 18 March 2014 05:16:02 GMT
+ * Last Modify: Thu, 20 March 2014 03:04:42 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -102,7 +102,6 @@
         }
     }
 
-    //#!#CLASS_LABEL
     /**
      * Label in Maps
      * @param {Object} options Label options
@@ -143,6 +142,7 @@
             this.span.html(this.text.toString());
         }
     };
+
     /**
      * Label remove from the map
      * @this {Label}
@@ -150,7 +150,7 @@
     Label.prototype.onRemove = function () {
         $(this.div).remove();
     };
-    //#!#END
+
     /**
      * tinyMap Constructor
      * @param {Object} container HTML element
@@ -237,7 +237,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.5',
+        VERSION: '2.5.6',
 
         // Layers container
         _markers: [],
@@ -260,7 +260,7 @@
                 map.setZoom(opt.zoom);
             }
         },
-        //#!#FUNC_KML
+        
         /**
          * KML overlay
          * @param {Object} map Map instance
@@ -282,8 +282,7 @@
                 kml.setMap(map);
             }
         },
-        //#!#END
-        //#!#FUNC_DIRECTION
+        
         /**
          * Direction overlay
          * @param {Object} map Map instance
@@ -302,8 +301,7 @@
                 }
             }
         },
-        //#!#END
-        //#!#FUNC_MARKERS
+
         /**
          * Markers overlay
          * @param {Object} map Map instance
@@ -330,8 +328,6 @@
                 }
             }
         },
-        //#!#END
-        //#!#FUNC_POLYLINE
         /**
          * Polyline overlay
          * @param {Object} map Map instance
@@ -364,8 +360,7 @@
                 }
             }
         },
-        //#!#END
-        //#!#FUNC_POLYGON
+
         /**
          * Polygon overlay
          * @param {Object} map Map instance
@@ -403,8 +398,7 @@
                 }
             }
         },
-        //#!#END
-        //#!#FUNC_CIRCLE
+
         /**
          * Circle overlay
          * @param {Object} map Map instance
@@ -438,38 +432,26 @@
                 }
             }
         },
-        //#!#END
+
         /**
          * Overlay process
          * @this {tinyMap}
          */
         overlay: function () {
-            //#!#CALL_KML
             // kml overlay
             this.kml(this.map);
-            //#!#END
-            //#!#CALL_DIRECTION
             // direction overlay
             this.direction(this.map);
-            //#!#END
-            //#!#CALL_MARKERS
             // markers overlay
             this.markers(this.map);
-            //#!#END
-            //#!#CALL_POLYLINE
             // polyline overlay
             this.DrawPolyline(this.map);
-            //#!#END
-            //#!#CALL_POLYGON
             // polygon overlay
             this.DrawPolygon(this.map);
-            //#!#END
-            //#!#CALL_CIRCLE
             // circle overlay
             this.DrawCircle(this.map);
-            //#!#END
         },
-        //#!#PROTOTYPE_MARKERS
+        
         /**
          * Set a marker directly by latitude and longitude
          * @param {Object} opt Options
@@ -522,9 +504,8 @@
             label.bindTo('position', marker, 'position');
             label.bindTo('text', marker, 'position');
             label.bindTo('visible', marker);
-            google.maps.event.addListener(marker, 'click', function () {
-                marker.infoWindow.open(self.map, marker);
-            });
+
+            self.bindEvent(marker, opt.event);
         },
         /**
          * Set a marker by Geocoder service
@@ -573,14 +554,12 @@
                     label.bindTo('position', marker, 'position');
                     label.bindTo('text', marker, 'position');
                     label.bindTo('visible', marker);
-                    google.maps.event.addListener(marker, 'click', function () {
-                        marker.infoWindow.open(self.map, marker);
-                    });
+
+                    self.bindEvent(marker, opt.event);
                 }
             });
         },
-        //#!#END
-        //#!#PROTOTYPE_DIRECTION
+
         /**
          * Direction service
          * @param {Object} opt Options
@@ -626,7 +605,28 @@
                 this._directions.push(directionsDisplay);
             }
         },
-        //#!#END
+        /**
+         * bind event of markers
+         * @param {Object} marker Marker objects
+         * @param {string|Object} event Events
+         */
+        bindEvent: function (marker, event) {
+            var self = this;
+            if ('function' === typeof event) {
+                google.maps.event.addListener(marker, 'click', event);
+            } else if (_hasOwnProperty(event, 'type')) {
+                if (
+                    'string' === typeof event.type &&
+                    'function' === typeof event.bind
+                ) {
+                    google.maps.event.addListener(marker, event.type, event.bind);
+                }
+            } else {
+                google.maps.event.addListener(marker, 'click', function () {
+                    marker.infoWindow.open(self.map, marker);
+                });
+            }
+        },
         /**
          * tinyMap Initialize
          * @this {tinyMap}
@@ -654,8 +654,6 @@
                                               results[0].geometry.location :
                                               '';
                                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
-                                // 若 Map 進入了 idle 事件表示地圖已加載完成。
-                                // 所以可以將建立標記...等事件置於此事件內已確保地圖能正確運行
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                     self.overlay();
                                     if (self.options.marker.length && true === self.options.markerFitBounds) {
@@ -675,8 +673,6 @@
                 }, (this.interval * loop));
             } else {
                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
-                // 若 Map 進入了 idle 事件表示地圖已加載完成。
-                // 所以可以將建立標記...等事件置於此事件內已確保地圖能正確運行
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
                     if (self.options.marker.length && true === self.options.markerFitBounds) {
@@ -815,5 +811,4 @@
             });
         }
     };
-    //#!#END
 })(jQuery, window, document);
