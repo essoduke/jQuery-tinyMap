@@ -20,12 +20,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.6
+ * @version: 2.5.7
  *
  * [Changelog]
- * marker 新增綁定事件參數 event。
+ * 修正 interval 參數無作用並導致 javascript error 的錯誤。
  *
- * Last Modify: Thu, 20 March 2014 03:04:42 GMT
+ * Last Modify: Tue, 1 April 2014 03:01:45 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -101,7 +101,6 @@
         } catch (ignore) {
         }
     }
-
     /**
      * Label in Maps
      * @param {Object} options Label options
@@ -142,7 +141,6 @@
             this.span.html(this.text.toString());
         }
     };
-
     /**
      * Label remove from the map
      * @this {Label}
@@ -158,7 +156,6 @@
      * @constructor
      */
     function tinyMap (container, options) {
-    //function tinyMap (container, options) {
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
             return;
@@ -182,8 +179,7 @@
          * Interval for geocoder's query interval
          * @type {number}
          */
-        this.interval = parseInt(this.options.interval, 10);
-        this.interval = isNaN(this.interval) ? 200 : this.interval;
+        this.interval = parseInt(this.options.interval, 10) || 200;
         /**
          * Google Maps options
          * @type {Object}
@@ -237,7 +233,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.6',
+        VERSION: '2.5.7',
 
         // Layers container
         _markers: [],
@@ -260,7 +256,6 @@
                 map.setZoom(opt.zoom);
             }
         },
-        
         /**
          * KML overlay
          * @param {Object} map Map instance
@@ -282,7 +277,6 @@
                 kml.setMap(map);
             }
         },
-        
         /**
          * Direction overlay
          * @param {Object} map Map instance
@@ -301,7 +295,6 @@
                 }
             }
         },
-
         /**
          * Markers overlay
          * @param {Object} map Map instance
@@ -360,7 +353,6 @@
                 }
             }
         },
-
         /**
          * Polygon overlay
          * @param {Object} map Map instance
@@ -398,7 +390,6 @@
                 }
             }
         },
-
         /**
          * Circle overlay
          * @param {Object} map Map instance
@@ -432,7 +423,6 @@
                 }
             }
         },
-
         /**
          * Overlay process
          * @this {tinyMap}
@@ -451,7 +441,6 @@
             // circle overlay
             this.DrawCircle(this.map);
         },
-        
         /**
          * Set a marker directly by latitude and longitude
          * @param {Object} opt Options
@@ -519,11 +508,11 @@
 				opt.addr = 'loc: ' + opt.addr;
 			}
             geocoder.geocode({'address': opt.addr}, function (results, status) {
-                // if exceeded limit, then call again;
+                // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
                         self.MarkerByGeocoder(opt);
-                    }, this.interval);
+                    }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker, label_opt, label,
                         markerOptions = {
@@ -554,12 +543,10 @@
                     label.bindTo('position', marker, 'position');
                     label.bindTo('text', marker, 'position');
                     label.bindTo('visible', marker);
-
                     self.bindEvent(marker, opt.event);
                 }
             });
         },
-
         /**
          * Direction service
          * @param {Object} opt Options
@@ -659,7 +646,7 @@
                                     if (self.options.marker.length && true === self.options.markerFitBounds) {
                                         setTimeout(function () {
                                             self.map.fitBounds(self.bounds);
-                                        }, this.interval);
+                                        }, self.interval);
                                     }
                                 });
                             } else {
@@ -670,7 +657,7 @@
                             error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
                         }
                     });
-                }, (this.interval * loop));
+                }, (self.interval * loop));
             } else {
                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
@@ -768,7 +755,7 @@
                     ['circle', 'DrawCircle'],
                     ['zoom', 'setZoom']
                 ],
-                i;
+                i = 0;
             
             if (undefined !== options) {
                 for (i = 0; i < label.length; i += 1) {
