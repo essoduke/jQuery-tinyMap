@@ -20,10 +20,10 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.7
+ * @version: 2.5.8
  *
  * [Changelog]
- * 修正 interval 參數無作用並導致 javascript error 的錯誤。
+ * 修正呼叫 clear方法無法清除路線規劃圖層的問題。
  *
  * Last Modify: Tue, 1 April 2014 03:01:45 GMT
  */
@@ -233,7 +233,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.7',
+        VERSION: '2.5.8',
 
         // Layers container
         _markers: [],
@@ -723,7 +723,7 @@
             if ('string' === typeof layer) {
                 layers = layer.split(',');
             }
-            
+            //console.dir(layers);
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
@@ -731,6 +731,7 @@
                         if (self.map === self[label][j].getMap()) {
                             self[label][j].set('visible', false);
                             self[label][j].setMap(self.map, null);
+                            self[label][j].set('directions', null);
                         }
                     }
                     self[label] = [];
