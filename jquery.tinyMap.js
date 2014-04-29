@@ -27,9 +27,8 @@
  * Marker:
  *     icon 參數現在可以指定 url, size 以及 anchor。
  *     新增 animation 參數設定動畫效果。
- *     新增 cluster 參數設定叢集 ID。
  *
- * Last Modify: Tue, 29 April 2014 05:13:00 GMT
+ * Last Modify: Tue, 29 April 2014 08:39:07 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -538,14 +537,6 @@
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
-            // Marker clusters
-            if (undefined !== opt.cluster) {
-                if (undefined === self._cluster[opt.cluster]) {
-                    self._cluster[opt.cluster] = [];
-                }
-                self._cluster[opt.cluster].push(marker);
-            }
-
             // autozoom
             if (_hasOwnProperty(marker, 'position')) {
                 if (marker.getPosition().lat() && marker.getPosition().lng()) {
@@ -613,6 +604,7 @@
                     }
                     marker = new google.maps.Marker(markerOptions);
                     self._markers.push(marker);
+
                     // autozoom
                     if (_hasOwnProperty(marker, 'position')) {
                         if (marker.getPosition().lat() && marker.getPosition().lng()) {
@@ -737,6 +729,10 @@
                                             self.map.fitBounds(self.bounds);
                                         }, self.interval);
                                     }
+                                    // Marker cluster
+                                    if ('function' === typeof MarkerClusterer) {
+                                        new MarkerClusterer(self.map, self._markers);
+                                    }
                                 });
                             } else {
                                 msg = self.options.notfound.text || status;
@@ -756,11 +752,7 @@
                     }
                     // Marker cluster
                     if ('function' === typeof MarkerClusterer) {
-                        for (clu in self._cluster) {
-                            if (_hasOwnProperty(self._cluster, clu)) {
-                                new MarkerClusterer(self.map, self._cluster[clu]);
-                            }
-                        }
+                        new MarkerClusterer(self.map, self._markers);
                     }
                 });
             }
