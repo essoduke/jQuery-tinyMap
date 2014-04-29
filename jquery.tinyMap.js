@@ -17,15 +17,19 @@
  *
  * jQuery tinyMap 輕鬆建立 Google Maps 的 jQuery 擴充套件
  * 短小精幹！拯救你免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
+ *
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.8
+ * @version: 2.5.9
  *
  * [Changelog]
- * 修正呼叫 clear方法無法清除路線規劃圖層的問題。
+ * Marker:
+ *     icon 參數現在可以指定 url, size 以及 anchor。
+ *     新增 animation 參數設定動畫效果。
+ *     新增 cluster 參數設定叢集 ID。
  *
- * Last Modify: Tue, 1 April 2014 03:01:45 GMT
+ * Last Modify: Tue, 29 April 2014 05:13:00 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -79,7 +83,7 @@
                 'position': 'LEFT_TOP'
             },
             'notfound': '找不到查詢的地點',
-            'loading': '讀取中…',
+            'loading': '讀取中&hellip;',
             'kml': {
                 'url': '',
                 'viewport': true,
@@ -97,7 +101,9 @@
      */
     function _hasOwnProperty (obj, property) {
         try {
-            return (!window.hasOwnProperty) ? Object.prototype.hasOwnProperty.call(obj, property.toString()) : obj.hasOwnProperty(property.toString());
+            return (!window.hasOwnProperty) ?
+                   Object.prototype.hasOwnProperty.call(obj, property.toString()) :
+                   obj.hasOwnProperty(property.toString());
         } catch (ignore) {
         }
     }
@@ -109,8 +115,16 @@
     function Label (options) {
         var css = (options.css || '');
         this.setValues(options);
-        this.span = $('<span/>').css({'position': 'relative', 'left': '-50%', 'top': '0', 'white-space': 'nowrap'}).addClass(css);
-        this.div = $('<div/>').css({'position': 'absolute', 'display': 'none'});
+        this.span = $('<span/>').css({
+            'position': 'relative',
+            'left': '-50%',
+            'top': '0',
+            'white-space': 'nowrap'
+        }).addClass(css);
+        this.div = $('<div/>').css({
+            'position': 'absolute',
+            'display': 'none'
+        });
         this.span.appendTo(this.div);
     }
     /**
@@ -136,7 +150,11 @@
     Label.prototype.draw = function () {
         var projection = this.getProjection(),
             position = projection.fromLatLngToDivPixel(this.get('position'));
-        this.div.css({'left': position.x + 'px', 'top': position.y + 'px', 'display': 'block'});
+        this.div.css({
+            'left': position.x + 'px',
+            'top': position.y + 'px',
+            'display': 'block'
+        });
         if (this.text) {
             this.span.html(this.text.toString());
         }
@@ -233,7 +251,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.8',
+        VERSION: '2.5.9',
 
         // Layers container
         _markers: [],
@@ -243,6 +261,7 @@
         _circles: [],
         _kmls: [],
         _directions: [],
+        _cluster: {},
 
         // Google Maps LatLngClass
         bounds: new google.maps.LatLngBounds(),
@@ -289,7 +308,7 @@
                 for (d in opt.direction) {
                     if (_hasOwnProperty(opt.direction, d)) {
                         if (undefined !== opt.direction[d]) {
-                            this.DirectionService(opt.direction[d]);
+                            this.directionService(opt.direction[d]);
                         }
                     }
                 }
@@ -310,10 +329,10 @@
                             if (_hasOwnProperty(opt.marker[m], 'addr')) {
                                 if ('object' === typeof opt.marker[m].addr) {
                                     if (2 === opt.marker[m].addr.length) {
-                                        this.MarkerDirect(opt.marker[m]);
+                                        this.markerDirect(opt.marker[m]);
                                     }
                                 } else {
-                                    this.MarkerByGeocoder(opt.marker[m]);
+                                    this.markerByGeocoder(opt.marker[m]);
                                 }
                             }
                         }
@@ -326,7 +345,7 @@
          * @param {Object} map Map instance
          * @param {Object} opt Polyline options
          */
-        DrawPolyline: function (map, opt) {
+        drawPolyline: function (map, opt) {
             var polyline = {},
                 p = '',
                 c = {},
@@ -358,7 +377,7 @@
          * @param {Object} map Map instance
          * @param {Object} opt Polygon options
          */
-        DrawPolygon: function (map, opt) {
+        drawPolygon: function (map, opt) {
             var polygon = {},
                 p = '',
                 c = {},
@@ -395,7 +414,7 @@
          * @param {Object} map Map instance
          * @param {Object} opt Circle options
          */
-        DrawCircle: function (map, opt) {
+        drawCircle: function (map, opt) {
             var c = 0,
                 circle = {},
                 circles = {},
@@ -435,45 +454,97 @@
             // markers overlay
             this.markers(this.map);
             // polyline overlay
-            this.DrawPolyline(this.map);
+            this.drawPolyline(this.map);
             // polygon overlay
-            this.DrawPolygon(this.map);
+            this.drawPolygon(this.map);
             // circle overlay
-            this.DrawCircle(this.map);
+            this.drawCircle(this.map);
         },
+        /**
+         * Build the icon options of marker
+         * @param {Object} opt Marker option
+         * @this {tinyMap}
+         */
+        markerIcon: function (opt) {
+            var icons = null;
+            
+            if (_hasOwnProperty(opt, 'icon')) {
+
+                if ('string' === typeof opt.icon) {
+                    return opt.icon;
+                }
+
+                icons = {};
+
+                if (_hasOwnProperty(opt.icon, 'url')) {
+                    icons.url = opt.icon.url;
+                }
+                if (_hasOwnProperty(opt.icon, 'size')) {
+                    if (undefined !== opt.icon.size[0] &&
+                        undefined !== opt.icon.size[1]
+                    ) {
+                        icons.scaledSize = new google.maps.Size(
+                            opt.icon.size[0],
+                            opt.icon.size[1]
+                        );
+                    }
+                }
+                if (_hasOwnProperty(opt.icon, 'anchor')) {
+                    if (undefined !== opt.icon.anchor[0] &&
+                        undefined !== opt.icon.anchor[1]
+                    ) {
+                        icons.anchor = new google.maps.Point(
+                            opt.icon.anchor[0],
+                            opt.icon.anchor[1]
+                        )
+                    }
+                }
+            }
+            return icons;
+        },
+
         /**
          * Set a marker directly by latitude and longitude
          * @param {Object} opt Options
          * @this {tinyMap}
          */
-        MarkerDirect: function (opt) {
+        markerDirect: function (opt) {
             var self = this,
-                marker, label_opt, label,
+                marker = {},
+                label_opt = {},
+                label = {},
+                title = _hasOwnProperty(opt, 'text') ?
+                        opt.text.replace(/<([^>]+)>/g, '') :
+                        '',
                 markerOptions = {
-                    'map': this.map,
+                    'map': self.map,
                     'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
-                    'title': opt.text.replace(/<([^>]+)>/g, ''),
-                    'infoWindow': new google.maps.InfoWindow({content: opt.text})
+                    'title':  title,
+                    'infoWindow': new google.maps.InfoWindow({content: title}),
+                    'animation': null
                 },
-                icon = {},
-                anchor = {};
-            if ('string' === typeof opt.icon) {
-                markerOptions.icon = opt.icon;
-            } else {
-                // 若 opt.icon.url 存在
-                if (_hasOwnProperty(opt.icon, 'url')) {
-                    // 確保 opt.icon.anchor 存在且 array 數組
-                    anchor  = (_hasOwnProperty(opt.icon, 'anchor') && undefined !== opt.icon.anchor[1]) ?
-                              new google.maps.Point(opt.icon.anchor[0], opt.icon.anchor[1]) :
-                              new google.maps.Point(0, 0);
-                            
-                    icon = new google.maps.MarkerImage(opt.icon.url, null, new google.maps.Point(0,0), anchor);
-                    markerOptions.icon = icon;
+                icons = self.markerIcon(opt);
+            
+            if (icons) {
+                markerOptions.icon = icons;
+            }
+
+            if (_hasOwnProperty(opt.animation)) {
+                if ('string' === typeof opt.animation) {
+                    markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                 }
             }
 
             marker = new google.maps.Marker(markerOptions);
-            this._markers.push(marker);
+            self._markers.push(marker);
+
+            // Marker clusters
+            if (undefined !== opt.cluster) {
+                if (undefined === self._cluster[opt.cluster]) {
+                    self._cluster[opt.cluster] = [];
+                }
+                self._cluster[opt.cluster].push(marker);
+            }
 
             // autozoom
             if (_hasOwnProperty(marker, 'position')) {
@@ -483,9 +554,10 @@
             }
 
             label_opt = {
-                map: this.map,
+                map: self.map,
                 css: undefined !== opt.css ? opt.css : ''
             };
+
             if ('string' === typeof opt.label && 0 !== opt.label.length) {
                 label_opt.text = opt.label;
             }
@@ -501,7 +573,7 @@
          * @param {Object} opt Options
          * @this {tinyMap}
          */
-        MarkerByGeocoder: function (opt) {
+        markerByGeocoder: function (opt) {
             var geocoder = new google.maps.Geocoder(),
                 self = this;
             if (-1 !== opt.addr.indexOf(',')) {
@@ -511,18 +583,33 @@
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
-                        self.MarkerByGeocoder(opt);
+                        self.markerByGeocoder(opt);
                     }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
-                    var marker, label_opt, label,
+                    var marker = {},
+                        label_opt = {},
+                        label = {},
+                        icons = {},
+                        title = _hasOwnProperty(opt, 'text') ?
+                                opt.text.toString() :
+                                '',
                         markerOptions = {
                             'map': self.map,
                             'position': results[0].geometry.location,
-                            'title': opt.text.replace(/<([^>]+)>/g, ''),
-                            'infoWindow': new google.maps.InfoWindow({content: opt.text})
-                        };
-                    if ('string' === typeof opt.icon) {
-                        markerOptions.icon = opt.icon;
+                            'title': title,
+                            'infoWindow': new google.maps.InfoWindow({content: title}),
+                            'animation': null
+                        },
+                        icons = self.markerIcon(opt);
+                    
+                    if (icons) {
+                        markerOptions.icon = icons;
+                    }
+
+                    if (_hasOwnProperty(opt, 'animation')) {
+                        if ('string' === typeof opt.animation) {
+                            markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
+                        }
                     }
                     marker = new google.maps.Marker(markerOptions);
                     self._markers.push(marker);
@@ -552,7 +639,7 @@
          * @param {Object} opt Options
          * @this {tinyMap}
          */
-        DirectionService: function (opt) {
+        directionService: function (opt) {
             var waypoints = [],
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
@@ -620,6 +707,8 @@
          */
         init: function () {
             var self = this,
+                clu  = {},
+                markerCluster = [],
                 geocoder = {};
 
             loop += 1;
@@ -664,6 +753,14 @@
                     self.overlay();
                     if (self.options.marker.length && true === self.options.markerFitBounds) {
                         self.map.fitBounds(self.bounds);
+                    }
+                    // Marker cluster
+                    if ('function' === typeof MarkerClusterer) {
+                        for (clu in self._cluster) {
+                            if (_hasOwnProperty(self._cluster, clu)) {
+                                new MarkerClusterer(self.map, self._cluster[clu]);
+                            }
+                        }
                     }
                 });
             }
@@ -751,9 +848,9 @@
                     ['kml', 'kml'],
                     ['marker', 'markers'],
                     ['direction', 'direction'],
-                    ['polyline', 'DrawPolyline'],
-                    ['polygon', 'DrawPolygon'],
-                    ['circle', 'DrawCircle'],
+                    ['polyline', 'drawPolyline'],
+                    ['polygon', 'drawPolygon'],
+                    ['circle', 'drawCircle'],
                     ['zoom', 'setZoom']
                 ],
                 i = 0;
