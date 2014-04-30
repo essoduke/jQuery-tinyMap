@@ -1,0 +1,113 @@
+_____________________
+
+jQuery tinyMap Changelog
+_____________________
+
+2.6.1
+修正使用 markerCluster 時，若頁面有多個地圖則標記會合併在 cluster 地圖上顯示的錯誤。
+
+2.6.0
+加入 markerCluster 控制是否以 cluster 方式顯示標記
+
+2.5.9
+Marker:
+    icon 參數現在可以指定 url, size 以及 anchor。
+    新增 animation 參數設定動畫效果。
+
+2.5.8
+修正呼叫 clear方法無法清除路線規劃圖層的問題。
+
+2.5.7
+修正 interval 參數無作用並導致 javascript error 的錯誤。
+
+2.5.5
+修正 clear 方法會清除所有地圖圖層的錯誤。
+
+2.5.4
+修正使用 center: '字串地址' 時會發生錯誤的問題。
+
+2.5.2
+修正使用 modify 方法無法改變 zoom 縮放等級的錯誤。
+修正使用 clear 方法無法清除 Label 的錯誤。
+
+2.5.1
+新增 disableDefaultUI, maxZoom, minZoom, panControl, panControlOptions, streetViewControl, streetViewControlOptions 參數。
+
+2.5.0
+廢除原有的 tinyMapPanTo, tinyMapModify, tinyMapClear 方法，改為由 tinyMap 以字串參數呼叫。
+新增 interval 參數可以設定每次 geocoder 查詢的間隔秒數（毫秒）
+
+2.4.4
+修正 marker 使用地址字串時發生的 geocoder 錯誤。
+
+2.4.3
+修正使用 IE8（或以下版本）不支援 hasOwnProperty 導致出現 javascript 錯誤的問題。
+現在 infoWindow 將寫入 marker 陣列內以方便外部存取。
+
+2.4.2
+修正設置 markerFitBounds = true 時，地圖無法自動置中及縮放的錯誤。
+
+2.4.1
+新增 tinyMapClear 方法可以在清除指定地圖上的圖層。
+
+2.4.0
+新增 tinyMapModify 方法可以在指定地圖上動態加入標記、軌跡、繪製圖形等圖層。
+
+2.3.1
+修正 marker 使用地址字串會造成無法顯示的錯誤。
+
+2.3.0
+程式碼重構，提昇執行效能並縮小檔案。
+呼叫 tinyMapPanTo 不再需要加上 data-tinyMap 屬性。
+
+2.2.9
+新增 markerFitBounds (Bool) 參數，若為 true (預設) 則地圖將自動縮放及置中以顯示地圖標記。
+
+2.2.8
+若 marker.addr 輸入值為陣列座標值時，將不使用 geocode 查詢位置，避免因 marker 數量太多導致無法一次全部顯示。
+
+2.2.7
+加入 tinyMapPanTo 方法可移動地圖中心至指定的位置。
+
+2.2.6
+修正若輸入的地址為座標時，自動使用精準模式進行定位。
+
+2.2.5
+加入 KML 軌跡顯示功能
+
+2.2.4
+修正因 Geocode 每秒請求限制，導致地圖數量無法顯示超過 12 個的錯誤。
+加入 loading 參數可顯示地圖載入前顯示的自訂文字。
+
+2.2.3
+修正因 Geocode 每秒請求限制導致 marker 數目無法超過 8-10 個的錯誤。
+
+2.2.2
+Marker 群組移除 display 參數，並加入 label 參數用以設定文字層的內文
+修正路徑規劃功能的中途點順序會相反的錯誤
+加入路徑規劃 optimize 參數表示是否最佳化路徑
+
+2.2.1
+路徑規劃加入設置中途點的功能
+加入查無地址可自訂錯誤訊息的參數
+
+2.2
+加入可直接於地圖顯示 Marker 文字層的功能
+
+2.1
+加入 polyline, polygon, circle 等繪製功能
+改用 MIT 授權釋出
+
+2.0.1
+修正當座標或地址無效時的未預期錯誤
+若標記說明包含 HTML Code 時，icon title 將只保留文字而忽略任何標籤
+
+2.0
+改用 Google Maps API v3 重寫
+
+1.0.1
+修正部份程式錯誤以符合 JSLint
+改以 Google AJAX API 呼叫 map
+
+1.0
+Release
