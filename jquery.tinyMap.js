@@ -21,12 +21,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.1
+ * @version: 2.6.2
  *
  * [Changelog]
- * 修正使用 markerCluster 時，若頁面有多個地圖則標記會合併在 cluster 地圖上顯示的錯誤。
+ * 現在 modify 方法不只能異動圖層，也可以修改所有的地圖選項。
  *
- * Last Modify: Wed, 30 April 2014 07:12:33 GMT
+ * Last Modify: Wed, 30 April 2014 08:30:56 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -34,7 +34,6 @@
 
     // Loop counter for geocoder
     var pluginName = 'tinyMap',
-        g = {},
         loop = 0,
     // Plugin default settings
         defaults = {
@@ -254,7 +253,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.6.1',
+        VERSION: '2.6.2',
 
         // Layers container
         _labels: [],
@@ -858,11 +857,16 @@
                         func.push(label[i][1]);
                     }
                 }
-                if (null !== self.map && undefined !== self.map && func) {
-                    for (i = 0; i < func.length; i += 1) {
-                        if ('function' === typeof self[func[i]]) {
-                            self[func[i]](self.map, options);
+                
+                if (null !== self.map) {
+                    if (func.length) {
+                        for (i = 0; i < func.length; i += 1) {
+                            if ('function' === typeof self[func[i]]) {
+                                self[func[i]](self.map, options);
+                            }
                         }
+                    } else {
+                        self.map.setOptions(options);
                     }
                 }
             }
