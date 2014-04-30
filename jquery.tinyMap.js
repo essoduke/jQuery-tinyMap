@@ -21,14 +21,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.5.9
+ * @version: 2.6.0
  *
  * [Changelog]
- * Marker:
- *     icon 參數現在可以指定 url, size 以及 anchor。
- *     新增 animation 參數設定動畫效果。
+ * 加入 markerCluster 控制是否以 cluster 方式顯示標記
  *
- * Last Modify: Tue, 29 April 2014 08:39:07 GMT
+ * Last Modify: Wed, 30 April 2014 01:47:09 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -53,6 +51,7 @@
             'mapTypeId': 'ROADMAP',
             'marker': [],
             'markerFitBounds': false,
+            'markerCluster': false, //2.6.0
             'maxZoom': null, //2.5.1
             'minZoom': null, //2.5.1
             'panControl': true, //2.5.1
@@ -250,7 +249,7 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.5.9',
+        VERSION: '2.6.0',
 
         // Layers container
         _markers: [],
@@ -632,7 +631,8 @@
          * @this {tinyMap}
          */
         directionService: function (opt) {
-            var waypoints = [],
+            var self = this,
+                waypoints = [],
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
                 request = {
@@ -667,8 +667,8 @@
                         directionsDisplay.setDirections(response);
                     }
                 });
-                directionsDisplay.setMap(this.map);
-                this._directions.push(directionsDisplay);
+                directionsDisplay.setMap(self.map);
+                self._directions.push(directionsDisplay);
             }
         },
         /**
@@ -699,12 +699,10 @@
          */
         init: function () {
             var self = this,
-                clu  = {},
-                markerCluster = [],
                 geocoder = {};
 
             loop += 1;
-            if ('string' === typeof this.options.center) {
+            if ('string' === typeof self.options.center) {
                 window.setTimeout(function () {
                     var error = $(self.container),
                         msg = '';
@@ -731,7 +729,9 @@
                                     }
                                     // Marker cluster
                                     if ('function' === typeof MarkerClusterer) {
-                                        new MarkerClusterer(self.map, self._markers);
+                                        if (true === self.options.markerCluster) {
+                                            new MarkerClusterer(self.map, self._markers);
+                                        }
                                     }
                                 });
                             } else {
@@ -752,7 +752,9 @@
                     }
                     // Marker cluster
                     if ('function' === typeof MarkerClusterer) {
-                        new MarkerClusterer(self.map, self._markers);
+                        if (true === self.options.markerCluster) {
+                            new MarkerClusterer(self.map, self._markers);
+                        }
                     }
                 });
             }
