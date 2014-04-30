@@ -21,12 +21,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.0
+ * @version: 2.6.1
  *
  * [Changelog]
- * 加入 markerCluster 控制是否以 cluster 方式顯示標記
+ * 修正使用 markerCluster 時，若頁面有多個地圖則標記會合併在 cluster 地圖上顯示的錯誤。
  *
- * Last Modify: Wed, 30 April 2014 01:47:09 GMT
+ * Last Modify: Wed, 30 April 2014 07:12:33 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -182,6 +182,11 @@
          */
         this.map = null;
         /**
+         * Map markers
+         * @type {Object}
+         */
+        this._markers = [];
+        /**
          * DOM of selector
          * @type {Object}
          */
@@ -249,17 +254,15 @@
      */
     tinyMap.prototype = {
 
-        VERSION: '2.6.0',
+        VERSION: '2.6.1',
 
         // Layers container
-        _markers: [],
         _labels: [],
         _polylines: [],
         _polygons: [],
         _circles: [],
         _kmls: [],
         _directions: [],
-        _cluster: {},
 
         // Google Maps LatLngClass
         bounds: new google.maps.LatLngBounds(),
@@ -727,7 +730,7 @@
                                             self.map.fitBounds(self.bounds);
                                         }, self.interval);
                                     }
-                                    // Marker cluster
+                                    // Create the marker cluster
                                     if ('function' === typeof MarkerClusterer) {
                                         if (true === self.options.markerCluster) {
                                             new MarkerClusterer(self.map, self._markers);
@@ -747,14 +750,14 @@
                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
-                    if (self.options.marker.length && true === self.options.markerFitBounds) {
-                        self.map.fitBounds(self.bounds);
-                    }
-                    // Marker cluster
+                    // Create the marker cluster
                     if ('function' === typeof MarkerClusterer) {
                         if (true === self.options.markerCluster) {
                             new MarkerClusterer(self.map, self._markers);
                         }
+                    }
+                    if (self.options.marker.length && true === self.options.markerFitBounds) {
+                        self.map.fitBounds(self.bounds);
                     }
                 });
             }
