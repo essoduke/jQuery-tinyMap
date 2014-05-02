@@ -744,7 +744,7 @@
                             error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
                         }
                     });
-                }, (self.interval * loop));
+                }, self.interval);
             } else {
                 self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
