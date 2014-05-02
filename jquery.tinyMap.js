@@ -1,3 +1,4 @@
+/*jshint undef:false, unused:false */
 /**
  * MIT License
  * Copyright(c) 2014 essoduke.org
@@ -170,7 +171,7 @@
      * @param {(Object|string)} options User settings
      * @constructor
      */
-    function tinyMap (container, options) {
+    function TinyMap (container, options) {
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
             return;
@@ -180,6 +181,11 @@
          * @type {Object}
          */
         this.map = null;
+        /**
+         * Map marker cluster
+         * @type {Object}
+         */
+        this.markerCluster = null;
         /**
          * Map markers
          * @type {Object}
@@ -251,7 +257,7 @@
     /**
      * tinyMap prototype
      */
-    tinyMap.prototype = {
+    TinyMap.prototype = {
 
         VERSION: '2.6.2',
 
@@ -281,16 +287,18 @@
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
-            var opt = (!opt ? this.options : opt),
-                kml_opt = {},
+            var kml_opt = {},
                 kml_url = '',
                 kml = {};
+            opt = (!opt ? this.options : opt);
             if (undefined !== opt.kml) {
                 kml_opt = {
                     preserveViewport: true,
                     suppressInfoWindows: false
-                },
-                kml_url = ('string' === typeof opt.kml && 0 !== opt.kml.length) ? opt.kml : (undefined !== opt.kml.url ? opt.kml.url : ''),
+                };
+                kml_url = ('string' === typeof opt.kml && 0 !== opt.kml.length) ?
+                          opt.kml :
+                          (undefined !== opt.kml.url ? opt.kml.url : '');
                 kml = new google.maps.KmlLayer(kml_url, $.extend(kml_opt, opt.kml));
                 this._kmls.push(kml);
                 kml.setMap(map);
@@ -302,8 +310,8 @@
          * @param {Object} opt Direction options
          */
         direction: function (map, opt) {
-            var d = '',
-                opt = !opt ? this.options : opt;
+            var d = '';
+            opt = !opt ? this.options : opt;
             if (undefined !== opt.direction && 0 < opt.direction.length) {
                 for (d in opt.direction) {
                     if (_hasOwnProperty(opt.direction, d)) {
@@ -320,8 +328,8 @@
          * @param {Object} opt Markers options
          */
         markers: function (map, opt) {
-            var m = '',
-                opt = !opt ? this.options : opt;
+            var m = '';
+            opt = !opt ? this.options : opt;
             if (undefined !== opt.marker) {
                 if (0 < opt.marker.length) {
                     for (m in opt.marker) {
@@ -349,8 +357,8 @@
             var polyline = {},
                 p = '',
                 c = {},
-                coords = [],
-                opt = !opt ? this.options : opt;
+                coords = [];
+            opt = !opt ? this.options : opt;
             if (undefined !== opt.polyline) {
                 if (undefined !== opt.polyline.coords) {
                     for (p in opt.polyline.coords) {
@@ -381,8 +389,8 @@
             var polygon = {},
                 p = '',
                 c = {},
-                coords = [],
-                opt = !opt ? this.options : opt;
+                coords = [];
+            opt = !opt ? this.options : opt;
             if (undefined !== opt.polygon) {
                 if (undefined !== opt.polygon.coords) {
                     for (p in opt.polygon.coords) {
@@ -417,8 +425,8 @@
         drawCircle: function (map, opt) {
             var c = 0,
                 circle = {},
-                circles = {},
-                opt = !opt ? this.options : opt;
+                circles = {};
+            opt = !opt ? this.options : opt;
             if (undefined !== opt.circle && 0 < opt.circle.length) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
@@ -496,7 +504,7 @@
                         icons.anchor = new google.maps.Point(
                             opt.icon.anchor[0],
                             opt.icon.anchor[1]
-                        )
+                        );
                     }
                 }
             }
@@ -581,7 +589,6 @@
                     var marker = {},
                         label_opt = {},
                         label = {},
-                        icons = {},
                         title = _hasOwnProperty(opt, 'text') ?
                                 opt.text.toString() :
                                 '',
@@ -732,7 +739,7 @@
                                     // Create the marker cluster
                                     if ('function' === typeof MarkerClusterer) {
                                         if (true === self.options.markerCluster) {
-                                            new MarkerClusterer(self.map, self._markers);
+                                            self.markerCluster = new MarkerClusterer(self.map, self._markers);
                                         }
                                     }
                                 });
@@ -752,7 +759,7 @@
                     // Create the marker cluster
                     if ('function' === typeof MarkerClusterer) {
                         if (true === self.options.markerCluster) {
-                            new MarkerClusterer(self.map, self._markers);
+                            self.markerCluster = new MarkerClusterer(self.map, self._markers);
                         }
                     }
                     if (self.options.marker.length && true === self.options.markerFitBounds) {
@@ -884,15 +891,15 @@
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, pluginName);
-                if (instance instanceof tinyMap && 'function' === typeof instance[options]) {
+                if (instance instanceof TinyMap && 'function' === typeof instance[options]) {
                     result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
             });
-            return undefined !== result ? result : this;;
+            return undefined !== result ? result : this;
         } else {
             return this.each(function () {
                 if (!$.data(this, pluginName)) {
-                    $.data(this, pluginName, new tinyMap(this, options));
+                    $.data(this, pluginName, new TinyMap(this, options));
                 }
             });
         }
