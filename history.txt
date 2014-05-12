@@ -2,6 +2,11 @@ _____________________
 
 jQuery tinyMap Changelog
 _____________________
+2.6.3
+修正 disableDefaultUI 無法作用的錯誤。
+
+2.6.2
+現在 modify 方法不只能異動圖層，也可以修改所有的地圖選項。
 
 2.6.1
 修正使用 markerCluster 時，若頁面有多個地圖則標記會合併在 cluster 地圖上顯示的錯誤。
