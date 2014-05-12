@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.2
+ * @version: 2.6.3
  *
  * [Changelog]
- * 現在 modify 方法不只能異動圖層，也可以修改所有的地圖選項。
+ * 修正 disableDefaultUI 無法作用的錯誤。
  *
- * Last Modify: Wed, 30 April 2014 08:30:56 GMT
+ * Last Modify: Mon, 12 May 2014 06:43:29 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -251,6 +251,15 @@
                 'style': google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]
             }
         };
+        if (true === this.options.disableDefaultUI) {
+            this.GoogleMapOptions.mapTypeControl = false;
+            this.GoogleMapOptions.navigationControl = false;
+            this.GoogleMapOptions.panControl = false;
+            this.GoogleMapOptions.rotateControl = false;
+            this.GoogleMapOptions.scaleControl = false;
+            this.GoogleMapOptions.streetViewControl = false;
+            this.GoogleMapOptions.zoomControl = false;
+        }
         $(this.container).html(this.options.loading);
         this.init();
     }
@@ -259,7 +268,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.6.2',
+        VERSION: '2.6.3',
 
         // Layers container
         _labels: [],
@@ -474,16 +483,12 @@
          * @this {tinyMap}
          */
         markerIcon: function (opt) {
-            var icons = null;
-            
+            var icons = {};
             if (_hasOwnProperty(opt, 'icon')) {
 
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
                 }
-
-                icons = {};
-
                 if (_hasOwnProperty(opt.icon, 'url')) {
                     icons.url = opt.icon.url;
                 }
