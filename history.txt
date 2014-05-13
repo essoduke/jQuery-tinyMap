@@ -2,6 +2,10 @@ _____________________
 
 jQuery tinyMap Changelog
 _____________________
+2.6.4
+修正 marker 無法設置的錯誤。
+修正若 marker 使用文字地址設置時，fitbounds, cluster 會無法作用的錯誤。
+
 2.6.3
 修正 disableDefaultUI 無法作用的錯誤。
 
