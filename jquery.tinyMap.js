@@ -22,12 +22,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.3
+ * @version: 2.6.4
  *
  * [Changelog]
- * 修正 disableDefaultUI 無法作用的錯誤。
+ * 修正 marker 無法設置的錯誤。
+ * 修正若 marker 使用文字地址設置時，fitbounds, cluster 會無法作用的錯誤。
  *
- * Last Modify: Mon, 12 May 2014 06:43:29 GMT
+ * Last Modify: Tue, 13 May 2014 02:35:33 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -260,6 +261,7 @@
             this.GoogleMapOptions.streetViewControl = false;
             this.GoogleMapOptions.zoomControl = false;
         }
+
         $(this.container).html(this.options.loading);
         this.init();
     }
@@ -268,7 +270,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.6.3',
+        VERSION: '2.6.4',
 
         // Layers container
         _labels: [],
@@ -538,16 +540,17 @@
                 },
                 icons = self.markerIcon(opt);
             
-            if (icons) {
+            
+            if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                 markerOptions.icon = icons;
             }
-
+            
             if (_hasOwnProperty(opt.animation)) {
                 if ('string' === typeof opt.animation) {
                     markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                 }
             }
-
+            
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
@@ -584,6 +587,7 @@
             if (-1 !== opt.addr.indexOf(',')) {
 				opt.addr = 'loc: ' + opt.addr;
 			}
+            
             geocoder.geocode({'address': opt.addr}, function (results, status) {
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -606,7 +610,7 @@
                         },
                         icons = self.markerIcon(opt);
                     
-                    if (icons) {
+                    if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                         markerOptions.icon = icons;
                     }
 
@@ -615,6 +619,7 @@
                             markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                         }
                     }
+
                     marker = new google.maps.Marker(markerOptions);
                     self._markers.push(marker);
 
@@ -624,6 +629,7 @@
                             self.bounds.extend(markerOptions.position);
                         }
                     }
+
                     label_opt = {
                         map: self.map,
                         css: opt.css || ''
@@ -737,14 +743,16 @@
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                     self.overlay();
                                     if (self.options.marker.length && true === self.options.markerFitBounds) {
-                                        setTimeout(function () {
+                                        window.setTimeout(function () {
                                             self.map.fitBounds(self.bounds);
                                         }, self.interval);
                                     }
                                     // Create the marker cluster
                                     if ('function' === typeof MarkerClusterer) {
                                         if (true === self.options.markerCluster) {
-                                            self.markerCluster = new MarkerClusterer(self.map, self._markers);
+                                            window.setTimeout(function () {
+                                                self.markerCluster = new MarkerClusterer(self.map, self._markers);
+                                            }, self.interval);
                                         }
                                     }
                                 });
@@ -764,11 +772,15 @@
                     // Create the marker cluster
                     if ('function' === typeof MarkerClusterer) {
                         if (true === self.options.markerCluster) {
-                            self.markerCluster = new MarkerClusterer(self.map, self._markers);
+                            window.setTimeout(function () {
+                                self.markerCluster = new MarkerClusterer(self.map, self._markers);
+                            }, self.interval);
                         }
                     }
                     if (self.options.marker.length && true === self.options.markerFitBounds) {
-                        self.map.fitBounds(self.bounds);
+                        window.setTimeout(function () {
+                            self.map.fitBounds(self.bounds);
+                        }, self.interval);
                     }
                 });
             }
