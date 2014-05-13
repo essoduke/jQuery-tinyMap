@@ -5,6 +5,7 @@ _____________________
 2.6.4
 修正 marker 無法設置的錯誤。
 修正若 marker 使用文字地址設置時，fitbounds, cluster 會無法作用的錯誤。
+新增 disableDoubleClickZoom 參數可設置是否雙擊縮放地圖。
 
 2.6.3
 修正 disableDefaultUI 無法作用的錯誤。
