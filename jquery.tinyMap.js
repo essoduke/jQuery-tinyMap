@@ -27,6 +27,7 @@
  * [Changelog]
  * 修正 marker 無法設置的錯誤。
  * 修正若 marker 使用文字地址設置時，fitbounds, cluster 會無法作用的錯誤。
+ * 新增 disableDoubleClickZoom 參數可設置是否雙擊縮放地圖。
  *
  * Last Modify: Tue, 13 May 2014 02:35:33 GMT
  */
@@ -41,6 +42,7 @@
         defaults = {
             'center': {x: '24', y: '121'},
             'control': true,
+            'disableDoubleClickZoom': false, //2.6.4
             'disableDefaultUI': false, //2.5.1
             'draggable': true,
             'keyboardShortcuts': true,
@@ -214,6 +216,7 @@
         this.GoogleMapOptions = {
             'center': new google.maps.LatLng(this.options.center.x, this.options.center.y),
             'control': this.options.control,
+            'disableDoubleClickZoom': this.options.disableDoubleClickZoom,
             'disableDefaultUI': this.options.disableDefaultUI,
             'draggable': this.options.draggable,
             'keyboardShortcuts': this.options.keyboardShortcuts,
