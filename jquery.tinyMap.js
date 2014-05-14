@@ -22,14 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.4
+ * @version: 2.6.5
  *
  * [Changelog]
- * 修正 marker 無法設置的錯誤。
- * 修正若 marker 使用文字地址設置時，fitbounds, cluster 會無法作用的錯誤。
- * 新增 disableDoubleClickZoom 參數可設置是否雙擊縮放地圖。
+ * 新增 direction.panel 參數以顯示導航資訊面板
  *
- * Last Modify: Tue, 13 May 2014 02:35:33 GMT
+ * Last Modify: Tue, 14 May 2014 02:57:48 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -273,7 +271,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.6.4',
+        VERSION: '2.6.5',
 
         // Layers container
         _labels: [],
@@ -662,6 +660,7 @@
                     'travelMode': google.maps.DirectionsTravelMode.DRIVING,
                     'optimizeWaypoints': opt.optimize || false
                 },
+                panel = {},
                 i = 0,
                 c = 0;
             if ('string' === typeof opt.from) {
@@ -675,6 +674,9 @@
                     request.travelMode = google.maps.DirectionsTravelMode[opt.travel.toUpperCase()];
                 }
             }
+            
+            panel = $(undefined !== opt.panel ? opt.panel : null);
+            
             if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypoints.push({
@@ -691,6 +693,9 @@
                     }
                 });
                 directionsDisplay.setMap(self.map);
+                if (panel.length) {
+                    directionsDisplay.setPanel(panel.get(0));
+                }
                 self._directions.push(directionsDisplay);
             }
         },
