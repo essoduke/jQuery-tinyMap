@@ -670,11 +670,10 @@
                 request.destination = opt.to;
             }
             if ('string' === typeof opt.travel) {
-                if (0 < opt.travel.length) {
-                    request.travelMode = google.maps.DirectionsTravelMode[opt.travel.toUpperCase()];
+                if (opt.travel.length) {
+                    request.travelMode = google.maps.TravelMode[opt.travel.toUpperCase()];
                 }
             }
-            
             panel = $(undefined !== opt.panel ? opt.panel : null);
             
             if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
@@ -848,7 +847,6 @@
             if ('string' === typeof layer) {
                 layers = layer.split(',');
             }
-            //console.dir(layers);
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
