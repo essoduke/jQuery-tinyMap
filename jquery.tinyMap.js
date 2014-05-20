@@ -29,7 +29,7 @@
  * 修正: marker text 會過濾 HTML 的問題。
  * 修正: 大量呼叫 modify 方法可能會佔用過多記憶體的問題。
  *
- * Last Modify: Tue, 20 May 2014 04:11:38 GMT
+ * Last Modify: Tue, 20 May 2014 11:15:38 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -590,13 +590,13 @@
                 }
             }
 
-            label_opt = {
+            labelOpt = {
                 map: map,
                 css: undefined !== opt.css ? opt.css : ''
             };
 
             if ('string' === typeof opt.label && 0 !== opt.label.length) {
-                label_opt.text = opt.label;
+                labelOpt.text = opt.label;
             }
             label = new Label(labelOpt);
             label.bindTo('position', marker, 'position');
@@ -626,7 +626,7 @@
                     }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker = {},
-                        label_opt = {},
+                        labelOpt = {},
                         label = {},
                         title = _hasOwnProperty(opt, 'text') ?
                                 opt.text.toString() :
@@ -680,14 +680,14 @@
                         }
                     }
 
-                    label_opt = {
+                    labelOpt = {
                         map: self.map,
                         css: opt.css || ''
                     };
                     if ('string' === typeof opt.label && 0 !== opt.label.length) {
-                        label_opt.text = opt.label;
+                        labelOpt.text = opt.label;
                     }
-                    label = new Label(label_opt);
+                    label = new Label(labelOpt);
                     label.bindTo('position', marker, 'position');
                     label.bindTo('text', marker, 'position');
                     label.bindTo('visible', marker);
