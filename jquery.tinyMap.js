@@ -22,14 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.6
+ * @version: 2.6.7
  *
  * [Changelog]
- * 修正: 若建立大量以地址查詢的 marker 時，fitBounds 及 markercluster 可能無法運作的問題。
- * 修正: marker text 會過濾 HTML 的問題。
- * 修正: 大量呼叫 modify 方法可能會佔用過多記憶體的問題。
+ * 修正: markerCluster 沒有作用的錯誤
  *
- * Last Modify: Tue, 20 May 2014 11:15:38 GMT
+ * Last Modify: Wed, 21 May 2014 01:54:13 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -275,7 +273,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.6.6',
+        VERSION: '2.6.7',
 
         // Layers container
         _labels: [],
@@ -570,20 +568,22 @@
                 if (marker.getPosition().lat() && marker.getPosition().lng()) {
                     self.bounds.extend(markerOptions.position);
                 }
-            }
-            if (true === self.options.markerFitBounds) {
-                if (_geoMarkersLength === self.options.marker.length) {
-                    return map.fitBounds(self.bounds);
+                if (true === self.options.markerFitBounds) {
+                    console.dir('qwe');
+                    if (_directMarkersLength === self.options.marker.length) {
+                        return map.fitBounds(self.bounds);
+                    }
                 }
             }
+            
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
              * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
              */
-            if (true === self.options.markerFitBounds) {
+            if (true === self.options.markerCluster) {
                 if ('function' === typeof MarkerClusterer) {
-                    if (_geoMarkersLength === self.options.marker.length) {
+                    if (_directMarkersLength === self.options.marker.length) {
                         self.markerCluster = new MarkerClusterer(map, self._markers);
                         return;
                     }
