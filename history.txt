@@ -1,7 +1,18 @@
-_____________________
-
 jQuery tinyMap Changelog
-_____________________
+
+2.7.0
+新增 marker.title 參數以解決使用 marker.text 做為預設提示文字的問題。
+修改 marker.event 參數以支援更多事件。
+新增 event 參數以自訂地圖事件。
+
+2.6.7
+修正 markerCluster 沒有作用的錯誤。
+
+2.6.6
+修正: 若建立大量以地址查詢的 marker 時，fitBounds 及 markercluster 可能無法運作的問題。
+修正: marker text 會過濾 HTML 的問題。
+修正: 大量呼叫 modify 方法可能會佔用過多記憶體的問題。
+
 2.6.5
 新增 direction.panel 參數以顯示導航資訊面板
 
@@ -23,9 +34,8 @@ _____________________
 加入 markerCluster 控制是否以 cluster 方式顯示標記
 
 2.5.9
-Marker:
-    icon 參數現在可以指定 url, size 以及 anchor。
-    新增 animation 參數設定動畫效果。
+Marker.icon 參數現在可以指定 url, size 以及 anchor。
+新增 marker.animation 參數以設定動畫效果。
 
 2.5.8
 修正呼叫 clear方法無法清除路線規劃圖層的問題。
