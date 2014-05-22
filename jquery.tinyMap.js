@@ -795,7 +795,7 @@
                     }
                 }
             }
-            if (_hasOwnProperty(target, 'title')) {
+            if (_hasOwnProperty(target, 'infoWindow')) {
                 google.maps.event.addListener(target, 'click', function () {
                     target.infoWindow.open(self.map, target);
                 });
