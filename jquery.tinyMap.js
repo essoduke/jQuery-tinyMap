@@ -771,7 +771,8 @@
          */
         bindEvents: function (target, event) {
 
-            var e = {};
+            var self = this,
+                e = {};
             
             switch (typeof event) {
             case 'function':
@@ -793,6 +794,11 @@
                         }
                     }
                 }
+            }
+            if (_hasOwnProperty(target, 'title')) {
+                google.maps.event.addListener(target, 'click', function () {
+                    target.infoWindow.open(self.map, target);
+                });
             }
         },
         /**
