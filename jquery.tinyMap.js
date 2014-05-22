@@ -764,9 +764,10 @@
             }
         },
         /**
-         * bind event of markers
+         * bind events
          * @param {Object} marker Marker objects
-         * @param {string|Object} event Events
+         * @param {function|Object} event Events
+         * @this {tinyMap}
          */
         bindEvents: function (target, event) {
 
@@ -794,8 +795,6 @@
                 }
             }
         },
-
-
         /**
          * tinyMap Initialize
          * @this {tinyMap}
