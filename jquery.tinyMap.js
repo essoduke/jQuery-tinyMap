@@ -22,12 +22,14 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.6.7
+ * @version: 2.7.0
  *
  * [Changelog]
- * 修正: markerCluster 沒有作用的錯誤
+ * 新增 marker.title 參數以解決使用 marker.text 做為預設提示文字的問題。
+ * 修改 marker.event 參數以支援更多事件。
+ * 新增 event 參數以自訂地圖事件。
  *
- * Last Modify: Wed, 21 May 2014 01:54:13 GMT
+ * Last Modify: Thu, 22 May 2014 02:29:26 GMT
  */
 ;(function ($, window, document, undefined) {
 
@@ -88,7 +90,8 @@
                 'viewport': true,
                 'infowindow': false
             },
-            'interval': 200 //2.5.0
+            'interval': 200, //2.5.0
+            'event': null //2.7.0
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
@@ -273,7 +276,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.6.7',
+        VERSION: '2.7.0',
 
         // Layers container
         _labels: [],
@@ -538,15 +541,23 @@
                 marker = {},
                 labelOpt = {},
                 label = {},
-                title = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
+                title = _hasOwnProperty(opt, 'title') ?
+                        opt.title.toString().replace(/<([^>]+)>/g, '') :
+                        '',
+                content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
                 markerOptions = {
                     'map': map,
                     'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
-                    'title':  title,
-                    'infoWindow': new google.maps.InfoWindow({content: title}),
+                    'infoWindow': new google.maps.InfoWindow({
+                        'content': content
+                    }),
                     'animation': null
                 },
                 icons = self.markerIcon(opt);
+
+            if (title) {
+                markerOptions.title = title;
+            }
 
             _directMarkersLength += 1;
             
@@ -569,7 +580,6 @@
                     self.bounds.extend(markerOptions.position);
                 }
                 if (true === self.options.markerFitBounds) {
-                    console.dir('qwe');
                     if (_directMarkersLength === self.options.marker.length) {
                         return map.fitBounds(self.bounds);
                     }
@@ -603,7 +613,7 @@
             label.bindTo('text', marker, 'position');
             label.bindTo('visible', marker);
 
-            self.bindEvent(marker, opt.event);
+            self.bindEvents(marker, opt.event);
         },
         /**
          * Set a marker by Geocoder service
@@ -628,18 +638,24 @@
                     var marker = {},
                         labelOpt = {},
                         label = {},
-                        title = _hasOwnProperty(opt, 'text') ?
-                                opt.text.toString() :
+                        title = _hasOwnProperty(opt, 'title') ?
+                                opt.title.toString().replace(/<([^>]+)>/g, '') :
                                 '',
+                        content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
                         markerOptions = {
                             'map': map,
                             'position': results[0].geometry.location,
                             'title': title,
-                            'infoWindow': new google.maps.InfoWindow({content: title}),
+                            'infoWindow': new google.maps.InfoWindow({
+                                'content': content
+                            }),
                             'animation': null
                         },
                         icons = self.markerIcon(opt);
                     
+                    if (title) {
+                        markerOptions.title = title;
+                    }
                     _geoMarkersLength += 1;
 
                     if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
@@ -691,7 +707,7 @@
                     label.bindTo('position', marker, 'position');
                     label.bindTo('text', marker, 'position');
                     label.bindTo('visible', marker);
-                    self.bindEvent(marker, opt.event);
+                    self.bindEvents(marker, opt.event);
                 }
             });
         },
@@ -752,24 +768,34 @@
          * @param {Object} marker Marker objects
          * @param {string|Object} event Events
          */
-        bindEvent: function (marker, event) {
-            var self = this,
-                m = self.map;
-            if ('function' === typeof event) {
-                google.maps.event.addListener(marker, 'click', event);
-            } else if (_hasOwnProperty(event, 'type')) {
-                if (
-                    'string' === typeof event.type &&
-                    'function' === typeof event.bind
-                ) {
-                    google.maps.event.addListener(marker, event.type, event.bind);
+        bindEvents: function (target, event) {
+
+            var e = {};
+            
+            switch (typeof event) {
+            case 'function':
+                google.maps.event.addListener(target, 'click', event);
+                break;
+            case 'object':
+                for (e in event) {
+                    if ('function' === typeof event[e]) {
+                        google.maps.event.addListener(target, e, event[e]);
+                    } else {
+                        if (_hasOwnProperty(event[e], 'func') && 'function' === typeof event[e].func) {
+                            if (_hasOwnProperty(event[e], 'once') && true === event[e].once) {
+                                google.maps.event.addListenerOnce(target, e, event[e].func);
+                            } else {
+                                google.maps.event.addListener(target, e, event[e].func);
+                            }
+                        } else if ('function' === typeof event[e]) {
+                            google.maps.event.addListener(target, e, event[e]);
+                        }
+                    }
                 }
-            } else {
-                google.maps.event.addListener(marker, 'click', function () {
-                    marker.infoWindow.open(m, marker);
-                });
             }
         },
+
+
         /**
          * tinyMap Initialize
          * @this {tinyMap}
@@ -800,6 +826,9 @@
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                     self.overlay();
                                 });
+                                // Events binding
+                                self.bindEvents(self.map, self.options.event);
+
                             } else {
                                 msg = self.options.notfound.text || status;
                                 error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
@@ -814,6 +843,8 @@
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
                 });
+                // Events binding
+                self.bindEvents(self.map, self.options.event);
             }
         },
         /**
