@@ -1,5 +1,14 @@
 jQuery tinyMap Changelog
 
+2.7.2
+修正使用 modify 傳入大量 marker 時造成的效能問題及 Label 位置不會跟著更新的錯誤。
+
+2.7.1
+修正 clear 方法若使用陣列參數無作用的錯誤。
+新增 marker.id 參數，作用於使用 modify 方法傳入新的 markers 時，
+     若有已存在的 marker id，則更新標記而不是重新建立。
+     可避免使用 clear 再 modify 造成的閃爍以及 infoWindow 也會移除再重建的問題。
+
 2.7.0
 新增 marker.title 參數以解決使用 marker.text 做為預設提示文字的問題。
 修改 marker.event 參數以支援更多事件。
