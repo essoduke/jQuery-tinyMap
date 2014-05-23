@@ -22,14 +22,15 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.0
+ * @version: 2.7.1
  *
  * [Changelog]
- * 新增 marker.title 參數以解決使用 marker.text 做為預設提示文字的問題。
- * 修改 marker.event 參數以支援更多事件。
- * 新增 event 參數以自訂地圖事件。
+ * 修正 clear 方法若使用陣列參數無作用的錯誤。
+ * 新增 marker.id 參數，作用於使用 modify 方法傳入新的 markers 時，
+ *     若有已存在的 marker id，則更新標記而不是重新建立。
+ *     可避免使用 clear 再 modify 造成的閃爍以及 infoWindow 也會移除再重建的問題。
  *
- * Last Modify: Thu, 22 May 2014 02:29:26 GMT
+ * Last Modify: 2014-05-23
  */
 ;(function ($, window, document, undefined) {
 
@@ -276,7 +277,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.0',
+        VERSION: '2.7.1',
 
         // Layers container
         _labels: [],
@@ -344,26 +345,59 @@
          * @param {Object} map Map instance
          * @param {Object} opt Markers options
          */
-        markers: function (map, opt) {
-            var m = '';
+        markers: function (map, opt, source) {
+            var m = '',
+                i = 0,
+                j = 0,
+                markers = [];
+
             opt = !opt ? this.options : opt;
 
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
 
-            if (undefined !== opt.marker) {
-                if (0 < opt.marker.length) {
-                    for (m in opt.marker) {
-                        if (_hasOwnProperty(opt.marker, m) &&
-                            _hasOwnProperty(opt.marker[m], 'addr')
-                        ) {
-                            if (
-                                'object' === typeof opt.marker[m].addr &&
-                                2 === opt.marker[m].addr.length
+            
+                if (undefined !== opt.marker) {
+                    if (0 < opt.marker.length) {
+                        for (m in opt.marker) {
+                            if (_hasOwnProperty(opt.marker, m) &&
+                                _hasOwnProperty(opt.marker[m], 'addr')
                             ) {
-                                this.markerDirect(map, opt.marker[m]);
-                            } else if ('string' === typeof opt.marker[m].addr) {
-                                this.markerByGeocoder(map, opt.marker[m]);
+                                if (
+                                    'object' === typeof opt.marker[m].addr &&
+                                    2 === opt.marker[m].addr.length
+                                ) {
+                                    this.markerDirect(map, opt.marker[m]);
+                                } else if ('string' === typeof opt.marker[m].addr) {
+                                    this.markerByGeocoder(map, opt.marker[m]);
+                                }
+                            }
+                        }
+                    }
+                }
+            
+            /**
+             * Modify existed marker to new position
+             * @version 2.7.1
+             */
+            markers = this._markers;
+            for (i = 0; i < markers.length; i++) {
+                if (_hasOwnProperty(markers[i], 'id')) {
+                    for (j = 0; j < opt.marker.length; j++) {
+                        if (markers[i].id === opt.marker[j].id) {
+                            if (_hasOwnProperty(opt.marker[j], 'addr')) {
+                                if (opt.marker[j].addr) {
+                                    markers[i].setPosition(
+                                        new google.maps.LatLng(
+                                            opt.marker[j].addr[0],
+                                            opt.marker[j].addr[1]
+                                        )
+                                    );
+                                    if ('function' === typeof markers[i].infoWindow.setContent) {
+                                        markers[i].infoWindow.setContent(opt.marker[j].text);
+                                    }
+                                    continue;
+                                }
                             }
                         }
                     }
@@ -537,21 +571,24 @@
          * @this {tinyMap}
          */
         markerDirect: function (map, opt) {
-            var self = this,
-                marker = {},
+            var self     = this,
+                marker   = {},
                 labelOpt = {},
-                label = {},
-                title = _hasOwnProperty(opt, 'title') ?
-                        opt.title.toString().replace(/<([^>]+)>/g, '') :
-                        '',
-                content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
+                label    = {},
+                id       = _hasOwnProperty(opt, 'id') ? opt.id : '',
+                title    = _hasOwnProperty(opt, 'title') ?
+                           opt.title.toString().replace(/<([^>]+)>/g, '') :
+                           '',
+                content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
+
                 markerOptions = {
                     'map': map,
                     'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
                     'infoWindow': new google.maps.InfoWindow({
                         'content': content
                     }),
-                    'animation': null
+                    'animation': null,
+                    'id': id
                 },
                 icons = self.markerIcon(opt);
 
@@ -905,9 +942,11 @@
                 label = '',
                 i = 0,
                 j = 0;
-            if ('string' === typeof layer) {
-                layers = layer.split(',');
-            }
+                
+            layers = 'string' === typeof layer ?
+                     layer.split(',') :
+                     ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
+
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
@@ -953,7 +992,7 @@
                     if (func.length) {
                         for (i = 0; i < func.length; i += 1) {
                             if ('function' === typeof self[func[i]]) {
-                                self[func[i]](m, options);
+                                self[func[i]](m, options, 'modify');
                             }
                         }
                     } else {
