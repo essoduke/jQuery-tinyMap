@@ -381,24 +381,22 @@
              */
             if ('modify' === source) {
                 markers = this._markers;
-                for (i = 0; i < markers.length; i++) {
-                    if (_hasOwnProperty(markers[i], 'id')) {
-                        for (j = 0; j < opt.marker.length; j++) {
-                            if (markers[i].id === opt.marker[j].id) {
-                                if (_hasOwnProperty(opt.marker[j], 'addr')) {
-                                    if (opt.marker[j].addr) {
-                                        markers[i].setPosition(
-                                            new google.maps.LatLng(
-                                                opt.marker[j].addr[0],
-                                                opt.marker[j].addr[1]
-                                            )
-                                        );
-                                        if ('function' === typeof markers[i].infoWindow.setContent) {
-                                            markers[i].infoWindow.setContent(opt.marker[j].text);
-                                        }
-                                        continue;
-                                    }
+                for (i = 0; i < markers.length; i += 1) {
+                    if (undefined !== markers[i].id) {
+                        for (j = 0; j < opt.marker.length; j += 1) {
+                            if (markers[i].id === opt.marker[j].id &&
+                                undefined !== opt.marker[j].addr
+                            ) {
+                                markers[i].setPosition(
+                                    new google.maps.LatLng(
+                                        opt.marker[j].addr[0],
+                                        opt.marker[j].addr[1]
+                                    )
+                                );
+                                if ('function' === typeof markers[i].infoWindow.setContent) {
+                                    markers[i].infoWindow.setContent(opt.marker[j].text);
                                 }
+                                continue;
                             }
                         }
                     }
