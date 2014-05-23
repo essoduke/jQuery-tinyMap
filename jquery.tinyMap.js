@@ -356,47 +356,48 @@
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
 
-            
-                if (undefined !== opt.marker) {
-                    if (0 < opt.marker.length) {
-                        for (m in opt.marker) {
-                            if (_hasOwnProperty(opt.marker, m) &&
-                                _hasOwnProperty(opt.marker[m], 'addr')
+            if (undefined !== opt.marker) {
+                if (0 < opt.marker.length) {
+                    for (m in opt.marker) {
+                        if (_hasOwnProperty(opt.marker, m) &&
+                            _hasOwnProperty(opt.marker[m], 'addr')
+                        ) {
+                            if (
+                                'object' === typeof opt.marker[m].addr &&
+                                2 === opt.marker[m].addr.length
                             ) {
-                                if (
-                                    'object' === typeof opt.marker[m].addr &&
-                                    2 === opt.marker[m].addr.length
-                                ) {
-                                    this.markerDirect(map, opt.marker[m]);
-                                } else if ('string' === typeof opt.marker[m].addr) {
-                                    this.markerByGeocoder(map, opt.marker[m]);
-                                }
+                                this.markerDirect(map, opt.marker[m]);
+                            } else if ('string' === typeof opt.marker[m].addr) {
+                                this.markerByGeocoder(map, opt.marker[m]);
                             }
                         }
                     }
                 }
+            }
             
             /**
              * Modify existed marker to new position
              * @version 2.7.1
              */
-            markers = this._markers;
-            for (i = 0; i < markers.length; i++) {
-                if (_hasOwnProperty(markers[i], 'id')) {
-                    for (j = 0; j < opt.marker.length; j++) {
-                        if (markers[i].id === opt.marker[j].id) {
-                            if (_hasOwnProperty(opt.marker[j], 'addr')) {
-                                if (opt.marker[j].addr) {
-                                    markers[i].setPosition(
-                                        new google.maps.LatLng(
-                                            opt.marker[j].addr[0],
-                                            opt.marker[j].addr[1]
-                                        )
-                                    );
-                                    if ('function' === typeof markers[i].infoWindow.setContent) {
-                                        markers[i].infoWindow.setContent(opt.marker[j].text);
+            if ('modify' === source) {
+                markers = this._markers;
+                for (i = 0; i < markers.length; i++) {
+                    if (_hasOwnProperty(markers[i], 'id')) {
+                        for (j = 0; j < opt.marker.length; j++) {
+                            if (markers[i].id === opt.marker[j].id) {
+                                if (_hasOwnProperty(opt.marker[j], 'addr')) {
+                                    if (opt.marker[j].addr) {
+                                        markers[i].setPosition(
+                                            new google.maps.LatLng(
+                                                opt.marker[j].addr[0],
+                                                opt.marker[j].addr[1]
+                                            )
+                                        );
+                                        if ('function' === typeof markers[i].infoWindow.setContent) {
+                                            markers[i].infoWindow.setContent(opt.marker[j].text);
+                                        }
+                                        continue;
                                     }
-                                    continue;
                                 }
                             }
                         }
