@@ -22,13 +22,10 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.1
+ * @version: 2.7.2
  *
  * [Changelog]
- * 修正 clear 方法若使用陣列參數無作用的錯誤。
- * 新增 marker.id 參數，作用於使用 modify 方法傳入新的 markers 時，
- *     若有已存在的 marker id，則更新標記而不是重新建立。
- *     可避免使用 clear 再 modify 造成的閃爍以及 infoWindow 也會移除再重建的問題。
+ * 修正使用 modify 傳入大量 marker 時造成的效能問題及 Label 位置不會跟著更新的錯誤。
  *
  * Last Modify: 2014-05-23
  */
@@ -95,7 +92,8 @@
             'event': null //2.7.0
         },
         _directMarkersLength = 0,
-        _geoMarkersLength = 0;
+        _geoMarkersLength = 0,
+        _labels = [];
 
     /**
      * _hasOwnProperty for compatibility IE
@@ -142,10 +140,11 @@
      * @this {Label}
      */
     Label.prototype.onAdd = function () {
-        var pane = this.getPanes().overlayLayer, me = this;
-        this.div.appendTo($(pane));
-        this.listeners = [
-            google.maps.event.addListener(this, 'visible_changed', me.onRemove)
+        var self = this,
+            pane = self.getPanes().overlayLayer;
+        self.div.appendTo($(pane));
+        self.listeners = [
+            google.maps.event.addListener(self, 'visible_changed', self.onRemove)
         ];
     };
     /**
@@ -154,14 +153,19 @@
      */
     Label.prototype.draw = function () {
         var projection = this.getProjection(),
+            position   = {};
+
+        try {
             position = projection.fromLatLngToDivPixel(this.get('position'));
-        this.div.css({
-            'left': position.x + 'px',
-            'top': position.y + 'px',
-            'display': 'block'
-        });
-        if (this.text) {
-            this.span.html(this.text.toString());
+            this.div.css({
+                'left': position.x + 'px',
+                'top': position.y + 'px',
+                'display': 'block'
+            });
+            if (this.text) {
+                this.span.html(this.text.toString());
+            }
+        } catch (ignore) {
         }
     };
     /**
@@ -277,7 +281,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.1',
+        VERSION: '2.7.2',
 
         // Layers container
         _labels: [],
@@ -356,46 +360,65 @@
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
 
-            if (undefined !== opt.marker) {
-                if (0 < opt.marker.length) {
-                    for (m in opt.marker) {
-                        if (_hasOwnProperty(opt.marker, m) &&
-                            _hasOwnProperty(opt.marker[m], 'addr')
-                        ) {
-                            if (
-                                'object' === typeof opt.marker[m].addr &&
-                                2 === opt.marker[m].addr.length
+            markers = this._markers;
+
+            // Make sure
+            if (!source || 0 === markers.length) {
+                if (undefined !== opt.marker) {
+                    if (0 < opt.marker.length) {
+                        for (m in opt.marker) {
+                            if (_hasOwnProperty(opt.marker, m) &&
+                                _hasOwnProperty(opt.marker[m], 'addr')
                             ) {
-                                this.markerDirect(map, opt.marker[m]);
-                            } else if ('string' === typeof opt.marker[m].addr) {
-                                this.markerByGeocoder(map, opt.marker[m]);
+                                if (
+                                    'object' === typeof opt.marker[m].addr &&
+                                    2 === opt.marker[m].addr.length
+                                ) {
+                                    this.markerDirect(map, opt.marker[m]);
+                                } else if ('string' === typeof opt.marker[m].addr) {
+                                    this.markerByGeocoder(map, opt.marker[m]);
+                                }
                             }
                         }
                     }
                 }
             }
             
+            //var nn = _labels[0];
+            //var x = nn.getProjection();
+            
+            //nn.bindTo('position', markers[0], 'position');
+            
+            
             /**
-             * Modify existed marker to new position
-             * @version 2.7.1
+             * Put existed markers to the new position
              */
             if ('modify' === source) {
                 markers = this._markers;
-                for (i = 0; i < markers.length; i += 1) {
-                    if (undefined !== markers[i].id) {
-                        for (j = 0; j < opt.marker.length; j += 1) {
-                            if (markers[i].id === opt.marker[j].id &&
-                                undefined !== opt.marker[j].addr
+                for (i = 0; i < opt.marker.length; i += 1) {
+                    if (undefined !== opt.marker[i].id) {
+                        for (j = 0; j < markers.length; j += 1) {
+                            if (opt.marker[i].id === markers[j].id &&
+                                undefined !== opt.marker[i].addr
                             ) {
-                                markers[i].setPosition(
+                                markers[j].setPosition(
                                     new google.maps.LatLng(
-                                        opt.marker[j].addr[0],
-                                        opt.marker[j].addr[1]
+                                        opt.marker[i].addr[0],
+                                        opt.marker[i].addr[1]
                                     )
                                 );
                                 if ('function' === typeof markers[i].infoWindow.setContent) {
-                                    markers[i].infoWindow.setContent(opt.marker[j].text);
+                                    markers[j].infoWindow.setContent(opt.marker[i].text);
                                 }
+                                continue;
+                            }
+                        }
+                        for (j = 0; j < _labels.length; j += 1) {
+                            if (opt.marker[i].id === _labels[j].id) {
+                                if (_hasOwnProperty(opt.marker[i], 'label')) {
+                                    _labels[j].text = opt.marker[i].label;
+                                }
+                                _labels[j].draw();
                                 continue;
                             }
                         }
@@ -638,17 +661,18 @@
 
             labelOpt = {
                 map: map,
-                css: undefined !== opt.css ? opt.css : ''
+                css: undefined !== opt.css ? opt.css : '',
+                id:  id
             };
 
             if ('string' === typeof opt.label && 0 !== opt.label.length) {
                 labelOpt.text = opt.label;
+                label = new Label(labelOpt);
+                label.bindTo('position', marker, 'position');
+                label.bindTo('text', marker, 'position');
+                label.bindTo('visible', marker);
+                _labels.push(label);
             }
-            label = new Label(labelOpt);
-            label.bindTo('position', marker, 'position');
-            label.bindTo('text', marker, 'position');
-            label.bindTo('visible', marker);
-
             self.bindEvents(marker, opt.event);
         },
         /**
@@ -738,11 +762,12 @@
                     };
                     if ('string' === typeof opt.label && 0 !== opt.label.length) {
                         labelOpt.text = opt.label;
+                        label = new Label(labelOpt);
+                        label.bindTo('position', marker, 'position');
+                        label.bindTo('text', marker, 'position');
+                        label.bindTo('visible', marker);
+                        _labels.push(label);
                     }
-                    label = new Label(labelOpt);
-                    label.bindTo('position', marker, 'position');
-                    label.bindTo('text', marker, 'position');
-                    label.bindTo('visible', marker);
                     self.bindEvents(marker, opt.event);
                 }
             });
