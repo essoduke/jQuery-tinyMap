@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.2
+ * @version: 2.7.3
  *
  * [Changelog]
- * 修正使用 modify 傳入大量 marker 時造成的效能問題及 Label 位置不會跟著更新的錯誤。
+ * 修正使用 modify 時傳入的 marker 無法新增的錯誤。
  *
- * Last Modify: 2014-05-23
+ * Last Modify: 2014-06-11
  */
 ;(function ($, window, document, undefined) {
 
@@ -92,8 +92,7 @@
             'event': null //2.7.0
         },
         _directMarkersLength = 0,
-        _geoMarkersLength = 0,
-        _labels = [];
+        _geoMarkersLength = 0;
 
     /**
      * _hasOwnProperty for compatibility IE
@@ -203,6 +202,11 @@
          */
         this._markers = [];
         /**
+         * Map Labels
+         * @type {Object}
+         */
+        this._labels = [];
+        /**
          * DOM of selector
          * @type {Object}
          */
@@ -281,10 +285,9 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.2',
+        VERSION: '2.7.3',
 
         // Layers container
-        _labels: [],
         _polylines: [],
         _polygons: [],
         _circles: [],
@@ -353,7 +356,8 @@
             var m = '',
                 i = 0,
                 j = 0,
-                markers = [];
+                markers = [],
+                labels  = [];
 
             opt = !opt ? this.options : opt;
 
@@ -384,17 +388,14 @@
                 }
             }
             
-            //var nn = _labels[0];
-            //var x = nn.getProjection();
-            
-            //nn.bindTo('position', markers[0], 'position');
-            
-            
             /**
              * Put existed markers to the new position
              */
             if ('modify' === source) {
+
                 markers = this._markers;
+                labels  = this._labels;
+
                 for (i = 0; i < opt.marker.length; i += 1) {
                     if (undefined !== opt.marker[i].id) {
                         for (j = 0; j < markers.length; j += 1) {
@@ -413,14 +414,24 @@
                                 continue;
                             }
                         }
-                        for (j = 0; j < _labels.length; j += 1) {
-                            if (opt.marker[i].id === _labels[j].id) {
+                        for (j = 0; j < labels.length; j += 1) {
+                            if (opt.marker[i].id === labels[j].id) {
                                 if (_hasOwnProperty(opt.marker[i], 'label')) {
-                                    _labels[j].text = opt.marker[i].label;
+                                    labels[j].text = opt.marker[i].label;
                                 }
-                                _labels[j].draw();
+                                labels[j].draw();
                                 continue;
                             }
+                        }
+                    // Insert the new marker if it is not existed.
+                    } else {
+                        if (
+                            'object' === typeof opt.marker[i].addr &&
+                            2 === opt.marker[i].addr.length
+                        ) {
+                            this.markerDirect(map, opt.marker[i]);
+                        } else if ('string' === typeof opt.marker[i].addr) {
+                            this.markerByGeocoder(map, opt.marker[i]);
                         }
                     }
                 }
@@ -671,7 +682,7 @@
                 label.bindTo('position', marker, 'position');
                 label.bindTo('text', marker, 'position');
                 label.bindTo('visible', marker);
-                _labels.push(label);
+                this._labels.push(label);
             }
             self.bindEvents(marker, opt.event);
         },
@@ -766,7 +777,7 @@
                         label.bindTo('position', marker, 'position');
                         label.bindTo('text', marker, 'position');
                         label.bindTo('visible', marker);
-                        _labels.push(label);
+                        self._labels.push(label);
                     }
                     self.bindEvents(marker, opt.event);
                 }
