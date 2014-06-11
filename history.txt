@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.7.3
+修正使用 modify 時傳入的 marker 無法新增的錯誤。
+
 2.7.2
 修正使用 modify 傳入大量 marker 時造成的效能問題及 Label 位置不會跟著更新的錯誤。
 
