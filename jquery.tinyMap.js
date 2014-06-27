@@ -22,10 +22,10 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.4
+ * @version: 2.7.5
  *
  * [Changelog]
- * 修正使用 modify 變更 marker 時，markerCluster 無法作用的問題。
+ * 加入 showStreetView 參數切換是否顯示街景。
  *
  * Last Modify: 2014-06-27
  */
@@ -89,7 +89,8 @@
                 'infowindow': false
             },
             'interval': 200, //2.5.0
-            'event': null //2.7.0
+            'event': null, //2.7.0
+            'showStreetView': false // 2.7.5
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
@@ -285,7 +286,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.4',
+        VERSION: '2.7.5',
 
         // Layers container
         _polylines: [],
@@ -567,6 +568,8 @@
             this.drawPolygon(map, opt);
             // circle overlay
             this.drawCircle(map, opt);
+            // StreetView service
+            this.streetView(map, opt);
         },
         /**
          * Build the icon options of marker
@@ -883,6 +886,18 @@
             }
         },
         /**
+         * Switch StreetView
+         * @this {tinyMap}
+         */
+        streetView: function (map, opt) {
+            var pano = map.getStreetView();
+            pano.setPosition(map.getCenter());
+            if (_hasOwnProperty(opt, 'showStreetView')) {
+                console.dir(opt.showStreetView);
+                pano.setVisible(opt.showStreetView);
+            }
+        },
+        /**
          * tinyMap Initialize
          * @this {tinyMap}
          */
@@ -1021,7 +1036,8 @@
                     ['polyline', 'drawPolyline'],
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
-                    ['zoom', 'setZoom']
+                    ['zoom', 'setZoom'],
+                    ['showStreetView', 'streetView']
                 ],
                 i = 0,
                 m = self.map;
