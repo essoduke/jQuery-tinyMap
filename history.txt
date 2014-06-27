@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.7.4
+修正使用 modify 變更 marker 時，markerCluster 無法作用的問題。
+
 2.7.3
 修正使用 modify 時傳入的 marker 無法新增的錯誤。
 
