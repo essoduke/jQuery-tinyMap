@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.7.5
+加入 showStreetView 參數切換是否顯示街景。
+
 2.7.4
 修正使用 modify 變更 marker 時，markerCluster 無法作用的問題。
 
