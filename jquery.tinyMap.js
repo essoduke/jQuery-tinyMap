@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.3
+ * @version: 2.7.4
  *
  * [Changelog]
- * 修正使用 modify 時傳入的 marker 無法新增的錯誤。
+ * 修正使用 modify 變更 marker 時，markerCluster 無法作用的問題。
  *
- * Last Modify: 2014-06-11
+ * Last Modify: 2014-06-27
  */
 ;(function ($, window, document, undefined) {
 
@@ -285,7 +285,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.3',
+        VERSION: '2.7.4',
 
         // Layers container
         _polylines: [],
@@ -364,9 +364,7 @@
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
 
-            markers = this._markers;
-
-            // Make sure
+            // For first initialize of instance.
             if (!source || 0 === markers.length) {
                 if (undefined !== opt.marker) {
                     if (0 < opt.marker.length) {
@@ -378,62 +376,73 @@
                                     'object' === typeof opt.marker[m].addr &&
                                     2 === opt.marker[m].addr.length
                                 ) {
-                                    this.markerDirect(map, opt.marker[m]);
+                                    this.markerDirect(map, opt.marker[m], opt);
                                 } else if ('string' === typeof opt.marker[m].addr) {
-                                    this.markerByGeocoder(map, opt.marker[m]);
+                                    this.markerByGeocoder(map, opt.marker[m], opt);
                                 }
                             }
                         }
                     }
                 }
-            }
+            } else if ('modify' === source) {
             
-            /**
-             * Put existed markers to the new position
-             */
-            if ('modify' === source) {
+                /**
+                 * Put existed markers to the new position
+                 */
+                if ('modify' === source) {
 
-                markers = this._markers;
-                labels  = this._labels;
+                    markers = this._markers;
+                    labels  = this._labels;
 
-                for (i = 0; i < opt.marker.length; i += 1) {
-                    if (undefined !== opt.marker[i].id) {
-                        for (j = 0; j < markers.length; j += 1) {
-                            if (opt.marker[i].id === markers[j].id &&
-                                undefined !== opt.marker[i].addr
+                    for (i = 0; i < opt.marker.length; i += 1) {
+                        if (undefined !== opt.marker[i].id) {
+                            for (j = 0; j < markers.length; j += 1) {
+                                if (opt.marker[i].id === markers[j].id &&
+                                    undefined !== opt.marker[i].addr
+                                ) {
+                                    markers[j].setPosition(
+                                        new google.maps.LatLng(
+                                            opt.marker[i].addr[0],
+                                            opt.marker[i].addr[1]
+                                        )
+                                    );
+                                    if ('function' === typeof markers[i].infoWindow.setContent) {
+                                        markers[j].infoWindow.setContent(opt.marker[i].text);
+                                    }
+                                    continue;
+                                }
+                            }
+                            for (j = 0; j < labels.length; j += 1) {
+                                if (opt.marker[i].id === labels[j].id) {
+                                    if (_hasOwnProperty(opt.marker[i], 'label')) {
+                                        labels[j].text = opt.marker[i].label;
+                                    }
+                                    labels[j].draw();
+                                    continue;
+                                }
+                            }
+                        // Insert the new marker if it is not existed.
+                        } else {
+                            if (
+                                'object' === typeof opt.marker[i].addr &&
+                                2 === opt.marker[i].addr.length
                             ) {
-                                markers[j].setPosition(
-                                    new google.maps.LatLng(
-                                        opt.marker[i].addr[0],
-                                        opt.marker[i].addr[1]
-                                    )
-                                );
-                                if ('function' === typeof markers[i].infoWindow.setContent) {
-                                    markers[j].infoWindow.setContent(opt.marker[i].text);
-                                }
-                                continue;
+                                this.markerDirect(map, opt.marker[i]);
+                            } else if ('string' === typeof opt.marker[i].addr) {
+                                this.markerByGeocoder(map, opt.marker[i]);
                             }
-                        }
-                        for (j = 0; j < labels.length; j += 1) {
-                            if (opt.marker[i].id === labels[j].id) {
-                                if (_hasOwnProperty(opt.marker[i], 'label')) {
-                                    labels[j].text = opt.marker[i].label;
-                                }
-                                labels[j].draw();
-                                continue;
-                            }
-                        }
-                    // Insert the new marker if it is not existed.
-                    } else {
-                        if (
-                            'object' === typeof opt.marker[i].addr &&
-                            2 === opt.marker[i].addr.length
-                        ) {
-                            this.markerDirect(map, opt.marker[i]);
-                        } else if ('string' === typeof opt.marker[i].addr) {
-                            this.markerByGeocoder(map, opt.marker[i]);
                         }
                     }
+                }
+            }
+            /**
+             * Apply marker cluster.
+             * Require markerclusterer.js
+             * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+             */
+            if (_hasOwnProperty(opt, 'markerCluster') && true === opt.markerCluster) {
+                if ('function' === typeof MarkerClusterer) {
+                    return new MarkerClusterer(map, this._markers);
                 }
             }
         },
@@ -628,7 +637,7 @@
             if (title) {
                 markerOptions.title = title;
             }
-
+            
             _directMarkersLength += 1;
             
             if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
