@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.7.6
+修正使用 modify marker 可能會影響效能的錯誤。
+
 2.7.5
 加入 showStreetView 參數切換是否顯示街景。
 
