@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.5
+ * @version: 2.7.6
  *
  * [Changelog]
- * 加入 showStreetView 參數切換是否顯示街景。
+ * 修正使用 modify marker 可能會影響效能的錯誤。
  *
- * Last Modify: 2014-06-27
+ * Last Modify: 2014-07-03
  */
 ;(function ($, window, document, undefined) {
 
@@ -286,7 +286,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.5',
+        VERSION: '2.7.6',
 
         // Layers container
         _polylines: [],
@@ -294,7 +294,7 @@
         _circles: [],
         _kmls: [],
         _directions: [],
-        
+
         // Google Maps LatLngClass
         bounds: new google.maps.LatLngBounds(),
         /**
@@ -365,6 +365,8 @@
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
 
+            markers = this._markers;
+
             // For first initialize of instance.
             if (!source || 0 === markers.length) {
                 if (undefined !== opt.marker) {
@@ -385,57 +387,56 @@
                         }
                     }
                 }
-            } else if ('modify' === source) {
-            
-                /**
-                 * Put existed markers to the new position
-                 */
-                if ('modify' === source) {
+            }
 
-                    markers = this._markers;
-                    labels  = this._labels;
+            /**
+             * Put existed markers to the new position
+             */
+            if ('modify' === source) {
 
-                    for (i = 0; i < opt.marker.length; i += 1) {
-                        if (undefined !== opt.marker[i].id) {
-                            for (j = 0; j < markers.length; j += 1) {
-                                if (opt.marker[i].id === markers[j].id &&
-                                    undefined !== opt.marker[i].addr
-                                ) {
-                                    markers[j].setPosition(
-                                        new google.maps.LatLng(
-                                            opt.marker[i].addr[0],
-                                            opt.marker[i].addr[1]
-                                        )
-                                    );
-                                    if ('function' === typeof markers[i].infoWindow.setContent) {
-                                        markers[j].infoWindow.setContent(opt.marker[i].text);
-                                    }
-                                    continue;
-                                }
-                            }
-                            for (j = 0; j < labels.length; j += 1) {
-                                if (opt.marker[i].id === labels[j].id) {
-                                    if (_hasOwnProperty(opt.marker[i], 'label')) {
-                                        labels[j].text = opt.marker[i].label;
-                                    }
-                                    labels[j].draw();
-                                    continue;
-                                }
-                            }
-                        // Insert the new marker if it is not existed.
-                        } else {
-                            if (
-                                'object' === typeof opt.marker[i].addr &&
-                                2 === opt.marker[i].addr.length
+                labels  = this._labels;
+
+                for (i = 0; i < opt.marker.length; i += 1) {
+                    if (undefined !== opt.marker[i].id) {
+                        for (j = 0; j < markers.length; j += 1) {
+                            if (opt.marker[i].id === markers[j].id &&
+                                undefined !== opt.marker[i].addr
                             ) {
-                                this.markerDirect(map, opt.marker[i]);
-                            } else if ('string' === typeof opt.marker[i].addr) {
-                                this.markerByGeocoder(map, opt.marker[i]);
+                                markers[j].setPosition(
+                                    new google.maps.LatLng(
+                                        opt.marker[i].addr[0],
+                                        opt.marker[i].addr[1]
+                                    )
+                                );
+                                if ('function' === typeof markers[i].infoWindow.setContent) {
+                                    markers[j].infoWindow.setContent(opt.marker[i].text);
+                                }
+                                continue;
                             }
+                        }
+                        for (j = 0; j < labels.length; j += 1) {
+                            if (opt.marker[i].id === labels[j].id) {
+                                if (_hasOwnProperty(opt.marker[i], 'label')) {
+                                    labels[j].text = opt.marker[i].label;
+                                }
+                                labels[j].draw();
+                                continue;
+                            }
+                        }
+                    // Insert the new marker if it is not existed.
+                    } else {
+                        if (
+                            'object' === typeof opt.marker[i].addr &&
+                            2 === opt.marker[i].addr.length
+                        ) {
+                            this.markerDirect(map, opt.marker[i]);
+                        } else if ('string' === typeof opt.marker[i].addr) {
+                            this.markerByGeocoder(map, opt.marker[i]);
                         }
                     }
                 }
             }
+
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
@@ -640,19 +641,19 @@
             if (title) {
                 markerOptions.title = title;
             }
-            
+
             _directMarkersLength += 1;
-            
+
             if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                 markerOptions.icon = icons;
             }
-            
+
             if (_hasOwnProperty(opt.animation)) {
                 if ('string' === typeof opt.animation) {
                     markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                 }
             }
-            
+
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
@@ -667,7 +668,7 @@
                     }
                 }
             }
-            
+
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
@@ -706,11 +707,11 @@
         markerByGeocoder: function (map, opt) {
             var geocoder = new google.maps.Geocoder(),
                 self = this;
-                
+
             if (-1 !== opt.addr.indexOf(',')) {
 				opt.addr = 'loc: ' + opt.addr;
 			}
-            
+
             geocoder.geocode({'address': opt.addr}, function (results, status) {
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -735,7 +736,7 @@
                             'animation': null
                         },
                         icons = self.markerIcon(opt);
-                    
+
                     if (title) {
                         markerOptions.title = title;
                     }
@@ -824,7 +825,7 @@
                 }
             }
             panel = $(undefined !== opt.panel ? opt.panel : null);
-            
+
             if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypoints.push({
@@ -857,7 +858,7 @@
 
             var self = this,
                 e = {};
-            
+
             switch (typeof event) {
             case 'function':
                 google.maps.event.addListener(target, 'click', event);
@@ -893,7 +894,6 @@
             var pano = map.getStreetView();
             pano.setPosition(map.getCenter());
             if (_hasOwnProperty(opt, 'showStreetView')) {
-                console.dir(opt.showStreetView);
                 pano.setVisible(opt.showStreetView);
             }
         },
@@ -1001,7 +1001,7 @@
                 label = '',
                 i = 0,
                 j = 0;
-                
+
             layers = 'string' === typeof layer ?
                      layer.split(',') :
                      ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
@@ -1019,7 +1019,7 @@
                     self[label].length = 0;
                 }
             }
-            
+
         },
         /**
          * Method:  Google Maps dynamic add layers
@@ -1041,7 +1041,7 @@
                 ],
                 i = 0,
                 m = self.map;
-            
+
             if (undefined !== options) {
                 for (i = 0; i < label.length; i += 1) {
                     if (_hasOwnProperty(options, label[i][0])) {
