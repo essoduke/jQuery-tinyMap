@@ -22,12 +22,14 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.7.6
+ * @version: 2.8.0
  *
  * [Changelog]
- * 修正使用 modify marker 可能會影響效能的錯誤。
+ * 新增參數 polyline.snap(boolean), polyline.getDistance(function)。
+ * polyline.snap 若為 true 則線條會貼近道路繪製（近似路線規劃功能）。
+ * polyline.getDistance 可以返回已繪製線條的距離
  *
- * Last Modify: 2014-07-03
+ * Last Modify: 2014-07-11 17:07:19
  */
 ;(function ($, window, document, undefined) {
 
@@ -59,7 +61,7 @@
             'panControlOptions': {
                 'position': 'LEFT_TOP'
             },
-            'polyline': [],
+            'polyline': [], // 2.8.0 update
             'navigationControl': true,
             'navigationControlOptions': {
                 'position': 'TOP_LEFT',
@@ -286,10 +288,9 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.7.6',
+        VERSION: '2.8.0',
 
         // Layers container
-        _polylines: [],
         _polygons: [],
         _circles: [],
         _kmls: [],
@@ -455,9 +456,16 @@
          */
         drawPolyline: function (map, opt) {
             var polyline = {},
+                i = 0,
                 p = '',
                 c = {},
-                coords = [];
+                len = 0,
+                coords = new google.maps.MVCArray(),
+                path   = [],
+                service = {},
+                waypoints = [],
+                distance = {};
+
             opt = !opt ? this.options : opt;
             if (undefined !== opt.polyline) {
                 if (undefined !== opt.polyline.coords) {
@@ -469,13 +477,52 @@
                             }
                         }
                     }
+
                     polyline = new google.maps.Polyline({
-                        'path': coords,
                         'strokeColor': opt.polyline.color || '#FF0000',
                         'strokeOpacity': 1.0,
                         'strokeWeight': opt.polyline.width || 2
                     });
-                    this._polylines.push(polyline);
+
+                    if (2 < coords.getLength()) {
+                        coords.forEach(function (loc, index) {
+                            if (0 < index && (coords.getLength() - 1 > index)) {
+                                waypoints.push({
+                                    'location': loc,
+                                    'stopover': false
+                                });
+                            }
+                        });
+                    }
+
+                    if (true === opt.polyline.snap) {
+                        service = new google.maps.DirectionsService();
+                        service.route({
+                            'origin': coords.getAt(0),
+                            'waypoints': waypoints,
+                            'destination': coords.getAt(coords.getLength() - 1),
+                            'travelMode': google.maps.DirectionsTravelMode.DRIVING
+                        }, function (result, status) {
+                            if (status === google.maps.DirectionsStatus.OK) {
+                                for (i = 0, len = result.routes[0].overview_path.length; i < len; i += 1) {
+                                    path.push(result.routes[0].overview_path[i]);
+                                }
+                                polyline.setPath(path);
+                                if ('function' === typeof opt.polyline.getDistance) {
+                                    distance = result.routes[0].legs[0].distance;
+                                    opt.polyline.getDistance.call(this, distance);
+                                }
+                            }
+                        });
+                    } else {
+                        polyline.setPath(coords);
+                        if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
+                            if ('function' === typeof opt.polyline.getDistance) {
+                                opt.polyline.getDistance.call(this, distance);
+                            }
+                        }
+                    }
                     polyline.setMap(map);
                 }
             }
@@ -540,7 +587,8 @@
                             'map': this.map,
                             'center': new google.maps.LatLng(circle.center.x, circle.center.y),
                             'radius': circle.radius || 10,
-                            'zIndex': 100
+                            'zIndex': 100,
+                            'id' : _hasOwnProperty(opt, 'id') ? opt.id : ''
                         });
                         this._circles.push(circles);
                         if ($.isFunction(opt.circle[c].click)) {
@@ -1019,7 +1067,6 @@
                     self[label].length = 0;
                 }
             }
-
         },
         /**
          * Method:  Google Maps dynamic add layers
@@ -1027,8 +1074,8 @@
          * @public
          */
         modify: function (options) {
-            var self = this,
-                func = [],
+            var self  = this,
+                func  = [],
                 label = [
                     ['kml', 'kml'],
                     ['marker', 'markers'],
