@@ -1,5 +1,10 @@
 jQuery tinyMap Changelog
 
+2.8.0
+新增參數 polyline.snap(boolean), polyline.getDistance(function)。
+polyline.snap 若為 true 則線條會貼近道路繪製（近似路線規劃功能）。
+polyline.getDistance 可以返回已繪製線條的距離
+
 2.7.6
 修正使用 modify marker 可能會影響效能的錯誤。
 
