@@ -12,7 +12,7 @@ Download builder:
 http://app.essoduke.org/tinyMap/customize/
 
 Features
------------
+--------
  * Easy to configure and use.
  * Supports Marker, Text label, Polyline, Polygon, Circle, KML, Direction layers. 
  * Custom events of map or layers.
@@ -20,33 +20,85 @@ Features
  * MarkerClusterer support.
 
 
-How to use?
------------
+Installation?
+-------------
 
-First, include the Google Maps API v3 in `HEAD` and tinyMap before `</body>`.
+Include the Google Maps API v3 in `HEAD` and jQuery tinyMap before the `</body>`.
 ```HTML
 <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
 
-Second, Create the container in HTML like this:
-
-```HTML
-<div id="map"></div>
-```
-
-Third, Setting up the style of container in CSS:
+Setting up the style of container in CSS:
 
 ```css
-#map{width:(WIDTH); height:(HEIGHT)}
+#map{width: WIDTH; height: HEIGHT}
 ```
 
-Finally, Call it!
+Usage
+-----
+
+Full options: http://app.essoduke.org/tinyMap/#parameters
 
 ```javascript
-$(function () {
-    $('#map').tinyMap();
+//Setting up the map
+$('#map').tinyMap({
+    'center': {'x': 'Lat', 'y': 'Lng'},
+    'zoom': 14,
+    'event': {
+        'idle': function () {}
+        ...
+        ...
+    }
+    ...
+    ...
 });
+```
+
+Create the Markers
+------------------
+```javascript
+$(selector).tinyMap({
+    'marker': [
+        {
+            'addr': ['Lat', 'Lng'], // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
+            'title': 'Hello World!', // (Optional)
+            'text': 'Cogito ergo sum!', // (optional)
+            'icon': 'http://domain/icon.png' // (optional)
+            'event': function () {}
+            /* OR 
+            'event': {
+                'click': function () {}
+                ...
+                ...
+            }
+            */
+        }
+        ...
+        ...
+    ]
+});
+```
+
+Methods
+-------
+```javascript
+//Methods
+//e.g. Move the map center to specified location
+$(selector).tinyMap('panto', 'Address string');
+$(selector).tinyMap('panto', ['Lat', 'Lng']);
+$(selector).tinyMap('panto', {'lat': 'Lat', 'lng': 'Lng'});
+
+//Dynamic setting up
+$(selector).tinyMap('modify', {OPTIONS});
+
+//e.g. Disable draggable
+$(selector).tinyMap('modify', {
+    'draggable': false
+});
+
+//e.g. Clear the layers
+$(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
 ```
 
 License
