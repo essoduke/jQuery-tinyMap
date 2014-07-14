@@ -8,7 +8,7 @@ Supported layers: Marker, Polyline, Polygon, Circle, Direction and KML.
 For complete parameters, methods and Demo:  
 http://app.essoduke.org/tinyMap/ (Traditional Chinese)
 
-Download builder
+Download builder:  
 http://app.essoduke.org/tinyMap/customize/
 
 How to use?
