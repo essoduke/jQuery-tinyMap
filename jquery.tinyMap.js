@@ -22,14 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.0
+ * @version: 2.8.1
  *
  * [Changelog]
- * 新增參數 polyline.snap(boolean), polyline.getDistance(function)。
- * polyline.snap 若為 true 則線條會貼近道路繪製（近似路線規劃功能）。
- * polyline.getDistance 可以返回已繪製線條的距離
+ * 修正 polyline 無法清除的錯誤。
  *
- * Last Modify: 2014-07-11 17:07:19
+ * Last Modify: 2014-07-14 10:41:52
  */
 ;(function ($, window, document, undefined) {
 
@@ -288,9 +286,10 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.0',
+        VERSION: '2.8.1',
 
         // Layers container
+        _polylines: [],
         _polygons: [],
         _circles: [],
         _kmls: [],
@@ -483,6 +482,8 @@
                         'strokeOpacity': 1.0,
                         'strokeWeight': opt.polyline.width || 2
                     });
+
+                    this._polylines.push(polyline);
 
                     if (2 < coords.getLength()) {
                         coords.forEach(function (loc, index) {
