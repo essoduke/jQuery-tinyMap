@@ -110,6 +110,7 @@
         } catch (ignore) {
         }
     }
+    //#!#START LABEL
     /**
      * Label in Maps
      * @param {Object} options Label options
@@ -175,6 +176,7 @@
     Label.prototype.onRemove = function () {
         $(this.div).remove();
     };
+    //#!#END
 
     /**
      * tinyMap Constructor
@@ -307,6 +309,7 @@
                 map.setZoom(opt.zoom);
             }
         },
+        //#!#START KML
         /**
          * KML overlay
          * @param {Object} map Map instance
@@ -330,6 +333,8 @@
                 kml.setMap(map);
             }
         },
+        //#!#END
+        //#!#START DIRECTION
         /**
          * Direction overlay
          * @param {Object} map Map instance
@@ -348,6 +353,8 @@
                 }
             }
         },
+        //#!#END
+        //#!#START MARKER
         /**
          * Markers overlay
          * @param {Object} map Map instance
@@ -448,6 +455,8 @@
                 }
             }
         },
+        //#!#END
+        //#!#START POLYLINE
         /**
          * Polyline overlay
          * @param {Object} map Map instance
@@ -517,10 +526,12 @@
                         });
                     } else {
                         polyline.setPath(coords);
-                        if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
-                            if ('function' === typeof opt.polyline.getDistance) {
-                                opt.polyline.getDistance.call(this, distance);
+                        if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
+                            if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+                                distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
+                                if ('function' === typeof opt.polyline.getDistance) {
+                                    opt.polyline.getDistance.call(this, distance);
+                                }
                             }
                         }
                     }
@@ -528,6 +539,8 @@
                 }
             }
         },
+        //#!#END
+        //#!#START POLYGON
         /**
          * Polygon overlay
          * @param {Object} map Map instance
@@ -565,6 +578,8 @@
                 }
             }
         },
+        //#!#END
+        //#!#START CIRCLE
         /**
          * Circle overlay
          * @param {Object} map Map instance
@@ -599,6 +614,7 @@
                 }
             }
         },
+        //#!#END
         /**
          * Overlay process
          * @this {tinyMap}
@@ -606,21 +622,37 @@
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            // kml overlay
-            this.kml(map, opt);
-            // direction overlay
-            this.direction(map, opt);
-            // markers overlay
-            this.markers(map, opt);
-            // polyline overlay
-            this.drawPolyline(map, opt);
-            // polygon overlay
-            this.drawPolygon(map, opt);
-            // circle overlay
-            this.drawCircle(map, opt);
-            // StreetView service
-            this.streetView(map, opt);
+            try {
+                //#!#START KML
+                // kml overlay
+                this.kml(map, opt);
+                //#!#END
+                //#!#START DIRECTION
+                // direction overlay
+                this.direction(map, opt);
+                //#!#END
+                //#!#START MARKER
+                // markers overlay
+                this.markers(map, opt);
+                //#!#END
+                //#!#START POLYLINE
+                // polyline overlay
+                this.drawPolyline(map, opt);
+                //#!#END
+                //#!#START POLYGON
+                // polygon overlay
+                this.drawPolygon(map, opt);
+                //#!#END
+                //#!#START CIRCLE
+                // circle overlay
+                this.drawCircle(map, opt);
+                //#!#END
+                // StreetView service
+                this.streetView(map, opt);
+            } catch (ignore) {
+            }
         },
+        //#!#START MARKER
         /**
          * Build the icon options of marker
          * @param {Object} opt Marker option
@@ -845,6 +877,8 @@
                 }
             });
         },
+        //#!#END
+        //#!#START DIRECTION
         /**
          * Direction service
          * @param {Object} opt Options
@@ -897,6 +931,7 @@
                 self._directions.push(directionsDisplay);
             }
         },
+        //#!#END
         /**
          * bind events
          * @param {Object} marker Marker objects
@@ -946,6 +981,124 @@
                 pano.setVisible(opt.showStreetView);
             }
         },
+        //#!#START PANTO
+        /**
+         * Method: Google Maps PanTo
+         * @param {string} addr Text address or "latitude, longitude" format
+         * @public
+         */
+        panto: function (addr) {
+            var self = this,
+                latlng = '',
+                geocoder = {},
+                m = self.map;
+            if (_hasOwnProperty(self, 'map')) {
+                if (null !== m && undefined !== m) {
+                    if ('string' === typeof addr) {
+                        if (-1 !== addr.indexOf(',')) {
+                            latlng = 'loc: ' + addr;
+                        }
+                        geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({'address': addr}, function (results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                if ($.isFunction(m.panTo) && undefined !== results[0]) {
+                                    m.panTo(results[0].geometry.location);
+                                }
+                            }
+                        });
+                        return;
+                    } else {
+                        if ('[object Array]' === Object.prototype.toString.call(addr)) {
+                            if (2 === addr.length) {
+                                latlng = new google.maps.LatLng(addr[0], addr[1]);
+                            }
+                        } else if (_hasOwnProperty(addr, 'lat') && _hasOwnProperty(addr, 'lng')) {
+                            latlng = new google.maps.LatLng(addr.lat, addr.lng);
+                        } else if (_hasOwnProperty(addr, 'x') && _hasOwnProperty(addr, 'y')) {
+                            latlng = new google.maps.LatLng(addr.x, addr.y);
+                        }
+                        if ($.isFunction(m.panTo) && undefined !== latlng) {
+                            m.panTo(latlng);
+                        }
+                    }
+                }
+            }
+        },
+        //#!#END
+        //#!#START CLEAR
+        /**
+         * Method: Google Maps clear the specificed layer
+         * @param {string} type Layer type (markers, polylines, polygons, circles, kmls, directions)
+         * @public
+         */
+        clear: function (layer) {
+            var self = this,
+                layers = [],
+                label = '',
+                i = 0,
+                j = 0;
+
+            layers = 'string' === typeof layer ?
+                     layer.split(',') :
+                     ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
+
+            for (i = 0; i < layers.length; i += 1) {
+                label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
+                if (undefined !== self[label] && self[label].length) {
+                    for (j = 0; j < self[label].length; j += 1) {
+                        if (self.map === self[label][j].getMap()) {
+                            self[label][j].set('visible', false);
+                            self[label][j].set('directions', null);
+                            self[label][j].setMap(null);
+                        }
+                    }
+                    self[label].length = 0;
+                }
+            }
+        },
+        //#!#END
+        //#!#START MODIFY
+        /**
+         * Method:  Google Maps dynamic add layers
+         * @param {Object} options Refernce by tinyMap options
+         * @public
+         */
+        modify: function (options) {
+            var self  = this,
+                func  = [],
+                label = [
+                    ['kml', 'kml'],
+                    ['marker', 'markers'],
+                    ['direction', 'direction'],
+                    ['polyline', 'drawPolyline'],
+                    ['polygon', 'drawPolygon'],
+                    ['circle', 'drawCircle'],
+                    ['zoom', 'setZoom'],
+                    ['showStreetView', 'streetView']
+                ],
+                i = 0,
+                m = self.map;
+
+            if (undefined !== options) {
+                for (i = 0; i < label.length; i += 1) {
+                    if (_hasOwnProperty(options, label[i][0])) {
+                        func.push(label[i][1]);
+                    }
+                }
+                if (null !== m) {
+                    if (func.length) {
+                        for (i = 0; i < func.length; i += 1) {
+                            if ('function' === typeof self[func[i]]) {
+                                self[func[i]](m, options, 'modify');
+                            }
+                        }
+                    } else {
+                        m.setOptions(options);
+                    }
+                }
+            }
+        },
+        //#!#END
         /**
          * tinyMap Initialize
          * @this {tinyMap}
@@ -995,118 +1148,6 @@
                 });
                 // Events binding
                 self.bindEvents(self.map, self.options.event);
-            }
-        },
-        /**
-         * Method: Google Maps PanTo
-         * @param {string} addr Text address or "latitude, longitude" format
-         * @public
-         */
-        panto: function (addr) {
-            var self = this,
-                latlng = '',
-                geocoder = {},
-                m = self.map;
-            if (_hasOwnProperty(self, 'map')) {
-                if (null !== m && undefined !== m) {
-                    if ('string' === typeof addr) {
-                        if (-1 !== addr.indexOf(',')) {
-                            latlng = 'loc: ' + addr;
-                        }
-                        geocoder = new google.maps.Geocoder();
-                        geocoder.geocode({'address': addr}, function (results, status) {
-                            if (status === google.maps.GeocoderStatus.OK) {
-                                if ($.isFunction(m.panTo) && undefined !== results[0]) {
-                                    m.panTo(results[0].geometry.location);
-                                }
-                            }
-                        });
-                        return;
-                    } else {
-                        if ('[object Array]' === Object.prototype.toString.call(addr)) {
-                            if (2 === addr.length) {
-                                latlng = new google.maps.LatLng(addr[0], addr[1]);
-                            }
-                        } else if (_hasOwnProperty(addr, 'lat') && _hasOwnProperty(addr, 'lng')) {
-                            latlng = new google.maps.LatLng(addr.lat, addr.lng);
-                        } else if (_hasOwnProperty(addr, 'x') && _hasOwnProperty(addr, 'y')) {
-                            latlng = new google.maps.LatLng(addr.x, addr.y);
-                        }
-                        if ($.isFunction(m.panTo) && undefined !== latlng) {
-                            m.panTo(latlng);
-                        }
-                    }
-                }
-            }
-        },
-        /**
-         * Method: Google Maps clear the specificed layer
-         * @param {string} type Layer type (markers, polylines, polygons, circles, kmls, directions)
-         * @public
-         */
-        clear: function (layer) {
-            var self = this,
-                layers = [],
-                label = '',
-                i = 0,
-                j = 0;
-
-            layers = 'string' === typeof layer ?
-                     layer.split(',') :
-                     ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
-
-            for (i = 0; i < layers.length; i += 1) {
-                label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
-                if (undefined !== self[label] && self[label].length) {
-                    for (j = 0; j < self[label].length; j += 1) {
-                        if (self.map === self[label][j].getMap()) {
-                            self[label][j].set('visible', false);
-                            self[label][j].set('directions', null);
-                            self[label][j].setMap(null);
-                        }
-                    }
-                    self[label].length = 0;
-                }
-            }
-        },
-        /**
-         * Method:  Google Maps dynamic add layers
-         * @param {Object} options Refernce by tinyMap options
-         * @public
-         */
-        modify: function (options) {
-            var self  = this,
-                func  = [],
-                label = [
-                    ['kml', 'kml'],
-                    ['marker', 'markers'],
-                    ['direction', 'direction'],
-                    ['polyline', 'drawPolyline'],
-                    ['polygon', 'drawPolygon'],
-                    ['circle', 'drawCircle'],
-                    ['zoom', 'setZoom'],
-                    ['showStreetView', 'streetView']
-                ],
-                i = 0,
-                m = self.map;
-
-            if (undefined !== options) {
-                for (i = 0; i < label.length; i += 1) {
-                    if (_hasOwnProperty(options, label[i][0])) {
-                        func.push(label[i][1]);
-                    }
-                }
-                if (null !== m) {
-                    if (func.length) {
-                        for (i = 0; i < func.length; i += 1) {
-                            if ('function' === typeof self[func[i]]) {
-                                self[func[i]](m, options, 'modify');
-                            }
-                        }
-                    } else {
-                        m.setOptions(options);
-                    }
-                }
             }
         }
     };
