@@ -11,18 +11,27 @@ http://app.essoduke.org/tinyMap/ (Traditional Chinese)
 Download builder:  
 http://app.essoduke.org/tinyMap/customize/
 
+Features
+-----------
+ * Easy to configure and use.
+ * Supports Marker, Text label, Polyline, Polygon, Circle, KML, Direction layers. 
+ * Custom events of map or layers.
+ * Dynamic change the map. 
+ * MarkerClusterer support.
+
+
 How to use?
 -----------
 
 First, include the Google Maps API v3 in `HEAD` and tinyMap before `</body>`.
-```html
+```HTML
 <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
 
 Second, Create the container in HTML like this:
 
-```html
+```HTML
 <div id="map"></div>
 ```
 
