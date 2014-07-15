@@ -3,9 +3,8 @@ jQuery-tinyMap
 
 This plugin will helping you to create the simple or complex Google Maps on the page.
 
-Supported layers: Marker, Polyline, Polygon, Circle, Direction and KML.
 
-For complete parameters, methods and Demo:  
+For complete parameters, methods and examples:  
 http://app.essoduke.org/tinyMap/ (Traditional Chinese)
 
 Download builder:  
