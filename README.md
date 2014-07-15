@@ -19,20 +19,26 @@ Features
  * MarkerClusterer support.
 
 
-Installation?
+Install
 -------------
 
-Include the Google Maps API v3 in `HEAD` and jQuery tinyMap before the `</body>`.
+Include the Google Maps API v3 before jQuery tinyMap.
 ```HTML
 <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
 
-Setting up the style of container in CSS:
+Create the HTML container.
+```html
+<div id="map"></div>
+```
+
+Setting up the container's width and height in CSS:
 
 ```css
 #map{width: WIDTH; height: HEIGHT}
 ```
+
 
 Usage
 -----
