@@ -27,7 +27,7 @@
  * [Changelog]
  * 新增 autoLocation (bool) 參數設置是否自動取得用戶位置為中心點。
  *
- * Release 2014.07.31.120002
+ * Release 2014.07.31.120725
  */
 ;(function ($, window, document, undefined) {
 
