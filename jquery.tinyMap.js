@@ -91,7 +91,7 @@
             'interval': 200, //2.5.0
             'event': null, //2.7.0
             'showStreetView': false, // 2.7.5
-            'autoLocation': true //2.8.2
+            'autoLocation': false //2.8.2
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
