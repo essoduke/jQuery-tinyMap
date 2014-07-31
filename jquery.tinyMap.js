@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.1
+ * @version: 2.8.2
  *
  * [Changelog]
- * 修正 polyline 無法清除的錯誤。
+ * 新增 autoLocation (bool) 參數設置是否自動取得用戶位置為中心點。
  *
- * Last Modify: 2014-07-14 10:41:52
+ * Release 2014.07.31.120002
  */
 ;(function ($, window, document, undefined) {
 
@@ -90,7 +90,8 @@
             },
             'interval': 200, //2.5.0
             'event': null, //2.7.0
-            'showStreetView': false // 2.7.5
+            'showStreetView': false, // 2.7.5
+            'autoLocation': true //2.8.2
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
@@ -288,7 +289,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.1',
+        VERSION: '2.8.2',
 
         // Layers container
         _polylines: [],
@@ -649,7 +650,10 @@
                 //#!#END
                 // StreetView service
                 this.streetView(map, opt);
+                // GeoLocation
+                this.geoLocation(map, opt);
             } catch (ignore) {
+                console.dir(ignore);
             }
         },
         //#!#START MARKER
@@ -1100,6 +1104,34 @@
         },
         //#!#END
         /**
+         * Use HTML5 Geolocation API to detect the client's location.
+         * @param {Object} map Map intance
+         * @param {Object} opt Plugin options
+         */
+        geoLocation: function (map, opt) {
+            if (undefined !== opt.autoLocation && true === opt.autoLocation) {
+                if (navigator.geolocation) {
+                    try {
+                        navigator.geolocation.getCurrentPosition(function (loc) {
+                            if (loc) {
+                                map.panTo(
+                                    new google.maps.LatLng(
+                                        loc.coords.latitude,
+                                        loc.coords.longitude
+                                    )
+                                );
+                            }
+                        }, function (error) {
+                            console.dir(error);
+                        });
+                    } catch (ignore) {
+                        console.log(ignore.message);
+                    }
+                }
+            }
+        },
+
+        /**
          * tinyMap Initialize
          * @this {tinyMap}
          */
@@ -1108,6 +1140,7 @@
                 geocoder = {};
 
             loop += 1;
+
             if ('string' === typeof self.options.center) {
                 window.setTimeout(function () {
                     var error = $(self.container),
