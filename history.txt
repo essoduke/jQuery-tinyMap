@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.8.2
+新增 autoLocation (bool) 參數設置是否自動取得用戶位置為中心點。
+
 2.8.1
 修正 polyline 無法清除的錯誤。
 
