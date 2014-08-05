@@ -22,12 +22,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.3
+ * @version: 2.8.4
  *
  * [Changelog]
- * 修正使用地址及 ID 建立標記之後無法再用 id 去操作的錯誤。
+ * 修正若 markerFitBounds 設為 true 則有部份的 marker 點選時無法開啟 infoWindow 的錯誤。
+ * 加入 infoWindowAutoClose (bool) 參數，可設置是否在點選標記時自動關閉其他已開啟的 infoWindow。
  *
- * Release 2014.08.05.095954
+ * Release 2014.08.05.161554
  */
 ;(function ($, window, document, undefined) {
 
@@ -43,6 +44,7 @@
             'disableDoubleClickZoom': false, //2.6.4
             'disableDefaultUI': false, //2.5.1
             'draggable': true,
+            'infoWindowAutoClose':  true, //2.8.4
             'keyboardShortcuts': true,
             'mapTypeControl': true,
             'mapTypeControlOptions': {
@@ -289,7 +291,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.3',
+        VERSION: '2.8.4',
 
         // Layers container
         _polylines: [],
@@ -393,6 +395,10 @@
                                 }
                             }
                         }
+                        /*
+                        if (true === opt.markerFitBounds) {
+                            map.fitBounds(this.bounds);
+                        }*/
                     }
                 }
             }
@@ -727,8 +733,6 @@
                 markerOptions.title = title;
             }
 
-            _directMarkersLength += 1;
-
             if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                 markerOptions.icon = icons;
             }
@@ -745,11 +749,12 @@
             // Apply marker fitbounds
             if (_hasOwnProperty(marker, 'position')) {
                 if (marker.getPosition().lat() && marker.getPosition().lng()) {
-                    self.bounds.extend(markerOptions.position);
+                    self.bounds.extend(marker.position);
                 }
                 if (true === self.options.markerFitBounds) {
-                    if (_directMarkersLength === self.options.marker.length) {
-                        return map.fitBounds(self.bounds);
+                    // Make sure fitBounds call after the last marker created.
+                    if (self._markers.length === self.options.marker.length) {
+                        map.fitBounds(self.bounds);
                     }
                 }
             }
@@ -827,7 +832,6 @@
                     if (title) {
                         markerOptions.title = title;
                     }
-                    _geoMarkersLength += 1;
 
                     if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                         markerOptions.icon = icons;
@@ -849,8 +853,9 @@
                         }
                     }
                     if (true === self.options.markerFitBounds) {
-                        if (_geoMarkersLength === self.options.marker.length) {
-                            return map.fitBounds(self.bounds);
+                        // Make sure fitBounds call after the last marker created.
+                        if (self._markers.length === self.options.marker.length) {
+                            map.fitBounds(self.bounds);
                         }
                     }
                     /**
@@ -972,6 +977,19 @@
             }
             if (_hasOwnProperty(target, 'infoWindow')) {
                 google.maps.event.addListener(target, 'click', function () {
+                    var i = 0,
+                        m = {};
+                    // Close all infoWindows if `infoWindowAutoClose` was true.
+                    if (true === self.options.infoWindowAutoClose) {
+                        for (i = 0; i < self._markers.length; i += 1) {
+                            m = self._markers[i];
+                            if (undefined !== m.infoWindow) {
+                                if ('function' === typeof m.infoWindow.close) {
+                                    m.infoWindow.close();
+                                }
+                            }
+                        }
+                    }
                     target.infoWindow.open(self.map, target);
                 });
             }
