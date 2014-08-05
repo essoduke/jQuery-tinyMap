@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.2
+ * @version: 2.8.3
  *
  * [Changelog]
- * 新增 autoLocation (bool) 參數設置是否自動取得用戶位置為中心點。
+ * 修正使用地址及 ID 建立標記之後無法再用 id 去操作的錯誤。
  *
- * Release 2014.07.31.120725
+ * Release 2014.08.05.095954
  */
 ;(function ($, window, document, undefined) {
 
@@ -38,7 +38,7 @@
         loop = 0,
     // Plugin default settings
         defaults = {
-            'center': {x: '24', y: '121'},
+            'center': {x: '', y: ''},
             'control': true,
             'disableDoubleClickZoom': false, //2.6.4
             'disableDefaultUI': false, //2.5.1
@@ -289,7 +289,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.2',
+        VERSION: '2.8.3',
 
         // Layers container
         _polylines: [],
@@ -807,6 +807,7 @@
                     var marker = {},
                         labelOpt = {},
                         label = {},
+                        id    = _hasOwnProperty(opt, 'id') ? opt.id : '',
                         title = _hasOwnProperty(opt, 'title') ?
                                 opt.title.toString().replace(/<([^>]+)>/g, '') :
                                 '',
@@ -818,7 +819,8 @@
                             'infoWindow': new google.maps.InfoWindow({
                                 'content': content
                             }),
-                            'animation': null
+                            'animation': null,
+                            'id': id
                         },
                         icons = self.markerIcon(opt);
 
@@ -1110,6 +1112,7 @@
          */
         geoLocation: function (map, opt) {
             if (undefined !== opt.autoLocation && true === opt.autoLocation) {
+                console.dir('qwe');
                 if (navigator.geolocation) {
                     try {
                         navigator.geolocation.getCurrentPosition(function (loc) {
@@ -1125,7 +1128,6 @@
                             console.dir(error);
                         });
                     } catch (ignore) {
-                        console.log(ignore.message);
                     }
                 }
             }
