@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.8.3
+修正使用地址及 id 建立標記之後無法再用 id 去操作的錯誤。
+
 2.8.2
 新增 autoLocation (bool) 參數設置是否自動取得用戶位置為中心點。
 
