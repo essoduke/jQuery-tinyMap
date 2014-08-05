@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+2.8.4
+修正若 markerFitBounds 設為 true 則有部份的 marker 點選時無法開啟 infoWindow 的錯誤。
+加入 infoWindowAutoClose (bool) 參數，可設置是否在點選標記時自動關閉其他已開啟的 infoWindow。
+
 2.8.3
 修正使用地址及 id 建立標記之後無法再用 id 去操作的錯誤。
 
