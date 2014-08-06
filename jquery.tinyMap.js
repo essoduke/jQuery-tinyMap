@@ -22,13 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.4
+ * @version: 2.8.5
  *
  * [Changelog]
- * 修正若 markerFitBounds 設為 true 則有部份的 marker 點選時無法開啟 infoWindow 的錯誤。
- * 加入 infoWindowAutoClose (bool) 參數，可設置是否在點選標記時自動關閉其他已開啟的 infoWindow。
+ * 路徑規劃新增 direction.autoViewport (bool 預設 true) 參數可設置是否要自動縮放該路線資訊。
  *
- * Release 2014.08.05.161554
+ * Release 2014.08.06.184249
  */
 ;(function ($, window, document, undefined) {
 
@@ -291,7 +290,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.4',
+        VERSION: '2.8.5',
 
         // Layers container
         _polylines: [],
@@ -932,6 +931,12 @@
             if (undefined !== request.origin && undefined !== request.destination) {
                 directionsService.route(request, function (response, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
+                        console.dir(opt.autoViewport);
+                        if (undefined !== opt.autoViewport) {
+                            directionsDisplay.setOptions({
+                                'preserveViewport': false === opt.autoViewport ? true : false
+                            });
+                        }
                         directionsDisplay.setDirections(response);
                     }
                 });
