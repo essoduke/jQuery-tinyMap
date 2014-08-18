@@ -1,5 +1,13 @@
 jQuery tinyMap Changelog
 
+2.8.6
+參數 center 現在可以支援陣列 [lat, lng] 以及物件 {'lat': 'LAT', 'lng': 'LNG'} 格式的資料了。
+修正 interval 沒有發生作用的問題。
+使用 clear 方法時若沒有傳入圖層參數，現在會刪除所有圖層。
+
+2.8.5
+路徑規劃新增 direction.autoViewport (bool 預設 true) 參數可設置是否要自動縮放該路線資訊。
+
 2.8.4
 修正若 markerFitBounds 設為 true 則有部份的 marker 點選時無法開啟 infoWindow 的錯誤。
 加入 infoWindowAutoClose (bool) 參數，可設置是否在點選標記時自動關閉其他已開啟的 infoWindow。
