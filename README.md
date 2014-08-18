@@ -49,6 +49,9 @@ Full options: http://app.essoduke.org/tinyMap/#parameters
 //Setting up the map
 $('#map').tinyMap({
     'center': {'x': 'Lat', 'y': 'Lng'},
+    // or 'center': 'lat, lng'
+    // or 'center': [lat, lng]
+    // or 'center': {lat: 'Lat', 'lng': Lng}
     'zoom': 14,
     'event': {
         'idle': function () {}
@@ -104,6 +107,8 @@ $(selector).tinyMap('modify', {
 
 //e.g. Clear the layers
 $(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
+// or clear all layers
+$(selector).tinyMap('clear'); 
 ```
 
 License
