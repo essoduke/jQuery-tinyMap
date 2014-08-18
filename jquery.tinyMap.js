@@ -22,12 +22,14 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.5
+ * @version: 2.8.6
  *
  * [Changelog]
- * 路徑規劃新增 direction.autoViewport (bool 預設 true) 參數可設置是否要自動縮放該路線資訊。
+ * 參數 center 現在可以支援陣列 [lat, lng] 以及物件 {'lat': 'LAT', 'lng': 'LNG'} 格式的資料了。
+ * 修正 interval 沒有發生作用的問題。
+ * 使用 clear 方法時若沒有傳入圖層參數，現在會刪除所有圖層。
  *
- * Release 2014.08.06.184249
+ * Release 2014.08.18.105544
  */
 ;(function ($, window, document, undefined) {
 
@@ -92,10 +94,18 @@
             'interval': 200, //2.5.0
             'event': null, //2.7.0
             'showStreetView': false, // 2.7.5
-            'autoLocation': false //2.8.2
+            'autoLocation': false //2.8.2, 2.8.6
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
+
+    // Timeout delegate
+    function setTimeout (func, wait) {
+        var args = Array.prototype.slice.call(arguments, 2);
+        return window.setTimeout(function () {
+            return func.apply(null, args);
+        }, wait);
+    }
 
     /**
      * _hasOwnProperty for compatibility IE
@@ -225,13 +235,13 @@
          * Interval for geocoder's query interval
          * @type {number}
          */
-        this.interval = parseInt(this.options.interval, 10) || 200;
+        this.interval = parseInt(this.options.interval, 10) || 110;
         /**
          * Google Maps options
          * @type {Object}
          */
-        this.GoogleMapOptions = {
-            'center': new google.maps.LatLng(this.options.center.x, this.options.center.y),
+        this.googleMapOptions = {
+            'center': '',
             'control': this.options.control,
             'disableDoubleClickZoom': this.options.disableDoubleClickZoom,
             'disableDefaultUI': this.options.disableDefaultUI,
@@ -272,14 +282,39 @@
                 'style': google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]
             }
         };
+
+        // tinyMap.center parse
+        // Array
+        if (Object.prototype.toString.call(this.options.center) === '[object Array]') {
+            if (2 === this.options.center.length) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center[0],
+                    this.options.center[1]
+                );
+            }
+        } else {
+        // Object
+            if (_hasOwnProperty(this.options.center, 'x') && _hasOwnProperty(this.options.center, 'y')) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center.x,
+                    this.options.center.y
+                );
+            } else if (_hasOwnProperty(this.options.center, 'lat') && _hasOwnProperty(this.options.center, 'lng')) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center.lat,
+                    this.options.center.lng
+                );
+            }
+        }
+
         if (true === this.options.disableDefaultUI) {
-            this.GoogleMapOptions.mapTypeControl = false;
-            this.GoogleMapOptions.navigationControl = false;
-            this.GoogleMapOptions.panControl = false;
-            this.GoogleMapOptions.rotateControl = false;
-            this.GoogleMapOptions.scaleControl = false;
-            this.GoogleMapOptions.streetViewControl = false;
-            this.GoogleMapOptions.zoomControl = false;
+            this.googleMapOptions.mapTypeControl = false;
+            this.googleMapOptions.navigationControl = false;
+            this.googleMapOptions.panControl = false;
+            this.googleMapOptions.rotateControl = false;
+            this.googleMapOptions.scaleControl = false;
+            this.googleMapOptions.streetViewControl = false;
+            this.googleMapOptions.zoomControl = false;
         }
 
         $(this.container).html(this.options.loading);
@@ -290,7 +325,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.5',
+        VERSION: '2.8.6',
 
         // Layers container
         _polylines: [],
@@ -368,12 +403,12 @@
                 j = 0,
                 markers = [],
                 labels  = [];
-
+                
             opt = !opt ? this.options : opt;
 
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
-
+            
             markers = this._markers;
 
             // For first initialize of instance.
@@ -394,10 +429,6 @@
                                 }
                             }
                         }
-                        /*
-                        if (true === opt.markerFitBounds) {
-                            map.fitBounds(this.bounds);
-                        }*/
                     }
                 }
             }
@@ -797,6 +828,10 @@
             var geocoder = new google.maps.Geocoder(),
                 self = this;
 
+            if (!_hasOwnProperty(opt, 'addr')) {
+                return;
+            }
+
             if (-1 !== opt.addr.indexOf(',')) {
 				opt.addr = 'loc: ' + opt.addr;
 			}
@@ -805,8 +840,8 @@
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
-                        self.markerByGeocoder(opt);
-                    }, self.interval);
+                        self.markerByGeocoder(map, opt);
+                    }, 100);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker = {},
                         labelOpt = {},
@@ -931,7 +966,6 @@
             if (undefined !== request.origin && undefined !== request.destination) {
                 directionsService.route(request, function (response, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
-                        console.dir(opt.autoViewport);
                         if (undefined !== opt.autoViewport) {
                             directionsDisplay.setOptions({
                                 'preserveViewport': false === opt.autoViewport ? true : false
@@ -1071,6 +1105,8 @@
                      layer.split(',') :
                      ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
 
+            layers = !layers.length ? ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml'] : layers;
+
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
                 if (undefined !== self[label] && self[label].length) {
@@ -1128,34 +1164,46 @@
             }
         },
         //#!#END
+        //#!#START AUTOLOCATION
         /**
          * Use HTML5 Geolocation API to detect the client's location.
          * @param {Object} map Map intance
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
-            if (undefined !== opt.autoLocation && true === opt.autoLocation) {
-                console.dir('qwe');
-                if (navigator.geolocation) {
-                    try {
-                        navigator.geolocation.getCurrentPosition(function (loc) {
-                            if (loc) {
-                                map.panTo(
-                                    new google.maps.LatLng(
-                                        loc.coords.latitude,
-                                        loc.coords.longitude
-                                    )
-                                );
-                            }
-                        }, function (error) {
-                            console.dir(error);
-                        });
-                    } catch (ignore) {
-                    }
-                }
-            }
-        },
 
+            var self = this,
+                watch = false,
+                positionOptions = {
+                    'maximumAge': 600000,
+                    'timeout': 3000,
+                    'enableHighAccuracy': false
+                },
+                geolocation = navigator.geolocation;
+
+            if (!geolocation) {
+                return;
+            }
+
+            if (true === opt.autoLocation) {
+                geolocation.getCurrentPosition(
+                    function (loc) {
+                        if (loc) {
+                            map.panTo(
+                                new google.maps.LatLng(
+                                    loc.coords.latitude,
+                                    loc.coords.longitude
+                                )
+                            );
+                        }
+                    },
+                    function (error) {
+                    },
+                    positionOptions
+                );
+            } 
+        },
+        //#!#END
         /**
          * tinyMap Initialize
          * @this {tinyMap}
@@ -1179,17 +1227,16 @@
                             if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                                 self.init();
                             } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
-                                self.GoogleMapOptions
+                                self.googleMapOptions
                                     .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
                                               results[0].geometry.location :
                                               '';
-                                self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
+                                self.map = new google.maps.Map(self.container, self.googleMapOptions);
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                     self.overlay();
                                 });
                                 // Events binding
                                 self.bindEvents(self.map, self.options.event);
-
                             } else {
                                 msg = self.options.notfound.text || status;
                                 error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
@@ -1200,7 +1247,7 @@
                     });
                 }, self.interval);
             } else {
-                self.map = new google.maps.Map(self.container, self.GoogleMapOptions);
+                self.map = new google.maps.Map(self.container, self.googleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
                 });
