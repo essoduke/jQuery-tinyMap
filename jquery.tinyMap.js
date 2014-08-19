@@ -22,14 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.6
+ * @version: 2.8.7
  *
  * [Changelog]
- * 參數 center 現在可以支援陣列 [lat, lng] 以及物件 {'lat': 'LAT', 'lng': 'LNG'} 格式的資料了。
- * 修正 interval 沒有發生作用的問題。
- * 使用 clear 方法時若沒有傳入圖層參數，現在會刪除所有圖層。
+ * 點選未設置 text 參數的 marker 時，地圖上已不會出現多餘的 infoWindow。
  *
- * Release 2014.08.18.105544
+ * Release 2014.08.19.155918
  */
 ;(function ($, window, document, undefined) {
 
@@ -94,7 +92,7 @@
             'interval': 200, //2.5.0
             'event': null, //2.7.0
             'showStreetView': false, // 2.7.5
-            'autoLocation': false //2.8.2, 2.8.6
+            'autoLocation': false //2.8.2
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0;
@@ -325,7 +323,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.6',
+        VERSION: '2.8.7',
 
         // Layers container
         _polylines: [],
@@ -745,15 +743,12 @@
                 id       = _hasOwnProperty(opt, 'id') ? opt.id : '',
                 title    = _hasOwnProperty(opt, 'title') ?
                            opt.title.toString().replace(/<([^>]+)>/g, '') :
-                           '',
-                content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
+                           false,
+                content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
 
                 markerOptions = {
                     'map': map,
                     'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
-                    'infoWindow': new google.maps.InfoWindow({
-                        'content': content
-                    }),
                     'animation': null,
                     'id': id
                 },
@@ -761,6 +756,12 @@
 
             if (title) {
                 markerOptions.title = title;
+            }
+
+            if (content) {
+                markerOptions.infoWindow = new google.maps.InfoWindow({
+                    'content': content
+                });
             }
 
             if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
@@ -849,15 +850,11 @@
                         id    = _hasOwnProperty(opt, 'id') ? opt.id : '',
                         title = _hasOwnProperty(opt, 'title') ?
                                 opt.title.toString().replace(/<([^>]+)>/g, '') :
-                                '',
-                        content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : '',
+                                false,
+                        content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
                         markerOptions = {
                             'map': map,
                             'position': results[0].geometry.location,
-                            'title': title,
-                            'infoWindow': new google.maps.InfoWindow({
-                                'content': content
-                            }),
                             'animation': null,
                             'id': id
                         },
@@ -866,7 +863,11 @@
                     if (title) {
                         markerOptions.title = title;
                     }
-
+                    if (content) {
+                        markerOptions.infoWindow = new google.maps.InfoWindow({
+                            'content': content
+                        });
+                    }
                     if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
                         markerOptions.icon = icons;
                     }
