@@ -1,17 +1,16 @@
-jQuery-tinyMap
-==============
+# jQuery-tinyMap
 
 This plugin will helping you to create the simple or complex Google Maps on the page.
 
 
-For complete parameters, methods and examples:  
-http://app.essoduke.org/tinyMap/ (Traditional Chinese)
+For complete options, methods and examples (Traditional Chinese):
+http://app.essoduke.org/tinyMap/ 
 
 Download builder:  
 http://app.essoduke.org/tinyMap/customize/
 
-Features
---------
+## Features
+
  * Easy to configure and use.
  * Supports Marker, Text label, Polyline, Polygon, Circle, KML, Direction layers. 
  * Custom events of map or layers.
@@ -19,8 +18,7 @@ Features
  * MarkerClusterer support.
 
 
-Install
--------------
+## Install
 
 Include the Google Maps API v3 before jQuery tinyMap.
 ```HTML
@@ -40,8 +38,7 @@ Setting up the container's width and height in CSS:
 ```
 
 
-Usage
------
+## Usage
 
 Full options: http://app.essoduke.org/tinyMap/#parameters
 
@@ -69,8 +66,8 @@ $('#map').tinyMap({
 });
 ```
 
-Create the Markers
-------------------
+### Create the Markers
+
 ```javascript
 $(selector).tinyMap({
     'marker': [
@@ -107,8 +104,8 @@ $(selector).tinyMap({
 });
 ```
 
-Methods
--------
+## Methods
+
 ```javascript
 // Methods
 // e.g. Move the map center to specified location
@@ -135,16 +132,16 @@ $(selector).tinyMap('clear', ['marker', 'polyline', 'polygon'...]);
 $(selector).tinyMap('clear'); 
 ```
 
-Using tinyMap instance
--------
+## Using tinyMap instance
+
 ```javascript
 var map = $(selector);
 var instance = map.data('tinyMap'); 
 var markers = instance._markers; // All markers on the Map.
 ```
 
-License
--------
+## License
+
 This plugin is released under the [MIT License](http://opensource.org/licenses/MIT).
 
 
