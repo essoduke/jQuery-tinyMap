@@ -759,6 +759,7 @@
             }
 
             if (content) {
+                markerOptions.text = content;
                 markerOptions.infoWindow = new google.maps.InfoWindow({
                     'content': content
                 });
@@ -864,6 +865,7 @@
                         markerOptions.title = title;
                     }
                     if (content) {
+                        markerOptions.text = content;
                         markerOptions.infoWindow = new google.maps.InfoWindow({
                             'content': content
                         });
