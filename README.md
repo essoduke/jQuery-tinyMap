@@ -73,10 +73,13 @@ $(selector).tinyMap({
             'title': 'Hello World!', // (Optional)
             'text': 'Cogito ergo sum!', // (optional)
             'icon': 'http://domain/icon.png' // (optional)
-            'event': function () {}
+            'event': function (event) {
+                this.text; // Marker text property.
+                event.latLng.lat(); // Mousr event
+            }
             /* OR 
             'event': {
-                'click': function () {}
+                'click': function (event) {}
                 ...
                 ...
             }
