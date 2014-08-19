@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.8.7
+點選未設置 text 參數的 marker 時，地圖上已不會出現多餘的 infoWindow。
+
 2.8.6
 參數 center 現在可以支援陣列 [lat, lng] 以及物件 {'lat': 'LAT', 'lng': 'LNG'} 格式的資料了。
 修正 interval 沒有發生作用的問題。
