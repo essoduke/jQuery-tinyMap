@@ -51,10 +51,16 @@ $('#map').tinyMap({
     'center': {'x': 'Lat', 'y': 'Lng'},
     // or 'center': 'lat, lng'
     // or 'center': [lat, lng]
-    // or 'center': {lat: 'Lat', 'lng': Lng}
+    // or 'center': {lat: 'Lat', lng: 'Lng'}
     'zoom': 14,
+    // Map events binding
     'event': {
         'idle': function () {}
+        // OR
+        'idle': {
+            'func': function () {},
+            'once': true / false //Run once
+        }
         ...
         ...
     }
@@ -73,15 +79,25 @@ $(selector).tinyMap({
             'title': 'Hello World!', // (Optional)
             'text': 'Cogito ergo sum!', // (optional)
             'icon': 'http://domain/icon.png' // (optional)
+            // Binding Click event
             'event': function (event) {
-                this.text; // Marker text property.
-                event.latLng.lat(); // Mousr event
+                console.log(this.text); // Marker text property.
+                console.log(event.latLng.lat()); // Mousr event
             }
             /* OR 
             'event': {
-                'click': function (event) {}
-                ...
-                ...
+                'click': function (event) {...},
+                'mouseover': function (event) {...}
+            }
+               OR
+            'event': {
+                'click': {
+                    'func': function () {...}
+                    'once': true / false
+                },
+                'mouseover': {
+                    ...
+                }
             }
             */
         }
@@ -94,24 +110,37 @@ $(selector).tinyMap({
 Methods
 -------
 ```javascript
-//Methods
-//e.g. Move the map center to specified location
+// Methods
+// e.g. Move the map center to specified location
 $(selector).tinyMap('panto', 'Address string');
 $(selector).tinyMap('panto', ['Lat', 'Lng']);
-$(selector).tinyMap('panto', {'lat': 'Lat', 'lng': 'Lng'});
+$(selector).tinyMap('panto', {lat: 'Lat', lng: 'Lng'});
 
-//Dynamic setting up
+// Dynamic setting up
 $(selector).tinyMap('modify', {OPTIONS});
 
-//e.g. Disable draggable
+// e.g. Disable draggable
 $(selector).tinyMap('modify', {
     'draggable': false
+    //Resetting  zoom level
+    'zoom': 16
 });
 
-//e.g. Clear the layers
+// Clear specified layers
+// Options: marker, polyline, polygon, circle, direction, kml
 $(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
+// or use array
+$(selector).tinyMap('clear', ['marker', 'polyline', 'polygon'...]);
 // or clear all layers
 $(selector).tinyMap('clear'); 
+```
+
+Using tinyMap instance
+-------
+```javascript
+var map = $(selector);
+var instance = map.data('tinyMap'); 
+var markers = instance._markers; // All markers on the Map.
 ```
 
 License
