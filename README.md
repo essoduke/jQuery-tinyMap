@@ -45,10 +45,10 @@ Full options: http://app.essoduke.org/tinyMap/#parameters
 ```javascript
 //Setting up the map
 $('#map').tinyMap({
-    'center': {'x': 'Lat', 'y': 'Lng'},
+    'center': {'lat': 'Lat', 'lng': 'Lng'},
     // or 'center': 'lat, lng'
     // or 'center': [lat, lng]
-    // or 'center': {lat: 'Lat', lng: 'Lng'}
+    // or 'center': 'ADDRESS'
     'zoom': 14,
     // Map events binding
     'event': {
@@ -72,7 +72,9 @@ $('#map').tinyMap({
 $(selector).tinyMap({
     'marker': [
         {
-            'addr': ['Lat', 'Lng'], // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
+            'addr': ['Lat', 'Lng'],
+            // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
+            // Or {lat: 'lat', lng: 'lng'}
             'title': 'Hello World!', // (Optional)
             'text': 'Cogito ergo sum!', // (optional)
             'icon': 'http://domain/icon.png' // (optional)
