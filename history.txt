@@ -1,5 +1,10 @@
 jQuery tinyMap Changelog
 
+2.8.9
+改善程式碼。
+現在 tinyMap.center, marker.addr, circle.center, direction.to, direction.from, direction.waypoint
+已支援多種格式輸入，例如 'lat, lng', [lat, lng], {lat: 'lat', lng: 'lng'}
+
 2.8.8
 新增 styles 參數 (string|Array) 可自訂地圖的視覺化選項。目前內建 'greyscale' 灰階可用。
 
