@@ -22,20 +22,18 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.7
+ * @version: 2.8.8
  *
  * [Changelog]
- * 點選未設置 text 參數的 marker 時，地圖上已不會出現多餘的 infoWindow。
+ * 新增 styles 參數 (string|Array) 可自訂地圖的視覺化選項。目前內建 'greyscale' 灰階可用。
  *
- * Release 2014.08.19.155918
+ * Release 2014.08.20.111231
  */
 ;(function ($, window, document, undefined) {
 
     'use strict';
 
-    // Loop counter for geocoder
     var pluginName = 'tinyMap',
-        loop = 0,
     // Plugin default settings
         defaults = {
             'center': {x: '', y: ''},
@@ -95,7 +93,22 @@
             'autoLocation': false //2.8.2
         },
         _directMarkersLength = 0,
-        _geoMarkersLength = 0;
+        _geoMarkersLength = 0,
+        styles = {}; //2.8.8
+
+    //#!#START STYLES
+    styles = {
+        // Grey Scale
+        'greyscale': [{
+            'featureType': 'all',
+            'stylers': [{
+                'saturation': -100
+            }, {
+                'gamma': 0.5
+            }]
+        }]
+    };
+    //#!#END
 
     // Timeout delegate
     function setTimeout (func, wait) {
@@ -315,6 +328,17 @@
             this.googleMapOptions.zoomControl = false;
         }
 
+        //#!#START STYLES
+        if (_hasOwnProperty(this.options, 'styles')) {
+            if ('string' === typeof this.options.styles) {
+                if (_hasOwnProperty(styles, this.options.styles)) {
+                    this.googleMapOptions.styles = styles[this.options.styles];
+                }
+            } else if ('[object Array]' === Object.prototype.toString.call(this.options.styles)) {
+                this.googleMapOptions.styles = this.options.styles;
+            }
+        }
+        //#!#END
         $(this.container).html(this.options.loading);
         this.init();
     }
@@ -323,7 +347,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.7',
+        VERSION: '2.8.8',
 
         // Layers container
         _polylines: [],
@@ -1161,6 +1185,14 @@
                             }
                         }
                     } else {
+                        //#!#START STYLES
+                        if (_hasOwnProperty(options, 'styles')) {
+                            console.dir(options);
+                            if ('string' === typeof options.styles) {
+                                options.styles = styles[options.styles];
+                            }
+                        }
+                        //#!#END
                         m.setOptions(options);
                     }
                 }
@@ -1214,8 +1246,6 @@
         init: function () {
             var self = this,
                 geocoder = {};
-
-            loop += 1;
 
             if ('string' === typeof self.options.center) {
                 window.setTimeout(function () {
