@@ -22,12 +22,14 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.8
+ * @version: 2.8.9
  *
  * [Changelog]
- * 新增 styles 參數 (string|Array) 可自訂地圖的視覺化選項。目前內建 'greyscale' 灰階可用。
+ * 改善程式碼。
+ * 現在 tinyMap.center, marker.addr, circle.center, direction.to, direction.from, direction.waypoint
+ * 已支援多種格式輸入，例如 'lat, lng', [lat, lng], {lat: 'lat', lng: 'lng'}
  *
- * Release 2014.08.20.111231
+ * Release 2014.08.20.190901
  */
 ;(function ($, window, document, undefined) {
 
@@ -87,7 +89,7 @@
                 'viewport': true,
                 'infowindow': false
             },
-            'interval': 200, //2.5.0
+            'interval': 100, //2.5.0
             'event': null, //2.7.0
             'showStreetView': false, // 2.7.5
             'autoLocation': false //2.8.2
@@ -110,14 +112,6 @@
     };
     //#!#END
 
-    // Timeout delegate
-    function setTimeout (func, wait) {
-        var args = Array.prototype.slice.call(arguments, 2);
-        return window.setTimeout(function () {
-            return func.apply(null, args);
-        }, wait);
-    }
-
     /**
      * _hasOwnProperty for compatibility IE
      * @param {Object} obj Object
@@ -133,6 +127,46 @@
         } catch (ignore) {
         }
     }
+
+    /**
+     * Parsing the location
+     * @param {string|array|Object} loc Location
+     * @param {bool} formatting Format to Google Maps LatLng Object
+     * @return {Object}
+     */
+    function parseLatLng (loc, formatting) {
+        var arr = [],
+            re = /^[+-]?\d+(\.\d+)?$/,
+            result = {
+                'lat': '',
+                'lng': ''
+            };
+
+        if ('string' === typeof loc || $.isArray(loc)) {
+            arr = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
+            if (2 === arr.length) {
+                if (re.test(arr[0]) && re.test(arr[1])) {
+                    result.lat = arr[0];
+                    result.lng = arr[1];
+                }
+            } else {
+                return loc;
+            }
+        } else if ('object' === typeof loc) {
+            if (_hasOwnProperty(loc, 'x') && _hasOwnProperty(loc, 'y')) {
+                result.lat = loc.x;
+                result.lng = loc.y;
+            } else if (_hasOwnProperty(loc, 'lat') && _hasOwnProperty(loc, 'lng')) {
+                result.lat = loc.lat;
+                result.lng = loc.lng;
+            }
+        }
+        if (undefined !== formatting && true === formatting) {
+            return new google.maps.LatLng(result.lat, result.lng);
+        }
+        return result;
+    }
+
     //#!#START LABEL
     /**
      * Label in Maps
@@ -208,10 +242,18 @@
      * @constructor
      */
     function TinyMap (container, options) {
+
+        var div = {},
+            loc = {},
+            opt = {};
+
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
             return;
         }
+
+        opt = $.extend({}, defaults, options);
+
         /**
          * Map instance
          * @type {Object}
@@ -241,84 +283,63 @@
          * Merge the options
          * @type {Object}
          */
-        this.options = $.extend({}, defaults, options);
+        this.options = opt;
         /**
          * Interval for geocoder's query interval
          * @type {number}
          */
-        this.interval = parseInt(this.options.interval, 10) || 110;
+        this.interval = parseInt(this.options.interval, 10) || 1100;
         /**
          * Google Maps options
          * @type {Object}
          */
         this.googleMapOptions = {
             'center': '',
-            'control': this.options.control,
-            'disableDoubleClickZoom': this.options.disableDoubleClickZoom,
-            'disableDefaultUI': this.options.disableDefaultUI,
-            'draggable': this.options.draggable,
-            'keyboardShortcuts': this.options.keyboardShortcuts,
-            'mapTypeId': google.maps.MapTypeId[this.options.mapTypeId.toUpperCase()],
-            'mapTypeControl': this.options.mapTypeControl,
+            'control': opt.control,
+            'disableDoubleClickZoom': opt.disableDoubleClickZoom,
+            'disableDefaultUI': opt.disableDefaultUI,
+            'draggable': opt.draggable,
+            'keyboardShortcuts': opt.keyboardShortcuts,
+            'mapTypeId': google.maps.MapTypeId[opt.mapTypeId.toUpperCase()],
+            'mapTypeControl': opt.mapTypeControl,
             'mapTypeControlOptions': {
-                'position': google.maps.ControlPosition[this.options.mapTypeControlOptions.position],
-                'style': google.maps.MapTypeControlStyle[this.options.mapTypeControlOptions.style.toUpperCase()]
+                'position': google.maps.ControlPosition[opt.mapTypeControlOptions.position],
+                'style': google.maps.MapTypeControlStyle[opt.mapTypeControlOptions.style.toUpperCase()]
             },
-            'maxZoom': this.options.maxZoom,
-            'minZoom': this.options.minZoom,
-            'navigationControl': this.options.navigationControl,
+            'maxZoom': opt.maxZoom,
+            'minZoom': opt.minZoom,
+            'navigationControl': opt.navigationControl,
             'navigationControlOptions': {
-                'position': google.maps.ControlPosition[this.options.navigationControlOptions.position],
-                'style': google.maps.NavigationControlStyle[this.options.navigationControlOptions.style.toUpperCase()]
+                'position': google.maps.ControlPosition[opt.navigationControlOptions.position],
+                'style': google.maps.NavigationControlStyle[opt.navigationControlOptions.style.toUpperCase()]
             },
-            'panControl': this.options.panControl,
+            'panControl': opt.panControl,
             'panControlOptions': {
-                'position': google.maps.ControlPosition[this.options.panControlOptions.position]
+                'position': google.maps.ControlPosition[opt.panControlOptions.position]
             },
-            'rotateControl': this.options.rotateControl,
-            'scaleControl': this.options.scaleControl,
+            'rotateControl': opt.rotateControl,
+            'scaleControl': opt.scaleControl,
             'scaleControlOptions': {
-                'position': google.maps.ControlPosition[this.options.scaleControlOptions.position],
-                'style': google.maps.ScaleControlStyle[this.options.scaleControlOptions.style.toUpperCase()]
+                'position': google.maps.ControlPosition[opt.scaleControlOptions.position],
+                'style': google.maps.ScaleControlStyle[opt.scaleControlOptions.style.toUpperCase()]
             },
-            'scrollwheel': this.options.scrollwheel,
-            'streetViewControl': this.options.streetViewControl,
+            'scrollwheel': opt.scrollwheel,
+            'streetViewControl': opt.streetViewControl,
             'streetViewControlOptions': {
-                'position': google.maps.ControlPosition[this.options.streetViewControlOptions.position]
+                'position': google.maps.ControlPosition[opt.streetViewControlOptions.position]
             },
-            'zoom': this.options.zoom,
-            'zoomControl': this.options.zoomControl,
+            'zoom': opt.zoom,
+            'zoomControl': opt.zoomControl,
             'zoomControlOptions': {
-                'position': google.maps.ControlPosition[this.options.zoomControlOptions.position],
-                'style': google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]
+                'position': google.maps.ControlPosition[opt.zoomControlOptions.position],
+                'style': google.maps.ZoomControlStyle[opt.zoomControlOptions.style.toUpperCase()]
             }
         };
 
-        // tinyMap.center parse
-        // Array
-        if (Object.prototype.toString.call(this.options.center) === '[object Array]') {
-            if (2 === this.options.center.length) {
-                this.googleMapOptions.center = new google.maps.LatLng(
-                    this.options.center[0],
-                    this.options.center[1]
-                );
-            }
-        } else {
-        // Object
-            if (_hasOwnProperty(this.options.center, 'x') && _hasOwnProperty(this.options.center, 'y')) {
-                this.googleMapOptions.center = new google.maps.LatLng(
-                    this.options.center.x,
-                    this.options.center.y
-                );
-            } else if (_hasOwnProperty(this.options.center, 'lat') && _hasOwnProperty(this.options.center, 'lng')) {
-                this.googleMapOptions.center = new google.maps.LatLng(
-                    this.options.center.lat,
-                    this.options.center.lng
-                );
-            }
-        }
+        // tinyMap.center parsing
+        this.options.center = this.googleMapOptions.center = parseLatLng(opt.center, true);
 
-        if (true === this.options.disableDefaultUI) {
+        if (true === opt.disableDefaultUI) {
             this.googleMapOptions.mapTypeControl = false;
             this.googleMapOptions.navigationControl = false;
             this.googleMapOptions.panControl = false;
@@ -329,17 +350,17 @@
         }
 
         //#!#START STYLES
-        if (_hasOwnProperty(this.options, 'styles')) {
-            if ('string' === typeof this.options.styles) {
-                if (_hasOwnProperty(styles, this.options.styles)) {
-                    this.googleMapOptions.styles = styles[this.options.styles];
+        if (_hasOwnProperty(opt, 'styles')) {
+            if ('string' === typeof opt.styles) {
+                if (_hasOwnProperty(styles, opt.styles)) {
+                    this.googleMapOptions.styles = styles[opt.styles];
                 }
-            } else if ('[object Array]' === Object.prototype.toString.call(this.options.styles)) {
-                this.googleMapOptions.styles = this.options.styles;
+            } else if ($.isArray(opt.styles)) {
+                this.googleMapOptions.styles = opt.styles;
             }
         }
         //#!#END
-        $(this.container).html(this.options.loading);
+        $(this.container).html(opt.loading);
         this.init();
     }
     /**
@@ -347,7 +368,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.8',
+        VERSION: '2.8.9',
 
         // Layers container
         _polylines: [],
@@ -402,12 +423,10 @@
         direction: function (map, opt) {
             var d = '';
             opt = !opt ? this.options : opt;
-            if (undefined !== opt.direction && 0 < opt.direction.length) {
+            if (_hasOwnProperty(opt, 'direction') && 0 < opt.direction.length) {
                 for (d in opt.direction) {
                     if (_hasOwnProperty(opt.direction, d)) {
-                        if (undefined !== opt.direction[d]) {
-                            this.directionService(opt.direction[d]);
-                        }
+                        this.directionService(opt.direction[d]);
                     }
                 }
             }
@@ -423,6 +442,7 @@
             var m = '',
                 i = 0,
                 j = 0,
+                loc = '',
                 markers = [],
                 labels  = [];
                 
@@ -431,30 +451,27 @@
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
             
-            markers = this._markers;
+            markers = self._markers;
 
             // For first initialize of instance.
             if (!source || 0 === markers.length) {
-                if (undefined !== opt.marker) {
-                    if (0 < opt.marker.length) {
-                        for (m in opt.marker) {
-                            if (_hasOwnProperty(opt.marker, m) &&
-                                _hasOwnProperty(opt.marker[m], 'addr')
-                            ) {
-                                if (
-                                    'object' === typeof opt.marker[m].addr &&
-                                    2 === opt.marker[m].addr.length
-                                ) {
-                                    this.markerDirect(map, opt.marker[m], opt);
-                                } else if ('string' === typeof opt.marker[m].addr) {
-                                    this.markerByGeocoder(map, opt.marker[m], opt);
-                                }
+                if ($.isArray(opt.marker)) {
+                    for (m in opt.marker) {
+                        if (_hasOwnProperty(opt.marker, m) &&
+                            _hasOwnProperty(opt.marker[m], 'addr')
+                        ) {
+                            loc = parseLatLng(opt.marker[m].addr, true);
+                            opt.marker[m].addr = loc;
+                            if ('string' === typeof loc) {
+                                this.markerByGeocoder(map, opt.marker[m], opt);
+                            } else {
+                                this.markerDirect(map, opt.marker[m], opt);
                             }
                         }
                     }
                 }
             }
-
+            
             /**
              * Put existed markers to the new position
              */
@@ -463,10 +480,10 @@
                 labels  = this._labels;
 
                 for (i = 0; i < opt.marker.length; i += 1) {
-                    if (undefined !== opt.marker[i].id) {
+                    if (_hasOwnProperty(opt.marker[i], 'id')) {
                         for (j = 0; j < markers.length; j += 1) {
                             if (opt.marker[i].id === markers[j].id &&
-                                undefined !== opt.marker[i].addr
+                                _hasOwnProperty(opt.marker[i], 'addr')
                             ) {
                                 markers[j].setPosition(
                                     new google.maps.LatLng(
@@ -491,10 +508,7 @@
                         }
                     // Insert the new marker if it is not existed.
                     } else {
-                        if (
-                            'object' === typeof opt.marker[i].addr &&
-                            2 === opt.marker[i].addr.length
-                        ) {
+                        if ($.isArray(opt.marker[i].addr)) {
                             this.markerDirect(map, opt.marker[i]);
                         } else if ('string' === typeof opt.marker[i].addr) {
                             this.markerByGeocoder(map, opt.marker[i]);
@@ -534,68 +548,68 @@
                 distance = {};
 
             opt = !opt ? this.options : opt;
-            if (undefined !== opt.polyline) {
-                if (undefined !== opt.polyline.coords) {
-                    for (p in opt.polyline.coords) {
-                        if (_hasOwnProperty(opt.polyline.coords, p)) {
-                            c = opt.polyline.coords;
-                            if (undefined !== c[p]) {
-                                coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
-                            }
+            if (_hasOwnProperty(opt, 'polyline') &&
+                _hasOwnProperty(opt.polyline, 'coords')
+            ) {
+                for (p in opt.polyline.coords) {
+                    if (_hasOwnProperty(opt.polyline.coords, p)) {
+                        c = opt.polyline.coords;
+                        if (undefined !== c[p]) {
+                            coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
                         }
                     }
-
-                    polyline = new google.maps.Polyline({
-                        'strokeColor': opt.polyline.color || '#FF0000',
-                        'strokeOpacity': 1.0,
-                        'strokeWeight': opt.polyline.width || 2
-                    });
-
-                    this._polylines.push(polyline);
-
-                    if (2 < coords.getLength()) {
-                        coords.forEach(function (loc, index) {
-                            if (0 < index && (coords.getLength() - 1 > index)) {
-                                waypoints.push({
-                                    'location': loc,
-                                    'stopover': false
-                                });
-                            }
-                        });
-                    }
-
-                    if (true === opt.polyline.snap) {
-                        service = new google.maps.DirectionsService();
-                        service.route({
-                            'origin': coords.getAt(0),
-                            'waypoints': waypoints,
-                            'destination': coords.getAt(coords.getLength() - 1),
-                            'travelMode': google.maps.DirectionsTravelMode.DRIVING
-                        }, function (result, status) {
-                            if (status === google.maps.DirectionsStatus.OK) {
-                                for (i = 0, len = result.routes[0].overview_path.length; i < len; i += 1) {
-                                    path.push(result.routes[0].overview_path[i]);
-                                }
-                                polyline.setPath(path);
-                                if ('function' === typeof opt.polyline.getDistance) {
-                                    distance = result.routes[0].legs[0].distance;
-                                    opt.polyline.getDistance.call(this, distance);
-                                }
-                            }
-                        });
-                    } else {
-                        polyline.setPath(coords);
-                        if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
-                            if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-                                distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
-                                if ('function' === typeof opt.polyline.getDistance) {
-                                    opt.polyline.getDistance.call(this, distance);
-                                }
-                            }
-                        }
-                    }
-                    polyline.setMap(map);
                 }
+
+                polyline = new google.maps.Polyline({
+                    'strokeColor': opt.polyline.color || '#FF0000',
+                    'strokeOpacity': 1.0,
+                    'strokeWeight': opt.polyline.width || 2
+                });
+
+                this._polylines.push(polyline);
+
+                if (2 < coords.getLength()) {
+                    for (i = 0; i < coords.length; i += 1) {
+                        if (0 < i && (coords.getLength() - 1 > i)) {
+                            waypoints.push({
+                                'location': coords[i],
+                                'stopover': false
+                            });
+                        }
+                    }
+                }
+
+                if (true === opt.polyline.snap) {
+                    service = new google.maps.DirectionsService();
+                    service.route({
+                        'origin': coords.getAt(0),
+                        'waypoints': waypoints,
+                        'destination': coords.getAt(coords.getLength() - 1),
+                        'travelMode': google.maps.DirectionsTravelMode.DRIVING
+                    }, function (result, status) {
+                        if (status === google.maps.DirectionsStatus.OK) {
+                            for (i = 0, len = result.routes[0].overview_path.length; i < len; i += 1) {
+                                path.push(result.routes[0].overview_path[i]);
+                            }
+                            polyline.setPath(path);
+                            if ('function' === typeof opt.polyline.getDistance) {
+                                distance = result.routes[0].legs[0].distance;
+                                opt.polyline.getDistance.call(this, distance);
+                            }
+                        }
+                    });
+                } else {
+                    polyline.setPath(coords);
+                    if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
+                        if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
+                            if ('function' === typeof opt.polyline.getDistance) {
+                                opt.polyline.getDistance.call(this, distance);
+                            }
+                        }
+                    }
+                }
+                polyline.setMap(map);
             }
         },
         //#!#END
@@ -611,29 +625,30 @@
                 c = {},
                 coords = [];
             opt = !opt ? this.options : opt;
-            if (undefined !== opt.polygon) {
-                if (undefined !== opt.polygon.coords) {
-                    for (p in opt.polygon.coords) {
-                        if (_hasOwnProperty(opt.polygon.coords, p)) {
-                            c = opt.polygon.coords;
-                            if (undefined !== c[p]) {
-                                coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
-                            }
+            if (_hasOwnProperty(opt, 'polygon') &&
+                _hasOwnProperty(opt.polygon, 'coords')
+            ) {
+            
+                for (p in opt.polygon.coords) {
+                    if (_hasOwnProperty(opt.polygon.coords, p)) {
+                        c = opt.polygon.coords;
+                        if (undefined !== c[p]) {
+                            coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
                         }
                     }
-                    polygon = new google.maps.Polygon({
-                        'path': coords,
-                        'strokeColor': opt.polygon.color || '#FF0000',
-                        'strokeOpacity': 1.0,
-                        'strokeWeight': opt.polygon.width || 2,
-                        'fillColor': opt.polygon.fillcolor || '#CC0000',
-                        'fillOpacity': 0.35
-                    });
-                    this._polygons.push(polygon);
-                    polygon.setMap(this.map);
-                    if ($.isFunction(opt.polygon.click)) {
-                        google.maps.event.addListener(polygon, 'click', opt.polygon.click);
-                    }
+                }
+                polygon = new google.maps.Polygon({
+                    'path': coords,
+                    'strokeColor': opt.polygon.color || '#FF0000',
+                    'strokeOpacity': 1.0,
+                    'strokeWeight': opt.polygon.width || 2,
+                    'fillColor': opt.polygon.fillcolor || '#CC0000',
+                    'fillOpacity': 0.35
+                });
+                this._polygons.push(polygon);
+                polygon.setMap(this.map);
+                if ('function' === typeof opt.polygon.click) {
+                    google.maps.event.addListener(polygon, 'click', opt.polygon.click);
                 }
             }
         },
@@ -646,13 +661,21 @@
          */
         drawCircle: function (map, opt) {
             var c = 0,
+                loc = {
+                    'lat': '',
+                    'lng': ''
+                },
+                locArray = [],
                 circle = {},
                 circles = {};
             opt = !opt ? this.options : opt;
-            if (undefined !== opt.circle && 0 < opt.circle.length) {
+            if (_hasOwnProperty(opt, 'circle') && $.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
-                    if (undefined !== circle.center.x && undefined !== circle.center.y) {
+                    if (_hasOwnProperty(circle, 'center')) {
+                        loc = parseLatLng(circle.center);
+                    }
+                    if (loc.lat && loc.lng) {
                         circles = new google.maps.Circle({
                             'strokeColor': circle.color || '#FF0000',
                             'strokeOpacity': circle.opacity || 0.8,
@@ -660,13 +683,13 @@
                             'fillColor': circle.fillcolor || '#FF0000',
                             'fillOpacity': circle.fillopacity || 0.35,
                             'map': this.map,
-                            'center': new google.maps.LatLng(circle.center.x, circle.center.y),
+                            'center': new google.maps.LatLng(loc.lat, loc.lng),
                             'radius': circle.radius || 10,
                             'zIndex': 100,
                             'id' : _hasOwnProperty(opt, 'id') ? opt.id : ''
                         });
                         this._circles.push(circles);
-                        if ($.isFunction(opt.circle[c].click)) {
+                        if ('function' === typeof opt.circle[c].click) {
                             google.maps.event.addListener(circles, 'click', opt.circle[c].click);
                         }
                     }
@@ -772,7 +795,7 @@
 
                 markerOptions = {
                     'map': map,
-                    'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
+                    'position': opt.addr,
                     'animation': null,
                     'id': id
                 },
@@ -851,23 +874,16 @@
          * @this {tinyMap}
          */
         markerByGeocoder: function (map, opt) {
+
             var geocoder = new google.maps.Geocoder(),
                 self = this;
-
-            if (!_hasOwnProperty(opt, 'addr')) {
-                return;
-            }
-
-            if (-1 !== opt.addr.indexOf(',')) {
-				opt.addr = 'loc: ' + opt.addr;
-			}
 
             geocoder.geocode({'address': opt.addr}, function (results, status) {
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
                         self.markerByGeocoder(map, opt);
-                    }, 100);
+                    }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker = {},
                         labelOpt = {},
@@ -968,23 +984,20 @@
                 panel = {},
                 i = 0,
                 c = 0;
-            if ('string' === typeof opt.from) {
-                request.origin = opt.from;
-            }
-            if ('string' === typeof opt.to) {
-                request.destination = opt.to;
-            }
+
+            request.origin = parseLatLng(opt.from, true);
+            request.destination = parseLatLng(opt.to, true);
+            
             if ('string' === typeof opt.travel) {
                 if (opt.travel.length) {
                     request.travelMode = google.maps.TravelMode[opt.travel.toUpperCase()];
                 }
             }
             panel = $(undefined !== opt.panel ? opt.panel : null);
-
             if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypoints.push({
-                        'location': opt.waypoint[i].toString(),
+                        'location': parseLatLng(opt.waypoint[i], true),
                         'stopover': true
                     });
                 }
@@ -993,7 +1006,7 @@
             if (undefined !== request.origin && undefined !== request.destination) {
                 directionsService.route(request, function (response, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
-                        if (undefined !== opt.autoViewport) {
+                        if (_hasOwnProperty(opt, 'autoViewport')) {
                             directionsDisplay.setOptions({
                                 'preserveViewport': false === opt.autoViewport ? true : false
                             });
@@ -1046,7 +1059,9 @@
                     var i = 0,
                         m = {};
                     // Close all infoWindows if `infoWindowAutoClose` was true.
-                    if (true === self.options.infoWindowAutoClose) {
+                    if (_hasOwnProperty(self.options, 'infoWindowAutoClose') &&
+                        true === self.options.infoWindowAutoClose
+                    ) {
                         for (i = 0; i < self._markers.length; i += 1) {
                             m = self._markers[i];
                             if (undefined !== m.infoWindow) {
@@ -1079,37 +1094,26 @@
          */
         panto: function (addr) {
             var self = this,
+                loc = '',
                 latlng = '',
                 geocoder = {},
                 m = self.map;
             if (_hasOwnProperty(self, 'map')) {
                 if (null !== m && undefined !== m) {
+                    loc = parseLatLng(addr, true);
                     if ('string' === typeof addr) {
-                        if (-1 !== addr.indexOf(',')) {
-                            latlng = 'loc: ' + addr;
-                        }
                         geocoder = new google.maps.Geocoder();
                         geocoder.geocode({'address': addr}, function (results, status) {
                             if (status === google.maps.GeocoderStatus.OK) {
-                                if ($.isFunction(m.panTo) && undefined !== results[0]) {
+                                if ('function' === typeof m.panTo && undefined !== results[0]) {
                                     m.panTo(results[0].geometry.location);
                                 }
                             }
                         });
                         return;
-                    } else {
-                        if ('[object Array]' === Object.prototype.toString.call(addr)) {
-                            if (2 === addr.length) {
-                                latlng = new google.maps.LatLng(addr[0], addr[1]);
-                            }
-                        } else if (_hasOwnProperty(addr, 'lat') && _hasOwnProperty(addr, 'lng')) {
-                            latlng = new google.maps.LatLng(addr.lat, addr.lng);
-                        } else if (_hasOwnProperty(addr, 'x') && _hasOwnProperty(addr, 'y')) {
-                            latlng = new google.maps.LatLng(addr.x, addr.y);
-                        }
-                        if ($.isFunction(m.panTo) && undefined !== latlng) {
-                            m.panTo(latlng);
-                        }
+                    }
+                    if ('function' === typeof m.panTo) {
+                        m.panTo(loc);
                     }
                 }
             }
@@ -1130,7 +1134,7 @@
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
-                     ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
+                     ($.isArray(layer) ? layer : []);
 
             layers = !layers.length ? ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml'] : layers;
 
@@ -1185,14 +1189,6 @@
                             }
                         }
                     } else {
-                        //#!#START STYLES
-                        if (_hasOwnProperty(options, 'styles')) {
-                            console.dir(options);
-                            if ('string' === typeof options.styles) {
-                                options.styles = styles[options.styles];
-                            }
-                        }
-                        //#!#END
                         m.setOptions(options);
                     }
                 }
@@ -1245,40 +1241,37 @@
          */
         init: function () {
             var self = this,
-                geocoder = {};
+                error = {},
+                geocoder = {},
+                msg = '';
 
             if ('string' === typeof self.options.center) {
-                window.setTimeout(function () {
-                    var error = $(self.container),
-                        msg = '';
-                    if (-1 !== self.options.center.indexOf(',')) {
-                        self.options.center = 'loc: ' + self.options.center;
-                    }
-                    geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({'address': self.options.center}, function (results, status) {
-                        try {
-                            if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                                self.init();
-                            } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
-                                self.googleMapOptions
-                                    .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
-                                              results[0].geometry.location :
-                                              '';
-                                self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                                google.maps.event.addListenerOnce(self.map, 'idle', function () {
-                                    self.overlay();
-                                });
-                                // Events binding
-                                self.bindEvents(self.map, self.options.event);
-                            } else {
-                                msg = self.options.notfound.text || status;
-                                error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-                            }
-                        } catch (ignore) {
-                            error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
+                geocoder = new google.maps.Geocoder();
+                geocoder.geocode({'address': self.options.center}, function (results, status) {
+                    try {
+                        if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                            self.init();
+                            return;
+                        } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
+                            self.googleMapOptions
+                                .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
+                                          results[0].geometry.location :
+                                          '';
+                            self.map = new google.maps.Map(self.container, self.googleMapOptions);
+                            google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                                self.overlay();
+                            });
+                            // Events binding
+                            self.bindEvents(self.map, self.options.event);
+                        } else {
+                            msg = self.options.notfound.text || status;
+                            error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
                         }
-                    });
-                }, self.interval);
+                    } catch (ignore) {
+                        error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
+                    }
+                });
+                
             } else {
                 self.map = new google.maps.Map(self.container, self.googleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
