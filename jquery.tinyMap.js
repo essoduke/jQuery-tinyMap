@@ -1,34 +1,1317 @@
-(function(k,q,w,g){function e(b,a){try{return q.hasOwnProperty?b.hasOwnProperty(a.toString()):Object.prototype.hasOwnProperty.call(b,a.toString())}catch(d){}}function n(b){var a=b.css||"";this.setValues(b);this.span=k("<span/>").css({position:"relative",left:"-50%",top:"0","white-space":"nowrap"}).addClass(a);this.div=k("<div/>").css({position:"absolute",display:"none"});this.span.appendTo(this.div)}function s(b,a){e(q,"google")&&(this.markerCluster=this.map=null,this._markers=[],this._labels=[],
-this.container=b,this.options=k.extend({},v,a),this.interval=parseInt(this.options.interval,10)||110,this.googleMapOptions={center:"",control:this.options.control,disableDoubleClickZoom:this.options.disableDoubleClickZoom,disableDefaultUI:this.options.disableDefaultUI,draggable:this.options.draggable,keyboardShortcuts:this.options.keyboardShortcuts,mapTypeId:google.maps.MapTypeId[this.options.mapTypeId.toUpperCase()],mapTypeControl:this.options.mapTypeControl,mapTypeControlOptions:{position:google.maps.ControlPosition[this.options.mapTypeControlOptions.position],
-style:google.maps.MapTypeControlStyle[this.options.mapTypeControlOptions.style.toUpperCase()]},maxZoom:this.options.maxZoom,minZoom:this.options.minZoom,navigationControl:this.options.navigationControl,navigationControlOptions:{position:google.maps.ControlPosition[this.options.navigationControlOptions.position],style:google.maps.NavigationControlStyle[this.options.navigationControlOptions.style.toUpperCase()]},panControl:this.options.panControl,panControlOptions:{position:google.maps.ControlPosition[this.options.panControlOptions.position]},
-rotateControl:this.options.rotateControl,scaleControl:this.options.scaleControl,scaleControlOptions:{position:google.maps.ControlPosition[this.options.scaleControlOptions.position],style:google.maps.ScaleControlStyle[this.options.scaleControlOptions.style.toUpperCase()]},scrollwheel:this.options.scrollwheel,streetViewControl:this.options.streetViewControl,streetViewControlOptions:{position:google.maps.ControlPosition[this.options.streetViewControlOptions.position]},zoom:this.options.zoom,zoomControl:this.options.zoomControl,
-zoomControlOptions:{position:google.maps.ControlPosition[this.options.zoomControlOptions.position],style:google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]}},"[object Array]"===Object.prototype.toString.call(this.options.center)?2===this.options.center.length&&(this.googleMapOptions.center=new google.maps.LatLng(this.options.center[0],this.options.center[1])):e(this.options.center,"x")&&e(this.options.center,"y")?this.googleMapOptions.center=new google.maps.LatLng(this.options.center.x,
-this.options.center.y):e(this.options.center,"lat")&&e(this.options.center,"lng")&&(this.googleMapOptions.center=new google.maps.LatLng(this.options.center.lat,this.options.center.lng)),!0===this.options.disableDefaultUI&&(this.googleMapOptions.mapTypeControl=!1,this.googleMapOptions.navigationControl=!1,this.googleMapOptions.panControl=!1,this.googleMapOptions.rotateControl=!1,this.googleMapOptions.scaleControl=!1,this.googleMapOptions.streetViewControl=!1,this.googleMapOptions.zoomControl=!1),e(this.options,
-"styles")&&("string"===typeof this.options.styles?e(r,this.options.styles)&&(this.googleMapOptions.styles=r[this.options.styles]):"[object Array]"===Object.prototype.toString.call(this.options.styles)&&(this.googleMapOptions.styles=this.options.styles)),k(this.container).html(this.options.loading),this.init())}var v={center:{x:"",y:""},control:!0,disableDoubleClickZoom:!1,disableDefaultUI:!1,draggable:!0,infoWindowAutoClose:!0,keyboardShortcuts:!0,mapTypeControl:!0,mapTypeControlOptions:{position:"TOP_RIGHT",
-style:"DEFAULT"},mapTypeId:"ROADMAP",marker:[],markerFitBounds:!1,markerCluster:!1,maxZoom:null,minZoom:null,panControl:!0,panControlOptions:{position:"LEFT_TOP"},polyline:[],navigationControl:!0,navigationControlOptions:{position:"TOP_LEFT",style:"DEFAULT"},scaleControl:!0,scaleControlOptions:{position:"BOTTOM_LEFT",style:"DEFAULT"},scrollwheel:!0,streetViewControl:!0,streetViewControlOptions:{position:"LEFT_TOP"},zoom:4,zoomControl:!0,zoomControlOptions:{style:"LARGE",position:"LEFT_TOP"},notfound:"\u627e\u4e0d\u5230\u67e5\u8a62\u7684\u5730\u9ede",
-loading:"\u8b80\u53d6\u4e2d&hellip;",kml:{url:"",viewport:!0,infowindow:!1},interval:200,event:null,showStreetView:!1,autoLocation:!1},t=0,u=0,r={},r={greyscale:[{featureType:"all",stylers:[{saturation:-100},{gamma:.5}]}]};n.prototype=new google.maps.OverlayView;n.prototype.onAdd=function(){var b=this.getPanes().overlayLayer;this.div.appendTo(k(b));this.listeners=[google.maps.event.addListener(this,"visible_changed",this.onRemove)]};n.prototype.draw=function(){var b=this.getProjection(),a={};try{a=
-b.fromLatLngToDivPixel(this.get("position")),this.div.css({left:a.x+"px",top:a.y+"px",display:"block"}),this.text&&this.span.html(this.text.toString())}catch(d){}};n.prototype.onRemove=function(){k(this.div).remove()};s.prototype={VERSION:"2.8.8",_polylines:[],_polygons:[],_circles:[],_kmls:[],_directions:[],bounds:new google.maps.LatLngBounds,setZoom:function(b,a){e(a,"zoom")&&b&&b.setZoom(a.zoom)},kml:function(b,a){var d={},c="",d={};a=a?a:this.options;g!==a.kml&&(d={preserveViewport:!0,suppressInfoWindows:!1},
-c="string"===typeof a.kml&&0!==a.kml.length?a.kml:g!==a.kml.url?a.kml.url:"",d=new google.maps.KmlLayer(c,k.extend(d,a.kml)),this._kmls.push(d),d.setMap(b))},direction:function(b,a){var d="";a=a?a:this.options;if(g!==a.direction&&0<a.direction.length)for(d in a.direction)e(a.direction,d)&&g!==a.direction[d]&&this.directionService(a.direction[d])},markers:function(b,a,d){var c="",f=0,h=0,l=[],m=[];a=a?a:this.options;u=t=0;l=this._markers;if((!d||0===l.length)&&g!==a.marker&&0<a.marker.length)for(c in a.marker)e(a.marker,
-c)&&e(a.marker[c],"addr")&&("object"===typeof a.marker[c].addr&&2===a.marker[c].addr.length?this.markerDirect(b,a.marker[c],a):"string"===typeof a.marker[c].addr&&this.markerByGeocoder(b,a.marker[c],a));if("modify"===d)for(m=this._labels,f=0;f<a.marker.length;f+=1)if(g!==a.marker[f].id){for(h=0;h<l.length;h+=1)a.marker[f].id===l[h].id&&g!==a.marker[f].addr&&(l[h].setPosition(new google.maps.LatLng(a.marker[f].addr[0],a.marker[f].addr[1])),"function"===typeof l[f].infoWindow.setContent&&l[h].infoWindow.setContent(a.marker[f].text));
-for(h=0;h<m.length;h+=1)a.marker[f].id===m[h].id&&(e(a.marker[f],"label")&&(m[h].text=a.marker[f].label),m[h].draw())}else"object"===typeof a.marker[f].addr&&2===a.marker[f].addr.length?this.markerDirect(b,a.marker[f]):"string"===typeof a.marker[f].addr&&this.markerByGeocoder(b,a.marker[f]);if(e(a,"markerCluster")&&!0===a.markerCluster&&"function"===typeof MarkerClusterer)return new MarkerClusterer(b,this._markers)},drawPolyline:function(b,a){var d={},c=0,f="",h={},l=0,m=new google.maps.MVCArray,
-k=[],h={},p=[],n={};a=a?a:this.options;if(g!==a.polyline&&g!==a.polyline.coords){for(f in a.polyline.coords)e(a.polyline.coords,f)&&(h=a.polyline.coords,g!==h[f]&&m.push(new google.maps.LatLng(h[f][0],h[f][1])));d=new google.maps.Polyline({strokeColor:a.polyline.color||"#FF0000",strokeOpacity:1,strokeWeight:a.polyline.width||2});this._polylines.push(d);2<m.getLength()&&m.forEach(function(a,b){0<b&&m.getLength()-1>b&&p.push({location:a,stopover:!1})});!0===a.polyline.snap?(h=new google.maps.DirectionsService,
-h.route({origin:m.getAt(0),waypoints:p,destination:m.getAt(m.getLength()-1),travelMode:google.maps.DirectionsTravelMode.DRIVING},function(b,f){if(f===google.maps.DirectionsStatus.OK){c=0;for(l=b.routes[0].overview_path.length;c<l;c+=1)k.push(b.routes[0].overview_path[c]);d.setPath(k);"function"===typeof a.polyline.getDistance&&(n=b.routes[0].legs[0].distance,a.polyline.getDistance.call(this,n))}})):(d.setPath(m),e(google.maps.geometry,"spherical")&&"function"===typeof google.maps.geometry.spherical.computeDistanceBetween&&
-(n=google.maps.geometry.spherical.computeDistanceBetween(m.getAt(0),m.getAt(m.getLength()-1)),"function"===typeof a.polyline.getDistance&&a.polyline.getDistance.call(this,n)));d.setMap(b)}},drawPolygon:function(b,a){var d={},d="",c={},f=[];a=a?a:this.options;if(g!==a.polygon&&g!==a.polygon.coords){for(d in a.polygon.coords)e(a.polygon.coords,d)&&(c=a.polygon.coords,g!==c[d]&&f.push(new google.maps.LatLng(c[d][0],c[d][1])));d=new google.maps.Polygon({path:f,strokeColor:a.polygon.color||"#FF0000",strokeOpacity:1,
-strokeWeight:a.polygon.width||2,fillColor:a.polygon.fillcolor||"#CC0000",fillOpacity:.35});this._polygons.push(d);d.setMap(this.map);k.isFunction(a.polygon.click)&&google.maps.event.addListener(d,"click",a.polygon.click)}},drawCircle:function(b,a){var d=0,c={},c={};a=a?a:this.options;if(g!==a.circle&&0<a.circle.length)for(d=a.circle.length-1;0<=d;d-=1)c=a.circle[d],g!==c.center.x&&g!==c.center.y&&(c=new google.maps.Circle({strokeColor:c.color||"#FF0000",strokeOpacity:c.opacity||.8,strokeWeight:c.width||
-2,fillColor:c.fillcolor||"#FF0000",fillOpacity:c.fillopacity||.35,map:this.map,center:new google.maps.LatLng(c.center.x,c.center.y),radius:c.radius||10,zIndex:100,id:e(a,"id")?a.id:""}),this._circles.push(c),k.isFunction(a.circle[d].click)&&google.maps.event.addListener(c,"click",a.circle[d].click))},overlay:function(){var b=this.map,a=this.options;try{this.kml(b,a),this.direction(b,a),this.markers(b,a),this.drawPolyline(b,a),this.drawPolygon(b,a),this.drawCircle(b,a),this.streetView(b,a),this.geoLocation(b,
-a)}catch(d){console.dir(d)}},markerIcon:function(b){var a={};if(e(b,"icon")){if("string"===typeof b.icon)return b.icon;e(b.icon,"url")&&(a.url=b.icon.url);e(b.icon,"size")&&g!==b.icon.size[0]&&g!==b.icon.size[1]&&(a.scaledSize=new google.maps.Size(b.icon.size[0],b.icon.size[1]));e(b.icon,"anchor")&&g!==b.icon.anchor[0]&&g!==b.icon.anchor[1]&&(a.anchor=new google.maps.Point(b.icon.anchor[0],b.icon.anchor[1]))}return a},markerDirect:function(b,a){var d={},c={},c={},c=e(a,"id")?a.id:"",d=e(a,"title")?
-a.title.toString().replace(/<([^>]+)>/g,""):!1,f=e(a,"text")?a.text.toString():!1,h={map:b,position:new google.maps.LatLng(a.addr[0],a.addr[1]),animation:null,id:c},l=this.markerIcon(a);d&&(h.title=d);f&&(h.text=f,h.infoWindow=new google.maps.InfoWindow({content:f}));if("string"===typeof l||e(l,"url"))h.icon=l;e(a.animation)&&"string"===typeof a.animation&&(h.animation=google.maps.Animation[a.animation.toUpperCase()]);d=new google.maps.Marker(h);this._markers.push(d);e(d,"position")&&(d.getPosition().lat()&&
-d.getPosition().lng()&&this.bounds.extend(d.position),!0===this.options.markerFitBounds&&this._markers.length===this.options.marker.length&&b.fitBounds(this.bounds));!0===this.options.markerCluster&&"function"===typeof MarkerClusterer&&t===this.options.marker.length?this.markerCluster=new MarkerClusterer(b,this._markers):(c={map:b,css:g!==a.css?a.css:"",id:c},"string"===typeof a.label&&0!==a.label.length&&(c.text=a.label,c=new n(c),c.bindTo("position",d,"position"),c.bindTo("text",d,"position"),c.bindTo("visible",
-d),this._labels.push(c)),this.bindEvents(d,a.event))},markerByGeocoder:function(b,a){var d=new google.maps.Geocoder,c=this;e(a,"addr")&&(-1!==a.addr.indexOf(",")&&(a.addr="loc: "+a.addr),d.geocode({address:a.addr},function(d,h){if(h===google.maps.GeocoderStatus.OVER_QUERY_LIMIT)q.setTimeout(function(){c.markerByGeocoder(b,a)},100);else if(h===google.maps.GeocoderStatus.OK){var l={},g={},g={},k=e(a,"id")?a.id:"",l=e(a,"title")?a.title.toString().replace(/<([^>]+)>/g,""):!1,g=e(a,"text")?a.text.toString():
-!1,k={map:b,position:d[0].geometry.location,animation:null,id:k},p=c.markerIcon(a);l&&(k.title=l);g&&(k.text=g,k.infoWindow=new google.maps.InfoWindow({content:g}));if("string"===typeof p||e(p,"url"))k.icon=p;e(a,"animation")&&"string"===typeof a.animation&&(k.animation=google.maps.Animation[a.animation.toUpperCase()]);l=new google.maps.Marker(k);c._markers.push(l);e(l,"position")&&l.getPosition().lat()&&l.getPosition().lng()&&c.bounds.extend(k.position);!0===c.options.markerFitBounds&&c._markers.length===
-c.options.marker.length&&b.fitBounds(c.bounds);e(c.options,"markerCluster")&&"function"===typeof MarkerClusterer&&u===c.options.marker.length?c.markerCluster=new MarkerClusterer(b,c._markers):(g={map:c.map,css:a.css||""},"string"===typeof a.label&&0!==a.label.length&&(g.text=a.label,g=new n(g),g.bindTo("position",l,"position"),g.bindTo("text",l,"position"),g.bindTo("visible",l),c._labels.push(g)),c.bindEvents(l,a.event))}}))},directionService:function(b){var a=[],d=new google.maps.DirectionsService,
-c=new google.maps.DirectionsRenderer,f={travelMode:google.maps.DirectionsTravelMode.DRIVING,optimizeWaypoints:b.optimize||!1},h={},e=0,m=0;"string"===typeof b.from&&(f.origin=b.from);"string"===typeof b.to&&(f.destination=b.to);"string"===typeof b.travel&&b.travel.length&&(f.travelMode=google.maps.TravelMode[b.travel.toUpperCase()]);h=k(g!==b.panel?b.panel:null);if(g!==b.waypoint&&0!==b.waypoint){e=0;for(m=b.waypoint.length;e<m;e+=1)a.push({location:b.waypoint[e].toString(),stopover:!0});f.waypoints=
-a}g!==f.origin&&g!==f.destination&&(d.route(f,function(a,d){d===google.maps.DirectionsStatus.OK&&(g!==b.autoViewport&&c.setOptions({preserveViewport:!1===b.autoViewport?!0:!1}),c.setDirections(a))}),c.setMap(this.map),h.length&&c.setPanel(h.get(0)),this._directions.push(c))},bindEvents:function(b,a){var d=this,c={};switch(typeof a){case "function":google.maps.event.addListener(b,"click",a);break;case "object":for(c in a)"function"===typeof a[c]?google.maps.event.addListener(b,c,a[c]):e(a[c],"func")&&
-"function"===typeof a[c].func?e(a[c],"once")&&!0===a[c].once?google.maps.event.addListenerOnce(b,c,a[c].func):google.maps.event.addListener(b,c,a[c].func):"function"===typeof a[c]&&google.maps.event.addListener(b,c,a[c])}e(b,"infoWindow")&&google.maps.event.addListener(b,"click",function(){var a=0,c={};if(!0===d.options.infoWindowAutoClose)for(a=0;a<d._markers.length;a+=1)c=d._markers[a],g!==c.infoWindow&&"function"===typeof c.infoWindow.close&&c.infoWindow.close();b.infoWindow.open(d.map,b)})},streetView:function(b,
-a){var d=b.getStreetView();d.setPosition(b.getCenter());e(a,"showStreetView")&&d.setVisible(a.showStreetView)},panto:function(b){var a="",d={},c=this.map;e(this,"map")&&null!==c&&g!==c&&("string"===typeof b?(-1!==b.indexOf(",")&&(a="loc: "+b),d=new google.maps.Geocoder,d.geocode({address:b},function(a,b){b===google.maps.GeocoderStatus.OK&&k.isFunction(c.panTo)&&g!==a[0]&&c.panTo(a[0].geometry.location)})):("[object Array]"===Object.prototype.toString.call(b)?2===b.length&&(a=new google.maps.LatLng(b[0],
-b[1])):e(b,"lat")&&e(b,"lng")?a=new google.maps.LatLng(b.lat,b.lng):e(b,"x")&&e(b,"y")&&(a=new google.maps.LatLng(b.x,b.y)),k.isFunction(c.panTo)&&g!==a&&c.panTo(a)))},clear:function(b){for(var a=[],d="",c=0,f=0,a="string"===typeof b?b.split(","):"[object Array]"===Object.prototype.toString.call(b)?b:[],a=a.length?a:"marker circle polygon polyline direction kml".split(" "),c=0;c<a.length;c+=1)if(d="_"+k.trim(a[c].toString().toLowerCase())+"s",g!==this[d]&&this[d].length){for(f=0;f<this[d].length;f+=
-1)this.map===this[d][f].getMap()&&(this[d][f].set("visible",!1),this[d][f].set("directions",null),this[d][f].setMap(null));this[d].length=0}},modify:function(b){var a=[],d=[["kml","kml"],["marker","markers"],["direction","direction"],["polyline","drawPolyline"],["polygon","drawPolygon"],["circle","drawCircle"],["zoom","setZoom"],["showStreetView","streetView"]],c=0,f=this.map;if(g!==b){for(c=0;c<d.length;c+=1)e(b,d[c][0])&&a.push(d[c][1]);if(null!==f)if(a.length)for(c=0;c<a.length;c+=1){if("function"===
-typeof this[a[c]])this[a[c]](f,b,"modify")}else e(b,"styles")&&(console.dir(b),"string"===typeof b.styles&&(b.styles=r[b.styles])),f.setOptions(b)}},geoLocation:function(b,a){var d={maximumAge:6E5,timeout:3E3,enableHighAccuracy:!1},c=navigator.geolocation;c&&!0===a.autoLocation&&c.getCurrentPosition(function(a){a&&b.panTo(new google.maps.LatLng(a.coords.latitude,a.coords.longitude))},function(a){},d)},init:function(){var b=this,a={};"string"===typeof b.options.center?q.setTimeout(function(){var d=
-k(b.container),c="";-1!==b.options.center.indexOf(",")&&(b.options.center="loc: "+b.options.center);a=new google.maps.Geocoder;a.geocode({address:b.options.center},function(a,e){try{e===google.maps.GeocoderStatus.OVER_QUERY_LIMIT?b.init():e===google.maps.GeocoderStatus.OK&&0!==a.length?(b.googleMapOptions.center=e===google.maps.GeocoderStatus.OK&&0!==a.length?a[0].geometry.location:"",b.map=new google.maps.Map(b.container,b.googleMapOptions),google.maps.event.addListenerOnce(b.map,"idle",function(){b.overlay()}),
-b.bindEvents(b.map,b.options.event)):(c=b.options.notfound.text||e,d.html(c.replace(/</g,"&lt;").replace(/>/g,"&gt;")))}catch(k){d.html((g!==k.message?k.message:k.description).toString())}})},b.interval):(b.map=new google.maps.Map(b.container,b.googleMapOptions),google.maps.event.addListenerOnce(b.map,"idle",function(){b.overlay()}),b.bindEvents(b.map,b.options.event))}};k.fn.tinyMap=function(b){var a=arguments,d=[],c={};return"string"===typeof b?(this.each(function(){c=k.data(this,"tinyMap");c instanceof
-s&&"function"===typeof c[b]&&(d=c[b].apply(c,Array.prototype.slice.call(a,1)))}),g!==d?d:this):this.each(function(){k.data(this,"tinyMap")||k.data(this,"tinyMap",new s(this,b))})}})(jQuery,window,document);
+/*jshint undef:false, unused:false */
+/**
+ * MIT License
+ * Copyright(c) 2014 essoduke.org
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED 『AS IS』, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * jQuery tinyMap 輕鬆建立 Google Maps 的 jQuery 擴充套件
+ * 短小精幹！拯救你免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
+ *
+ * http://app.essoduke.org/tinyMap/
+ *
+ * @author: Essoduke Chang
+ * @version: 2.8.8
+ *
+ * [Changelog]
+ * 新增 styles 參數 (string|Array) 可自訂地圖的視覺化選項。目前內建 'greyscale' 灰階可用。
+ *
+ * Release 2014.08.20.111231
+ */
+;(function ($, window, document, undefined) {
+
+    'use strict';
+
+    var pluginName = 'tinyMap',
+    // Plugin default settings
+        defaults = {
+            'center': {x: '', y: ''},
+            'control': true,
+            'disableDoubleClickZoom': false, //2.6.4
+            'disableDefaultUI': false, //2.5.1
+            'draggable': true,
+            'infoWindowAutoClose':  true, //2.8.4
+            'keyboardShortcuts': true,
+            'mapTypeControl': true,
+            'mapTypeControlOptions': {
+                'position': 'TOP_RIGHT',
+                'style': 'DEFAULT'
+            },
+            'mapTypeId': 'ROADMAP',
+            'marker': [],
+            'markerFitBounds': false,
+            'markerCluster': false, //2.6.0
+            'maxZoom': null, //2.5.1
+            'minZoom': null, //2.5.1
+            'panControl': true, //2.5.1
+            'panControlOptions': {
+                'position': 'LEFT_TOP'
+            },
+            'polyline': [], // 2.8.0 update
+            'navigationControl': true,
+            'navigationControlOptions': {
+                'position': 'TOP_LEFT',
+                'style': 'DEFAULT'
+            },
+            'scaleControl': true,
+            'scaleControlOptions': {
+                'position': 'BOTTOM_LEFT',
+                'style': 'DEFAULT'
+            },
+            'scrollwheel': true,
+            'streetViewControl': true, //2.5.1
+            'streetViewControlOptions': {
+                'position': 'LEFT_TOP'
+            },
+            'zoom': 4,
+            'zoomControl': true,
+            'zoomControlOptions': {
+                'style': 'LARGE',
+                'position': 'LEFT_TOP'
+            },
+            'notfound': '找不到查詢的地點',
+            'loading': '讀取中&hellip;',
+            'kml': {
+                'url': '',
+                'viewport': true,
+                'infowindow': false
+            },
+            'interval': 200, //2.5.0
+            'event': null, //2.7.0
+            'showStreetView': false, // 2.7.5
+            'autoLocation': false //2.8.2
+        },
+        _directMarkersLength = 0,
+        _geoMarkersLength = 0,
+        styles = {}; //2.8.8
+
+    //#!#START STYLES
+    styles = {
+        // Grey Scale
+        'greyscale': [{
+            'featureType': 'all',
+            'stylers': [{
+                'saturation': -100
+            }, {
+                'gamma': 0.5
+            }]
+        }]
+    };
+    //#!#END
+
+    // Timeout delegate
+    function setTimeout (func, wait) {
+        var args = Array.prototype.slice.call(arguments, 2);
+        return window.setTimeout(function () {
+            return func.apply(null, args);
+        }, wait);
+    }
+
+    /**
+     * _hasOwnProperty for compatibility IE
+     * @param {Object} obj Object
+     * @param {string} property Property name
+     * @return {boolean}
+     * @version 2.4.3
+     */
+    function _hasOwnProperty (obj, property) {
+        try {
+            return (!window.hasOwnProperty) ?
+                   Object.prototype.hasOwnProperty.call(obj, property.toString()) :
+                   obj.hasOwnProperty(property.toString());
+        } catch (ignore) {
+        }
+    }
+    //#!#START LABEL
+    /**
+     * Label in Maps
+     * @param {Object} options Label options
+     * @constructor
+     */
+    function Label (options) {
+        var css = (options.css || '');
+        this.setValues(options);
+        this.span = $('<span/>').css({
+            'position': 'relative',
+            'left': '-50%',
+            'top': '0',
+            'white-space': 'nowrap'
+        }).addClass(css);
+        this.div = $('<div/>').css({
+            'position': 'absolute',
+            'display': 'none'
+        });
+        this.span.appendTo(this.div);
+    }
+    /**
+     * Inherit from Google Maps OverlayView
+     * @this {Label}
+     */
+    Label.prototype = new google.maps.OverlayView();
+    /**
+     * binding the customize events to map
+     * @this {Label}
+     */
+    Label.prototype.onAdd = function () {
+        var self = this,
+            pane = self.getPanes().overlayLayer;
+        self.div.appendTo($(pane));
+        self.listeners = [
+            google.maps.event.addListener(self, 'visible_changed', self.onRemove)
+        ];
+    };
+    /**
+     * Label draw to map
+     * @this {Label}
+     */
+    Label.prototype.draw = function () {
+        var projection = this.getProjection(),
+            position   = {};
+
+        try {
+            position = projection.fromLatLngToDivPixel(this.get('position'));
+            this.div.css({
+                'left': position.x + 'px',
+                'top': position.y + 'px',
+                'display': 'block'
+            });
+            if (this.text) {
+                this.span.html(this.text.toString());
+            }
+        } catch (ignore) {
+        }
+    };
+    /**
+     * Label remove from the map
+     * @this {Label}
+     */
+    Label.prototype.onRemove = function () {
+        $(this.div).remove();
+    };
+    //#!#END
+
+    /**
+     * tinyMap Constructor
+     * @param {Object} container HTML element
+     * @param {(Object|string)} options User settings
+     * @constructor
+     */
+    function TinyMap (container, options) {
+        // Make sure the API has loaded.
+        if (!_hasOwnProperty(window, 'google')) {
+            return;
+        }
+        /**
+         * Map instance
+         * @type {Object}
+         */
+        this.map = null;
+        /**
+         * Map marker cluster
+         * @type {Object}
+         */
+        this.markerCluster = null;
+        /**
+         * Map markers
+         * @type {Object}
+         */
+        this._markers = [];
+        /**
+         * Map Labels
+         * @type {Object}
+         */
+        this._labels = [];
+        /**
+         * DOM of selector
+         * @type {Object}
+         */
+        this.container = container;
+        /**
+         * Merge the options
+         * @type {Object}
+         */
+        this.options = $.extend({}, defaults, options);
+        /**
+         * Interval for geocoder's query interval
+         * @type {number}
+         */
+        this.interval = parseInt(this.options.interval, 10) || 110;
+        /**
+         * Google Maps options
+         * @type {Object}
+         */
+        this.googleMapOptions = {
+            'center': '',
+            'control': this.options.control,
+            'disableDoubleClickZoom': this.options.disableDoubleClickZoom,
+            'disableDefaultUI': this.options.disableDefaultUI,
+            'draggable': this.options.draggable,
+            'keyboardShortcuts': this.options.keyboardShortcuts,
+            'mapTypeId': google.maps.MapTypeId[this.options.mapTypeId.toUpperCase()],
+            'mapTypeControl': this.options.mapTypeControl,
+            'mapTypeControlOptions': {
+                'position': google.maps.ControlPosition[this.options.mapTypeControlOptions.position],
+                'style': google.maps.MapTypeControlStyle[this.options.mapTypeControlOptions.style.toUpperCase()]
+            },
+            'maxZoom': this.options.maxZoom,
+            'minZoom': this.options.minZoom,
+            'navigationControl': this.options.navigationControl,
+            'navigationControlOptions': {
+                'position': google.maps.ControlPosition[this.options.navigationControlOptions.position],
+                'style': google.maps.NavigationControlStyle[this.options.navigationControlOptions.style.toUpperCase()]
+            },
+            'panControl': this.options.panControl,
+            'panControlOptions': {
+                'position': google.maps.ControlPosition[this.options.panControlOptions.position]
+            },
+            'rotateControl': this.options.rotateControl,
+            'scaleControl': this.options.scaleControl,
+            'scaleControlOptions': {
+                'position': google.maps.ControlPosition[this.options.scaleControlOptions.position],
+                'style': google.maps.ScaleControlStyle[this.options.scaleControlOptions.style.toUpperCase()]
+            },
+            'scrollwheel': this.options.scrollwheel,
+            'streetViewControl': this.options.streetViewControl,
+            'streetViewControlOptions': {
+                'position': google.maps.ControlPosition[this.options.streetViewControlOptions.position]
+            },
+            'zoom': this.options.zoom,
+            'zoomControl': this.options.zoomControl,
+            'zoomControlOptions': {
+                'position': google.maps.ControlPosition[this.options.zoomControlOptions.position],
+                'style': google.maps.ZoomControlStyle[this.options.zoomControlOptions.style.toUpperCase()]
+            }
+        };
+
+        // tinyMap.center parse
+        // Array
+        if (Object.prototype.toString.call(this.options.center) === '[object Array]') {
+            if (2 === this.options.center.length) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center[0],
+                    this.options.center[1]
+                );
+            }
+        } else {
+        // Object
+            if (_hasOwnProperty(this.options.center, 'x') && _hasOwnProperty(this.options.center, 'y')) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center.x,
+                    this.options.center.y
+                );
+            } else if (_hasOwnProperty(this.options.center, 'lat') && _hasOwnProperty(this.options.center, 'lng')) {
+                this.googleMapOptions.center = new google.maps.LatLng(
+                    this.options.center.lat,
+                    this.options.center.lng
+                );
+            }
+        }
+
+        if (true === this.options.disableDefaultUI) {
+            this.googleMapOptions.mapTypeControl = false;
+            this.googleMapOptions.navigationControl = false;
+            this.googleMapOptions.panControl = false;
+            this.googleMapOptions.rotateControl = false;
+            this.googleMapOptions.scaleControl = false;
+            this.googleMapOptions.streetViewControl = false;
+            this.googleMapOptions.zoomControl = false;
+        }
+
+        //#!#START STYLES
+        if (_hasOwnProperty(this.options, 'styles')) {
+            if ('string' === typeof this.options.styles) {
+                if (_hasOwnProperty(styles, this.options.styles)) {
+                    this.googleMapOptions.styles = styles[this.options.styles];
+                }
+            } else if ('[object Array]' === Object.prototype.toString.call(this.options.styles)) {
+                this.googleMapOptions.styles = this.options.styles;
+            }
+        }
+        //#!#END
+        $(this.container).html(this.options.loading);
+        this.init();
+    }
+    /**
+     * tinyMap prototype
+     */
+    TinyMap.prototype = {
+
+        VERSION: '2.8.8',
+
+        // Layers container
+        _polylines: [],
+        _polygons: [],
+        _circles: [],
+        _kmls: [],
+        _directions: [],
+
+        // Google Maps LatLngClass
+        bounds: new google.maps.LatLngBounds(),
+        /**
+         * Set zoom level of the map
+         * @param {Object} map Map instance
+         * @param {Object} opt tinyMap options
+         */
+        setZoom: function (map, opt) {
+            if (_hasOwnProperty(opt, 'zoom') && map) {
+                map.setZoom(opt.zoom);
+            }
+        },
+        //#!#START KML
+        /**
+         * KML overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt KML options
+         */
+        kml: function (map, opt) {
+            var kml_opt = {},
+                kml_url = '',
+                kml = {};
+            opt = (!opt ? this.options : opt);
+            if (undefined !== opt.kml) {
+                kml_opt = {
+                    preserveViewport: true,
+                    suppressInfoWindows: false
+                };
+                kml_url = ('string' === typeof opt.kml && 0 !== opt.kml.length) ?
+                          opt.kml :
+                          (undefined !== opt.kml.url ? opt.kml.url : '');
+                kml = new google.maps.KmlLayer(kml_url, $.extend(kml_opt, opt.kml));
+                this._kmls.push(kml);
+                kml.setMap(map);
+            }
+        },
+        //#!#END
+        //#!#START DIRECTION
+        /**
+         * Direction overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt Direction options
+         */
+        direction: function (map, opt) {
+            var d = '';
+            opt = !opt ? this.options : opt;
+            if (undefined !== opt.direction && 0 < opt.direction.length) {
+                for (d in opt.direction) {
+                    if (_hasOwnProperty(opt.direction, d)) {
+                        if (undefined !== opt.direction[d]) {
+                            this.directionService(opt.direction[d]);
+                        }
+                    }
+                }
+            }
+        },
+        //#!#END
+        //#!#START MARKER
+        /**
+         * Markers overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt Markers options
+         */
+        markers: function (map, opt, source) {
+            var m = '',
+                i = 0,
+                j = 0,
+                markers = [],
+                labels  = [];
+                
+            opt = !opt ? this.options : opt;
+
+            _directMarkersLength = 0;
+            _geoMarkersLength = 0;
+            
+            markers = this._markers;
+
+            // For first initialize of instance.
+            if (!source || 0 === markers.length) {
+                if (undefined !== opt.marker) {
+                    if (0 < opt.marker.length) {
+                        for (m in opt.marker) {
+                            if (_hasOwnProperty(opt.marker, m) &&
+                                _hasOwnProperty(opt.marker[m], 'addr')
+                            ) {
+                                if (
+                                    'object' === typeof opt.marker[m].addr &&
+                                    2 === opt.marker[m].addr.length
+                                ) {
+                                    this.markerDirect(map, opt.marker[m], opt);
+                                } else if ('string' === typeof opt.marker[m].addr) {
+                                    this.markerByGeocoder(map, opt.marker[m], opt);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Put existed markers to the new position
+             */
+            if ('modify' === source) {
+
+                labels  = this._labels;
+
+                for (i = 0; i < opt.marker.length; i += 1) {
+                    if (undefined !== opt.marker[i].id) {
+                        for (j = 0; j < markers.length; j += 1) {
+                            if (opt.marker[i].id === markers[j].id &&
+                                undefined !== opt.marker[i].addr
+                            ) {
+                                markers[j].setPosition(
+                                    new google.maps.LatLng(
+                                        opt.marker[i].addr[0],
+                                        opt.marker[i].addr[1]
+                                    )
+                                );
+                                if ('function' === typeof markers[i].infoWindow.setContent) {
+                                    markers[j].infoWindow.setContent(opt.marker[i].text);
+                                }
+                                continue;
+                            }
+                        }
+                        for (j = 0; j < labels.length; j += 1) {
+                            if (opt.marker[i].id === labels[j].id) {
+                                if (_hasOwnProperty(opt.marker[i], 'label')) {
+                                    labels[j].text = opt.marker[i].label;
+                                }
+                                labels[j].draw();
+                                continue;
+                            }
+                        }
+                    // Insert the new marker if it is not existed.
+                    } else {
+                        if (
+                            'object' === typeof opt.marker[i].addr &&
+                            2 === opt.marker[i].addr.length
+                        ) {
+                            this.markerDirect(map, opt.marker[i]);
+                        } else if ('string' === typeof opt.marker[i].addr) {
+                            this.markerByGeocoder(map, opt.marker[i]);
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Apply marker cluster.
+             * Require markerclusterer.js
+             * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+             */
+            if (_hasOwnProperty(opt, 'markerCluster') && true === opt.markerCluster) {
+                if ('function' === typeof MarkerClusterer) {
+                    return new MarkerClusterer(map, this._markers);
+                }
+            }
+        },
+        //#!#END
+        //#!#START POLYLINE
+        /**
+         * Polyline overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt Polyline options
+         */
+        drawPolyline: function (map, opt) {
+            var polyline = {},
+                i = 0,
+                p = '',
+                c = {},
+                len = 0,
+                coords = new google.maps.MVCArray(),
+                path   = [],
+                service = {},
+                waypoints = [],
+                distance = {};
+
+            opt = !opt ? this.options : opt;
+            if (undefined !== opt.polyline) {
+                if (undefined !== opt.polyline.coords) {
+                    for (p in opt.polyline.coords) {
+                        if (_hasOwnProperty(opt.polyline.coords, p)) {
+                            c = opt.polyline.coords;
+                            if (undefined !== c[p]) {
+                                coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
+                            }
+                        }
+                    }
+
+                    polyline = new google.maps.Polyline({
+                        'strokeColor': opt.polyline.color || '#FF0000',
+                        'strokeOpacity': 1.0,
+                        'strokeWeight': opt.polyline.width || 2
+                    });
+
+                    this._polylines.push(polyline);
+
+                    if (2 < coords.getLength()) {
+                        coords.forEach(function (loc, index) {
+                            if (0 < index && (coords.getLength() - 1 > index)) {
+                                waypoints.push({
+                                    'location': loc,
+                                    'stopover': false
+                                });
+                            }
+                        });
+                    }
+
+                    if (true === opt.polyline.snap) {
+                        service = new google.maps.DirectionsService();
+                        service.route({
+                            'origin': coords.getAt(0),
+                            'waypoints': waypoints,
+                            'destination': coords.getAt(coords.getLength() - 1),
+                            'travelMode': google.maps.DirectionsTravelMode.DRIVING
+                        }, function (result, status) {
+                            if (status === google.maps.DirectionsStatus.OK) {
+                                for (i = 0, len = result.routes[0].overview_path.length; i < len; i += 1) {
+                                    path.push(result.routes[0].overview_path[i]);
+                                }
+                                polyline.setPath(path);
+                                if ('function' === typeof opt.polyline.getDistance) {
+                                    distance = result.routes[0].legs[0].distance;
+                                    opt.polyline.getDistance.call(this, distance);
+                                }
+                            }
+                        });
+                    } else {
+                        polyline.setPath(coords);
+                        if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
+                            if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+                                distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
+                                if ('function' === typeof opt.polyline.getDistance) {
+                                    opt.polyline.getDistance.call(this, distance);
+                                }
+                            }
+                        }
+                    }
+                    polyline.setMap(map);
+                }
+            }
+        },
+        //#!#END
+        //#!#START POLYGON
+        /**
+         * Polygon overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt Polygon options
+         */
+        drawPolygon: function (map, opt) {
+            var polygon = {},
+                p = '',
+                c = {},
+                coords = [];
+            opt = !opt ? this.options : opt;
+            if (undefined !== opt.polygon) {
+                if (undefined !== opt.polygon.coords) {
+                    for (p in opt.polygon.coords) {
+                        if (_hasOwnProperty(opt.polygon.coords, p)) {
+                            c = opt.polygon.coords;
+                            if (undefined !== c[p]) {
+                                coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
+                            }
+                        }
+                    }
+                    polygon = new google.maps.Polygon({
+                        'path': coords,
+                        'strokeColor': opt.polygon.color || '#FF0000',
+                        'strokeOpacity': 1.0,
+                        'strokeWeight': opt.polygon.width || 2,
+                        'fillColor': opt.polygon.fillcolor || '#CC0000',
+                        'fillOpacity': 0.35
+                    });
+                    this._polygons.push(polygon);
+                    polygon.setMap(this.map);
+                    if ($.isFunction(opt.polygon.click)) {
+                        google.maps.event.addListener(polygon, 'click', opt.polygon.click);
+                    }
+                }
+            }
+        },
+        //#!#END
+        //#!#START CIRCLE
+        /**
+         * Circle overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt Circle options
+         */
+        drawCircle: function (map, opt) {
+            var c = 0,
+                circle = {},
+                circles = {};
+            opt = !opt ? this.options : opt;
+            if (undefined !== opt.circle && 0 < opt.circle.length) {
+                for (c = opt.circle.length - 1; c >= 0; c -= 1) {
+                    circle = opt.circle[c];
+                    if (undefined !== circle.center.x && undefined !== circle.center.y) {
+                        circles = new google.maps.Circle({
+                            'strokeColor': circle.color || '#FF0000',
+                            'strokeOpacity': circle.opacity || 0.8,
+                            'strokeWeight': circle.width || 2,
+                            'fillColor': circle.fillcolor || '#FF0000',
+                            'fillOpacity': circle.fillopacity || 0.35,
+                            'map': this.map,
+                            'center': new google.maps.LatLng(circle.center.x, circle.center.y),
+                            'radius': circle.radius || 10,
+                            'zIndex': 100,
+                            'id' : _hasOwnProperty(opt, 'id') ? opt.id : ''
+                        });
+                        this._circles.push(circles);
+                        if ($.isFunction(opt.circle[c].click)) {
+                            google.maps.event.addListener(circles, 'click', opt.circle[c].click);
+                        }
+                    }
+                }
+            }
+        },
+        //#!#END
+        /**
+         * Overlay process
+         * @this {tinyMap}
+         */
+        overlay: function () {
+            var map = this.map,
+                opt = this.options;
+            try {
+                //#!#START KML
+                // kml overlay
+                this.kml(map, opt);
+                //#!#END
+                //#!#START DIRECTION
+                // direction overlay
+                this.direction(map, opt);
+                //#!#END
+                //#!#START MARKER
+                // markers overlay
+                this.markers(map, opt);
+                //#!#END
+                //#!#START POLYLINE
+                // polyline overlay
+                this.drawPolyline(map, opt);
+                //#!#END
+                //#!#START POLYGON
+                // polygon overlay
+                this.drawPolygon(map, opt);
+                //#!#END
+                //#!#START CIRCLE
+                // circle overlay
+                this.drawCircle(map, opt);
+                //#!#END
+                // StreetView service
+                this.streetView(map, opt);
+                // GeoLocation
+                this.geoLocation(map, opt);
+            } catch (ignore) {
+                console.dir(ignore);
+            }
+        },
+        //#!#START MARKER
+        /**
+         * Build the icon options of marker
+         * @param {Object} opt Marker option
+         * @this {tinyMap}
+         */
+        markerIcon: function (opt) {
+            var icons = {};
+            if (_hasOwnProperty(opt, 'icon')) {
+
+                if ('string' === typeof opt.icon) {
+                    return opt.icon;
+                }
+                if (_hasOwnProperty(opt.icon, 'url')) {
+                    icons.url = opt.icon.url;
+                }
+                if (_hasOwnProperty(opt.icon, 'size')) {
+                    if (undefined !== opt.icon.size[0] &&
+                        undefined !== opt.icon.size[1]
+                    ) {
+                        icons.scaledSize = new google.maps.Size(
+                            opt.icon.size[0],
+                            opt.icon.size[1]
+                        );
+                    }
+                }
+                if (_hasOwnProperty(opt.icon, 'anchor')) {
+                    if (undefined !== opt.icon.anchor[0] &&
+                        undefined !== opt.icon.anchor[1]
+                    ) {
+                        icons.anchor = new google.maps.Point(
+                            opt.icon.anchor[0],
+                            opt.icon.anchor[1]
+                        );
+                    }
+                }
+            }
+            return icons;
+        },
+
+        /**
+         * Set a marker directly by latitude and longitude
+         * @param {Object} opt Options
+         * @this {tinyMap}
+         */
+        markerDirect: function (map, opt) {
+            var self     = this,
+                marker   = {},
+                labelOpt = {},
+                label    = {},
+                id       = _hasOwnProperty(opt, 'id') ? opt.id : '',
+                title    = _hasOwnProperty(opt, 'title') ?
+                           opt.title.toString().replace(/<([^>]+)>/g, '') :
+                           false,
+                content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
+
+                markerOptions = {
+                    'map': map,
+                    'position': new google.maps.LatLng(opt.addr[0], opt.addr[1]),
+                    'animation': null,
+                    'id': id
+                },
+                icons = self.markerIcon(opt);
+
+            if (title) {
+                markerOptions.title = title;
+            }
+
+            if (content) {
+                markerOptions.text = content;
+                markerOptions.infoWindow = new google.maps.InfoWindow({
+                    'content': content
+                });
+            }
+
+            if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
+                markerOptions.icon = icons;
+            }
+
+            if (_hasOwnProperty(opt.animation)) {
+                if ('string' === typeof opt.animation) {
+                    markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
+                }
+            }
+
+            marker = new google.maps.Marker(markerOptions);
+            self._markers.push(marker);
+
+            // Apply marker fitbounds
+            if (_hasOwnProperty(marker, 'position')) {
+                if (marker.getPosition().lat() && marker.getPosition().lng()) {
+                    self.bounds.extend(marker.position);
+                }
+                if (true === self.options.markerFitBounds) {
+                    // Make sure fitBounds call after the last marker created.
+                    if (self._markers.length === self.options.marker.length) {
+                        map.fitBounds(self.bounds);
+                    }
+                }
+            }
+
+            /**
+             * Apply marker cluster.
+             * Require markerclusterer.js
+             * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+             */
+            if (true === self.options.markerCluster) {
+                if ('function' === typeof MarkerClusterer) {
+                    if (_directMarkersLength === self.options.marker.length) {
+                        self.markerCluster = new MarkerClusterer(map, self._markers);
+                        return;
+                    }
+                }
+            }
+
+            labelOpt = {
+                map: map,
+                css: undefined !== opt.css ? opt.css : '',
+                id:  id
+            };
+
+            if ('string' === typeof opt.label && 0 !== opt.label.length) {
+                labelOpt.text = opt.label;
+                label = new Label(labelOpt);
+                label.bindTo('position', marker, 'position');
+                label.bindTo('text', marker, 'position');
+                label.bindTo('visible', marker);
+                this._labels.push(label);
+            }
+            self.bindEvents(marker, opt.event);
+        },
+        /**
+         * Set a marker by Geocoder service
+         * @param {Object} opt Options
+         * @this {tinyMap}
+         */
+        markerByGeocoder: function (map, opt) {
+            var geocoder = new google.maps.Geocoder(),
+                self = this;
+
+            if (!_hasOwnProperty(opt, 'addr')) {
+                return;
+            }
+
+            if (-1 !== opt.addr.indexOf(',')) {
+				opt.addr = 'loc: ' + opt.addr;
+			}
+
+            geocoder.geocode({'address': opt.addr}, function (results, status) {
+                // If exceeded, call it later;
+                if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                    window.setTimeout(function () {
+                        self.markerByGeocoder(map, opt);
+                    }, 100);
+                } else if (status === google.maps.GeocoderStatus.OK) {
+                    var marker = {},
+                        labelOpt = {},
+                        label = {},
+                        id    = _hasOwnProperty(opt, 'id') ? opt.id : '',
+                        title = _hasOwnProperty(opt, 'title') ?
+                                opt.title.toString().replace(/<([^>]+)>/g, '') :
+                                false,
+                        content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
+                        markerOptions = {
+                            'map': map,
+                            'position': results[0].geometry.location,
+                            'animation': null,
+                            'id': id
+                        },
+                        icons = self.markerIcon(opt);
+
+                    if (title) {
+                        markerOptions.title = title;
+                    }
+                    if (content) {
+                        markerOptions.text = content;
+                        markerOptions.infoWindow = new google.maps.InfoWindow({
+                            'content': content
+                        });
+                    }
+                    if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
+                        markerOptions.icon = icons;
+                    }
+
+                    if (_hasOwnProperty(opt, 'animation')) {
+                        if ('string' === typeof opt.animation) {
+                            markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
+                        }
+                    }
+
+                    marker = new google.maps.Marker(markerOptions);
+                    self._markers.push(marker);
+
+                    // Apply marker fitbounds
+                    if (_hasOwnProperty(marker, 'position')) {
+                        if (marker.getPosition().lat() && marker.getPosition().lng()) {
+                            self.bounds.extend(markerOptions.position);
+                        }
+                    }
+                    if (true === self.options.markerFitBounds) {
+                        // Make sure fitBounds call after the last marker created.
+                        if (self._markers.length === self.options.marker.length) {
+                            map.fitBounds(self.bounds);
+                        }
+                    }
+                    /**
+                     * Apply marker cluster.
+                     * Require markerclusterer.js
+                     * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+                     */
+                    if (_hasOwnProperty(self.options, 'markerCluster')) {
+                        if ('function' === typeof MarkerClusterer) {
+                            if (_geoMarkersLength === self.options.marker.length) {
+                                self.markerCluster = new MarkerClusterer(map, self._markers);
+                                return;
+                            }
+                        }
+                    }
+
+                    labelOpt = {
+                        map: self.map,
+                        css: opt.css || ''
+                    };
+                    if ('string' === typeof opt.label && 0 !== opt.label.length) {
+                        labelOpt.text = opt.label;
+                        label = new Label(labelOpt);
+                        label.bindTo('position', marker, 'position');
+                        label.bindTo('text', marker, 'position');
+                        label.bindTo('visible', marker);
+                        self._labels.push(label);
+                    }
+                    self.bindEvents(marker, opt.event);
+                }
+            });
+        },
+        //#!#END
+        //#!#START DIRECTION
+        /**
+         * Direction service
+         * @param {Object} opt Options
+         * @this {tinyMap}
+         */
+        directionService: function (opt) {
+            var self = this,
+                waypoints = [],
+                directionsService = new google.maps.DirectionsService(),
+                directionsDisplay = new google.maps.DirectionsRenderer(),
+                request = {
+                    'travelMode': google.maps.DirectionsTravelMode.DRIVING,
+                    'optimizeWaypoints': opt.optimize || false
+                },
+                panel = {},
+                i = 0,
+                c = 0;
+            if ('string' === typeof opt.from) {
+                request.origin = opt.from;
+            }
+            if ('string' === typeof opt.to) {
+                request.destination = opt.to;
+            }
+            if ('string' === typeof opt.travel) {
+                if (opt.travel.length) {
+                    request.travelMode = google.maps.TravelMode[opt.travel.toUpperCase()];
+                }
+            }
+            panel = $(undefined !== opt.panel ? opt.panel : null);
+
+            if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
+                for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
+                    waypoints.push({
+                        'location': opt.waypoint[i].toString(),
+                        'stopover': true
+                    });
+                }
+                request.waypoints = waypoints;
+            }
+            if (undefined !== request.origin && undefined !== request.destination) {
+                directionsService.route(request, function (response, status) {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        if (undefined !== opt.autoViewport) {
+                            directionsDisplay.setOptions({
+                                'preserveViewport': false === opt.autoViewport ? true : false
+                            });
+                        }
+                        directionsDisplay.setDirections(response);
+                    }
+                });
+                directionsDisplay.setMap(self.map);
+                if (panel.length) {
+                    directionsDisplay.setPanel(panel.get(0));
+                }
+                self._directions.push(directionsDisplay);
+            }
+        },
+        //#!#END
+        /**
+         * bind events
+         * @param {Object} marker Marker objects
+         * @param {function|Object} event Events
+         * @this {tinyMap}
+         */
+        bindEvents: function (target, event) {
+
+            var self = this,
+                e = {};
+
+            switch (typeof event) {
+            case 'function':
+                google.maps.event.addListener(target, 'click', event);
+                break;
+            case 'object':
+                for (e in event) {
+                    if ('function' === typeof event[e]) {
+                        google.maps.event.addListener(target, e, event[e]);
+                    } else {
+                        if (_hasOwnProperty(event[e], 'func') && 'function' === typeof event[e].func) {
+                            if (_hasOwnProperty(event[e], 'once') && true === event[e].once) {
+                                google.maps.event.addListenerOnce(target, e, event[e].func);
+                            } else {
+                                google.maps.event.addListener(target, e, event[e].func);
+                            }
+                        } else if ('function' === typeof event[e]) {
+                            google.maps.event.addListener(target, e, event[e]);
+                        }
+                    }
+                }
+            }
+            if (_hasOwnProperty(target, 'infoWindow')) {
+                google.maps.event.addListener(target, 'click', function () {
+                    var i = 0,
+                        m = {};
+                    // Close all infoWindows if `infoWindowAutoClose` was true.
+                    if (true === self.options.infoWindowAutoClose) {
+                        for (i = 0; i < self._markers.length; i += 1) {
+                            m = self._markers[i];
+                            if (undefined !== m.infoWindow) {
+                                if ('function' === typeof m.infoWindow.close) {
+                                    m.infoWindow.close();
+                                }
+                            }
+                        }
+                    }
+                    target.infoWindow.open(self.map, target);
+                });
+            }
+        },
+        /**
+         * Switch StreetView
+         * @this {tinyMap}
+         */
+        streetView: function (map, opt) {
+            var pano = map.getStreetView();
+            pano.setPosition(map.getCenter());
+            if (_hasOwnProperty(opt, 'showStreetView')) {
+                pano.setVisible(opt.showStreetView);
+            }
+        },
+        //#!#START PANTO
+        /**
+         * Method: Google Maps PanTo
+         * @param {string} addr Text address or "latitude, longitude" format
+         * @public
+         */
+        panto: function (addr) {
+            var self = this,
+                latlng = '',
+                geocoder = {},
+                m = self.map;
+            if (_hasOwnProperty(self, 'map')) {
+                if (null !== m && undefined !== m) {
+                    if ('string' === typeof addr) {
+                        if (-1 !== addr.indexOf(',')) {
+                            latlng = 'loc: ' + addr;
+                        }
+                        geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({'address': addr}, function (results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                if ($.isFunction(m.panTo) && undefined !== results[0]) {
+                                    m.panTo(results[0].geometry.location);
+                                }
+                            }
+                        });
+                        return;
+                    } else {
+                        if ('[object Array]' === Object.prototype.toString.call(addr)) {
+                            if (2 === addr.length) {
+                                latlng = new google.maps.LatLng(addr[0], addr[1]);
+                            }
+                        } else if (_hasOwnProperty(addr, 'lat') && _hasOwnProperty(addr, 'lng')) {
+                            latlng = new google.maps.LatLng(addr.lat, addr.lng);
+                        } else if (_hasOwnProperty(addr, 'x') && _hasOwnProperty(addr, 'y')) {
+                            latlng = new google.maps.LatLng(addr.x, addr.y);
+                        }
+                        if ($.isFunction(m.panTo) && undefined !== latlng) {
+                            m.panTo(latlng);
+                        }
+                    }
+                }
+            }
+        },
+        //#!#END
+        //#!#START CLEAR
+        /**
+         * Method: Google Maps clear the specificed layer
+         * @param {string} type Layer type (markers, polylines, polygons, circles, kmls, directions)
+         * @public
+         */
+        clear: function (layer) {
+            var self = this,
+                layers = [],
+                label = '',
+                i = 0,
+                j = 0;
+
+            layers = 'string' === typeof layer ?
+                     layer.split(',') :
+                     ('[object Array]' === Object.prototype.toString.call(layer) ? layer : []);
+
+            layers = !layers.length ? ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml'] : layers;
+
+            for (i = 0; i < layers.length; i += 1) {
+                label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
+                if (undefined !== self[label] && self[label].length) {
+                    for (j = 0; j < self[label].length; j += 1) {
+                        if (self.map === self[label][j].getMap()) {
+                            self[label][j].set('visible', false);
+                            self[label][j].set('directions', null);
+                            self[label][j].setMap(null);
+                        }
+                    }
+                    self[label].length = 0;
+                }
+            }
+        },
+        //#!#END
+        //#!#START MODIFY
+        /**
+         * Method:  Google Maps dynamic add layers
+         * @param {Object} options Refernce by tinyMap options
+         * @public
+         */
+        modify: function (options) {
+            var self  = this,
+                func  = [],
+                label = [
+                    ['kml', 'kml'],
+                    ['marker', 'markers'],
+                    ['direction', 'direction'],
+                    ['polyline', 'drawPolyline'],
+                    ['polygon', 'drawPolygon'],
+                    ['circle', 'drawCircle'],
+                    ['zoom', 'setZoom'],
+                    ['showStreetView', 'streetView']
+                ],
+                i = 0,
+                m = self.map;
+
+            if (undefined !== options) {
+                for (i = 0; i < label.length; i += 1) {
+                    if (_hasOwnProperty(options, label[i][0])) {
+                        func.push(label[i][1]);
+                    }
+                }
+                if (null !== m) {
+                    if (func.length) {
+                        for (i = 0; i < func.length; i += 1) {
+                            if ('function' === typeof self[func[i]]) {
+                                self[func[i]](m, options, 'modify');
+                            }
+                        }
+                    } else {
+                        //#!#START STYLES
+                        if (_hasOwnProperty(options, 'styles')) {
+                            console.dir(options);
+                            if ('string' === typeof options.styles) {
+                                options.styles = styles[options.styles];
+                            }
+                        }
+                        //#!#END
+                        m.setOptions(options);
+                    }
+                }
+            }
+        },
+        //#!#END
+        //#!#START AUTOLOCATION
+        /**
+         * Use HTML5 Geolocation API to detect the client's location.
+         * @param {Object} map Map intance
+         * @param {Object} opt Plugin options
+         */
+        geoLocation: function (map, opt) {
+
+            var self = this,
+                watch = false,
+                positionOptions = {
+                    'maximumAge': 600000,
+                    'timeout': 3000,
+                    'enableHighAccuracy': false
+                },
+                geolocation = navigator.geolocation;
+
+            if (!geolocation) {
+                return;
+            }
+
+            if (true === opt.autoLocation) {
+                geolocation.getCurrentPosition(
+                    function (loc) {
+                        if (loc) {
+                            map.panTo(
+                                new google.maps.LatLng(
+                                    loc.coords.latitude,
+                                    loc.coords.longitude
+                                )
+                            );
+                        }
+                    },
+                    function (error) {
+                    },
+                    positionOptions
+                );
+            } 
+        },
+        //#!#END
+        /**
+         * tinyMap Initialize
+         * @this {tinyMap}
+         */
+        init: function () {
+            var self = this,
+                geocoder = {};
+
+            if ('string' === typeof self.options.center) {
+                window.setTimeout(function () {
+                    var error = $(self.container),
+                        msg = '';
+                    if (-1 !== self.options.center.indexOf(',')) {
+                        self.options.center = 'loc: ' + self.options.center;
+                    }
+                    geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({'address': self.options.center}, function (results, status) {
+                        try {
+                            if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                                self.init();
+                            } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
+                                self.googleMapOptions
+                                    .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
+                                              results[0].geometry.location :
+                                              '';
+                                self.map = new google.maps.Map(self.container, self.googleMapOptions);
+                                google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                                    self.overlay();
+                                });
+                                // Events binding
+                                self.bindEvents(self.map, self.options.event);
+                            } else {
+                                msg = self.options.notfound.text || status;
+                                error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                            }
+                        } catch (ignore) {
+                            error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
+                        }
+                    });
+                }, self.interval);
+            } else {
+                self.map = new google.maps.Map(self.container, self.googleMapOptions);
+                google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                    self.overlay();
+                });
+                // Events binding
+                self.bindEvents(self.map, self.options.event);
+            }
+        }
+    };
+    /**
+     * jQuery tinyMap instance
+     * @param {Object} options Plugin settings
+     * @public
+     */
+    $.fn[pluginName] = function (options) {
+        var args = arguments,
+            result = [],
+            instance = {};
+        if ('string' === typeof options) {
+            this.each(function () {
+                instance = $.data(this, pluginName);
+                if (instance instanceof TinyMap && 'function' === typeof instance[options]) {
+                    result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
+                }
+            });
+            return undefined !== result ? result : this;
+        } else {
+            return this.each(function () {
+                if (!$.data(this, pluginName)) {
+                    $.data(this, pluginName, new TinyMap(this, options));
+                }
+            });
+        }
+    };
+})(jQuery, window, document);
