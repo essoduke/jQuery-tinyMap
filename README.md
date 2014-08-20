@@ -3,7 +3,7 @@
 This plugin will helping you to create the simple or complex Google Maps on the page.
 
 
-For complete options, methods and examples (Traditional Chinese):
+For complete options, methods and examples (Traditional Chinese):  
 http://app.essoduke.org/tinyMap/ 
 
 Download builder:  
