@@ -438,7 +438,7 @@
          */
         markers: function (map, opt, source) {
             var self = this,
-				m = '',
+                m = '',
                 i = 0,
                 j = 0,
                 loc = '',
@@ -490,21 +490,21 @@
                                         opt.marker[i].addr[1]
                                     )
                                 );
-								if (_hasOwnProperty(opt.marker[i], 'text')) {
-									if (_hasOwnProperty(markers[j], 'infoWindow')) {
-                                		if ('function' === typeof markers[j].infoWindow.setContent) {
-											markers[j].infoWindow.setContent(opt.marker[i].text);
-										}
-									} else {
+                                if (_hasOwnProperty(opt.marker[i], 'text')) {
+                                    if (_hasOwnProperty(markers[j], 'infoWindow')) {
+                                        if ('function' === typeof markers[j].infoWindow.setContent) {
+                                            markers[j].infoWindow.setContent(opt.marker[i].text);
+                                        }
+                                    } else {
                                         markers[j].infoWindow = new google.maps.InfoWindow({
-											'content': opt.marker[i].text
-                						});
+                                            'content': opt.marker[i].text
+                                        });
                                         self.bindEvents(markers[j], opt.marker[i].event);
-									}
-								}
-								if (_hasOwnProperty(opt.marker[i], 'icon')) {
-									markers[j].setIcon(opt.marker[i].icon);
-								}
+                                    }
+                                }
+                                if (_hasOwnProperty(opt.marker[i], 'icon')) {
+                                    markers[j].setIcon(opt.marker[i].icon);
+                                }
                                 continue;
                             }
                         }
@@ -519,14 +519,14 @@
                         }
                     // Insert the new marker if it is not existed.
                     } else {
-						if (_hasOwnProperty(opt.marker[i], 'addr')) {
-							opt.marker[i].addr = parseLatLng(opt.marker[i].addr, true);
-                        	if ('string' === typeof opt.marker[i].addr) {
-                            	this.markerByGeocoder(map, opt.marker[i]);
-                        	} else {
+                        if (_hasOwnProperty(opt.marker[i], 'addr')) {
+                            opt.marker[i].addr = parseLatLng(opt.marker[i].addr, true);
+                            if ('string' === typeof opt.marker[i].addr) {
+                                this.markerByGeocoder(map, opt.marker[i]);
+                            } else {
                                 this.markerDirect(map, opt.marker[i]);
-                        	}
-						}
+                            }
+                        }
                     }
                 }
             }
