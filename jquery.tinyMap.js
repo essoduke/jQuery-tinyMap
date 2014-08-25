@@ -22,14 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.8.9
+ * @version: 2.9.0
  *
  * [Changelog]
- * 改善程式碼。
- * 現在 tinyMap.center, marker.addr, circle.center, direction.to, direction.from, direction.waypoint
- * 已支援多種格式輸入，例如 'lat, lng', [lat, lng], {lat: 'lat', lng: 'lng'}
+ * 修正 modify marker 時，無法正確設置 text, icon, title, event 的問題。
  *
- * Release 2014.08.20.190901
+ * Release25/08/2014 11:31:34
  */
 ;(function ($, window, document, undefined) {
 
@@ -368,7 +366,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.8.9',
+        VERSION: '2.9.0',
 
         // Layers container
         _polylines: [],
@@ -439,7 +437,8 @@
          * @param {Object} opt Markers options
          */
         markers: function (map, opt, source) {
-            var m = '',
+            var self = this,
+				m = '',
                 i = 0,
                 j = 0,
                 loc = '',
@@ -491,9 +490,24 @@
                                         opt.marker[i].addr[1]
                                     )
                                 );
-                                if ('function' === typeof markers[i].infoWindow.setContent) {
-                                    markers[j].infoWindow.setContent(opt.marker[i].text);
-                                }
+								if (_hasOwnProperty(opt.marker[i], 'text')) {
+									if (_hasOwnProperty(markers[j], 'infoWindow')) {
+                                		if ('function' === typeof markers[j].infoWindow.setContent) {
+											markers[j].infoWindow.setContent(opt.marker[i].text);
+										}
+									} else {
+                                        markers[j].infoWindow = new google.maps.InfoWindow({
+											'content': opt.marker[i].text
+                						});
+                                        self.bindEvents(markers[j], opt.marker[i].event);
+									}
+								}
+								if (_hasOwnProperty(opt.marker[i], 'icon')) {
+									markers[j].setIcon(opt.marker[i].icon);
+								}
+                                if (_hasOwnProperty(opt.marker[i], 'title')) {
+                                    markers[j].setTitle = opt.marker[i].title;
+								}
                                 continue;
                             }
                         }
@@ -1251,7 +1265,6 @@
                     try {
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                             self.init();
-                            return;
                         } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
                             self.googleMapOptions
                                 .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
