@@ -25,9 +25,9 @@
  * @version: 2.9.0
  *
  * [Changelog]
- * 修正 modify marker 時，無法正確設置 text, icon, event 的問題。
+ * 修正 modify marker 時，無法新增標記，以及正確設置已存在標記的 text, icon, event 參數的問題。
  *
- * Release25/08/2014 11:31:34
+ * Release 2014.08.25.115939
  */
 ;(function ($, window, document, undefined) {
 
@@ -505,9 +505,6 @@
 								if (_hasOwnProperty(opt.marker[i], 'icon')) {
 									markers[j].setIcon(opt.marker[i].icon);
 								}
-                                if (_hasOwnProperty(opt.marker[i], 'title')) {
-                                    markers[j].setTitle = opt.marker[i].title;
-								}
                                 continue;
                             }
                         }
@@ -522,11 +519,14 @@
                         }
                     // Insert the new marker if it is not existed.
                     } else {
-                        if ($.isArray(opt.marker[i].addr)) {
-                            this.markerDirect(map, opt.marker[i]);
-                        } else if ('string' === typeof opt.marker[i].addr) {
-                            this.markerByGeocoder(map, opt.marker[i]);
-                        }
+						if (_hasOwnProperty(opt.marker[i], 'addr')) {
+							opt.marker[i].addr = parseLatLng(opt.marker[i].addr, true);
+                        	if ('string' === typeof opt.marker[i].addr) {
+                            	this.markerByGeocoder(map, opt.marker[i]);
+                        	} else {
+                                this.markerDirect(map, opt.marker[i]);
+                        	}
+						}
                     }
                 }
             }
