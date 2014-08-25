@@ -25,7 +25,7 @@
  * @version: 2.9.0
  *
  * [Changelog]
- * 修正 modify marker 時，無法正確設置 text, icon, title, event 的問題。
+ * 修正 modify marker 時，無法正確設置 text, icon, event 的問題。
  *
  * Release25/08/2014 11:31:34
  */
