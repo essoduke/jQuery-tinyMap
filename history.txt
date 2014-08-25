@@ -1,7 +1,7 @@
 jQuery tinyMap Changelog
 
 2.9.0
-修正 modify marker 時，無法正確設置 text, icon, event 的問題。
+修正 modify marker 時，無法新增標記，以及正確設置已存在標記的 text, icon, event 參數的問題。
 
 2.8.9
 改善程式碼。
