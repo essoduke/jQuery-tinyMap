@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.9.0
+修正 modify marker 時，無法正確設置 text, icon, title, event 的問題。
+
 2.8.9
 改善程式碼。
 現在 tinyMap.center, marker.addr, circle.center, direction.to, direction.from, direction.waypoint
