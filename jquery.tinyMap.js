@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.2
+ * @version: 2.9.3
  *
  * [Changelog]
- * 修正 marker 的地址解析結果會覆寫 addr 參數的問題。
+ * 新增 direction.icon 參數可設置 from, to, waypoint 的自訂 icon url。
  *
- * Release 2014.08.26.164027
+ * Release 2014.08.26.184831
  */
 ;(function ($, window, document, undefined) {
 
@@ -368,7 +368,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.2',
+        VERSION: '2.9.3',
 
         // Layers container
         _polylines: [],
@@ -790,7 +790,6 @@
             }
             return icons;
         },
-
         /**
          * Set a marker directly by latitude and longitude
          * @param {Object} opt Options
@@ -999,6 +998,8 @@
                 waypoints = [],
                 waypointsOpts = {},
                 waypointsText = [],
+                endLocation = {},
+                endText = '',
                 i = 0,
                 c = 0;
 
@@ -1036,7 +1037,7 @@
                 }
                 request.waypoints = waypoints;
             }
-            
+
             if (undefined !== request.origin && undefined !== request.destination) {
                 directionsService.route(request, function (response, status) {
                     var legs = 0,
@@ -1048,17 +1049,46 @@
                         }
                         try {
                             if (_hasOwnProperty(opt, 'fromText')) {
-                                response.routes[0].legs[0].start_address = opt.fromText;
+                                legs[0].start_address = opt.fromText;
                             }
                             if (_hasOwnProperty(opt, 'toText')) {
                                 if (1 === legs.length) {
-                                    response.routes[0].legs[0].end_address = opt.toText;
+                                    legs[0].end_address = opt.toText;
                                 } else {
-                                    response.routes[0].legs[legs.length - 1].end_address = opt.toText;
+                                    legs[legs.length - 1].end_address = opt.toText;
+                                }
+                            }
+
+                            endLocation = 1 === legs.length ?
+                                          legs[0].end_location :
+                                          legs[legs.length - 1].end_location;
+                            endText     = 1 === legs.length ?
+                                          legs[0].end_address :
+                                          legs[legs.length - 1].end_address;
+
+                            if (_hasOwnProperty(opt, 'icon')) {
+                                renderOpts.suppressMarkers = true;
+                                if (_hasOwnProperty(opt.icon, 'from') && 'string' === typeof opt.icon.from) {
+                                    self.directionServiceMarker(legs[0].start_location, {
+                                        'icon': opt.icon.from,
+                                        'text': legs[0].start_address
+                                    });
+                                }
+                                if (_hasOwnProperty(opt.icon, 'to') && 'string' === typeof opt.icon.to) {
+                                    self.directionServiceMarker(endLocation, {
+                                        'icon': opt.icon.to,
+                                        'text': endText
+                                    });
                                 }
                             }
                             for (i = 1; i < legs.length; i += 1) {
                                 legs[i].start_address = waypointsText[i - 1];
+                                if (_hasOwnProperty(opt, 'icon') && _hasOwnProperty(opt.icon, 'waypoint')) {
+                                    self.directionServiceMarker(legs[i].start_location, {
+                                        'icon': opt.icon.waypoint,
+                                        'text': legs[i].start_address
+                                    });
+                                }
                             }
                         } catch (ignore) {
                         }
@@ -1072,6 +1102,22 @@
                 }
                 self._directions.push(directionsDisplay);
             }
+        },
+        directionServiceMarker: function (loc, opt) {
+            var def = {
+                    'position': loc,
+                    'map': this.map
+                },
+                setting = $.extend({}, def, opt),
+                marker  = {};
+            
+            if (_hasOwnProperty(setting, 'text')) {
+                setting.infoWindow = new google.maps.InfoWindow({
+                    'content': setting.text
+                });
+            }
+            marker = new google.maps.Marker(setting);
+            this.bindEvents(marker);
         },
         //#!#END
         /**
