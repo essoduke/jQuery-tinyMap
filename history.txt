@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.9.3
+新增 direction.icon 參數可設置 from, to, waypoint 的自訂 icon url。
+
 2.9.2
 修正 marker 的地址解析結果會覆寫 addr 參數的問題。
 
