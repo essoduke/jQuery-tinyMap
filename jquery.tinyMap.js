@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.1
+ * @version: 2.9.2
  *
  * [Changelog]
- * 新增 direction 下列參數: fromText, toText, 以及 waypoints.text，可設置各導航點的顯示名稱。
+ * 修正 marker 的地址解析結果會覆寫 addr 參數的問題。
  *
- * Release 2014.08.26.152341
+ * Release 2014.08.26.164027
  */
 ;(function ($, window, document, undefined) {
 
@@ -139,7 +139,6 @@
                 'lat': '',
                 'lng': ''
             };
-
         if ('string' === typeof loc || $.isArray(loc)) {
             arr = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
             if (2 === arr.length) {
@@ -151,7 +150,10 @@
                 return loc;
             }
         } else if ('object' === typeof loc) {
-            if (_hasOwnProperty(loc, 'x') && _hasOwnProperty(loc, 'y')) {
+            // Google LatLng Class
+            if ('function' === typeof loc.lat || 'function' === typeof loc.lng) {
+                return loc;
+            } else if (_hasOwnProperty(loc, 'x') && _hasOwnProperty(loc, 'y')) {
                 result.lat = loc.x;
                 result.lng = loc.y;
             } else if (_hasOwnProperty(loc, 'lat') && _hasOwnProperty(loc, 'lng')) {
@@ -366,7 +368,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.1',
+        VERSION: '2.9.2',
 
         // Layers container
         _polylines: [],
@@ -441,7 +443,6 @@
                 m = '',
                 i = 0,
                 j = 0,
-                loc = '',
                 markers = [],
                 labels  = [];
                 
@@ -459,9 +460,8 @@
                         if (_hasOwnProperty(opt.marker, m) &&
                             _hasOwnProperty(opt.marker[m], 'addr')
                         ) {
-                            loc = parseLatLng(opt.marker[m].addr, true);
-                            opt.marker[m].addr = loc;
-                            if ('string' === typeof loc) {
+                            opt.marker[m].parseAddr = parseLatLng(opt.marker[m].addr, true);
+                            if ('string' === typeof opt.marker[m].parseAddr) {
                                 this.markerByGeocoder(map, opt.marker[m], opt);
                             } else {
                                 this.markerDirect(map, opt.marker[m], opt);
@@ -520,8 +520,8 @@
                     // Insert the new marker if it is not existed.
                     } else {
                         if (_hasOwnProperty(opt.marker[i], 'addr')) {
-                            opt.marker[i].addr = parseLatLng(opt.marker[i].addr, true);
-                            if ('string' === typeof opt.marker[i].addr) {
+                            opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
+                            if ('string' === typeof opt.marker[i].parseAddr) {
                                 this.markerByGeocoder(map, opt.marker[i]);
                             } else {
                                 this.markerDirect(map, opt.marker[i]);
@@ -718,7 +718,7 @@
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            //try {
+            try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -747,10 +747,9 @@
                 this.streetView(map, opt);
                 // GeoLocation
                 this.geoLocation(map, opt);
-/*
             } catch (ignore) {
                 console.dir(ignore);
-            }*/
+            }
         },
         //#!#START MARKER
         /**
@@ -798,6 +797,7 @@
          * @this {tinyMap}
          */
         markerDirect: function (map, opt) {
+        
             var self     = this,
                 marker   = {},
                 labelOpt = {},
@@ -807,10 +807,9 @@
                            opt.title.toString().replace(/<([^>]+)>/g, '') :
                            false,
                 content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
-
                 markerOptions = {
                     'map': map,
-                    'position': opt.addr,
+                    'position': opt.parseAddr,
                     'animation': null,
                     'id': id
                 },
@@ -893,7 +892,7 @@
             var geocoder = new google.maps.Geocoder(),
                 self = this;
 
-            geocoder.geocode({'address': opt.addr}, function (results, status) {
+            geocoder.geocode({'address': opt.parseAddr}, function (results, status) {
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
