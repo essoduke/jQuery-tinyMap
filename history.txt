@@ -1,7 +1,13 @@
 jQuery tinyMap Changelog
 
+2.9.2
+修正 marker 的地址解析結果會覆寫 addr 參數的問題。
+
+2.9.1
+新增 direction 下列參數: fromText, toText, 以及 waypoints.text，可設置各導航點的顯示名稱。
+
 2.9.0
-修正 modify marker 時，無法新增標記，以及正確設置已存在標記的 text, icon, event 參數的問題。
+修正 modify marker 時，無法正確設置 text, icon, title, event 的問題。
 
 2.8.9
 改善程式碼。
