@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.0
+ * @version: 2.9.1
  *
  * [Changelog]
- * 修正 modify marker 時，無法新增標記，以及正確設置已存在標記的 text, icon, event 參數的問題。
+ * 新增 direction 下列參數: fromText, toText, 以及 waypoints.text，可設置各導航點的顯示名稱。
  *
- * Release 2014.08.25.115939
+ * Release 2014.08.26.152341
  */
 ;(function ($, window, document, undefined) {
 
@@ -366,7 +366,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.0',
+        VERSION: '2.9.1',
 
         // Layers container
         _polylines: [],
@@ -718,7 +718,7 @@
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            try {
+            //try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -747,9 +747,10 @@
                 this.streetView(map, opt);
                 // GeoLocation
                 this.geoLocation(map, opt);
+/*
             } catch (ignore) {
                 console.dir(ignore);
-            }
+            }*/
         },
         //#!#START MARKER
         /**
@@ -988,7 +989,6 @@
          */
         directionService: function (opt) {
             var self = this,
-                waypoints = [],
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
                 request = {
@@ -996,35 +996,74 @@
                     'optimizeWaypoints': opt.optimize || false
                 },
                 panel = {},
+                renderOpts = {},
+                waypoints = [],
+                waypointsOpts = {},
+                waypointsText = [],
                 i = 0,
                 c = 0;
 
             request.origin = parseLatLng(opt.from, true);
             request.destination = parseLatLng(opt.to, true);
-            
-            if ('string' === typeof opt.travel) {
-                if (opt.travel.length) {
-                    request.travelMode = google.maps.TravelMode[opt.travel.toUpperCase()];
-                }
+
+            if (_hasOwnProperty(opt, 'travel') &&
+                google.maps.TravelMode[opt.travel.toString().toUpperCase()]
+            ) {
+                    request.travelMode = google.maps.TravelMode[opt.travel.toString().toUpperCase()];
             }
-            panel = $(undefined !== opt.panel ? opt.panel : null);
+
+            if (_hasOwnProperty(opt, 'panel')) {
+                panel = $(opt.panel);
+            }
+
             if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
-                    waypoints.push({
-                        'location': parseLatLng(opt.waypoint[i], true),
-                        'stopover': true
-                    });
+                    waypointsOpts = {};
+                    if ('string' === typeof opt.waypoint[i]) {
+                        waypointsOpts = {
+                            'location' : opt.waypoint[i].toString(),
+                            'stopover' : true
+                        };
+                    } else {
+                        if (_hasOwnProperty(opt.waypoint[i], 'location')) {
+                            waypointsOpts.location = parseLatLng(opt.waypoint[i].location, true);
+                        }
+                        waypointsOpts.stopover = _hasOwnProperty(opt.waypoint[i], 'stopover') ?
+                                                 opt.waypoint[i].stopover :
+                                                 true;
+                    }
+                    waypointsText.push(opt.waypoint[i].text || opt.waypoint[i].toString());
+                    waypoints.push(waypointsOpts);
                 }
                 request.waypoints = waypoints;
             }
+            
             if (undefined !== request.origin && undefined !== request.destination) {
                 directionsService.route(request, function (response, status) {
+                    var legs = 0,
+                        i = 0;
                     if (status === google.maps.DirectionsStatus.OK) {
+                        legs = response.routes[0].legs;
                         if (_hasOwnProperty(opt, 'autoViewport')) {
-                            directionsDisplay.setOptions({
-                                'preserveViewport': false === opt.autoViewport ? true : false
-                            });
+                            renderOpts.preserveViewport = false === opt.autoViewport ? true : false;
                         }
+                        try {
+                            if (_hasOwnProperty(opt, 'fromText')) {
+                                response.routes[0].legs[0].start_address = opt.fromText;
+                            }
+                            if (_hasOwnProperty(opt, 'toText')) {
+                                if (1 === legs.length) {
+                                    response.routes[0].legs[0].end_address = opt.toText;
+                                } else {
+                                    response.routes[0].legs[legs.length - 1].end_address = opt.toText;
+                                }
+                            }
+                            for (i = 1; i < legs.length; i += 1) {
+                                legs[i].start_address = waypointsText[i - 1];
+                            }
+                        } catch (ignore) {
+                        }
+                        directionsDisplay.setOptions(renderOpts);
                         directionsDisplay.setDirections(response);
                     }
                 });
