@@ -22,12 +22,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.3
+ * @version: 2.9.4
  *
  * [Changelog]
- * 新增 direction.icon 參數可設置 from, to, waypoint 的自訂 icon url。
+ * 修正 clear 方法無法清除 規劃路徑 (direction) 自訂圖示的錯誤。
  *
- * Release 2014.08.26.184831
+ * Release 2014.08.27.100610
  */
 ;(function ($, window, document, undefined) {
 
@@ -368,7 +368,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.3',
+        VERSION: '2.9.4',
 
         // Layers container
         _polylines: [],
@@ -376,6 +376,7 @@
         _circles: [],
         _kmls: [],
         _directions: [],
+        _directionsMarkers: [],
 
         // Google Maps LatLngClass
         bounds: new google.maps.LatLngBounds(),
@@ -1117,6 +1118,7 @@
                 });
             }
             marker = new google.maps.Marker(setting);
+            this._directionsMarkers.push(marker);
             this.bindEvents(marker);
         },
         //#!#END
@@ -1228,7 +1230,8 @@
                 layers = [],
                 label = '',
                 i = 0,
-                j = 0;
+                j = 0,
+                k = 0;
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
@@ -1247,6 +1250,12 @@
                         }
                     }
                     self[label].length = 0;
+                }
+                // Remove the custom icons of directions
+                if ('direction' === layers[i]) {
+                    for (j = 0; j < self._directionsMarkers.length; j += 1) {
+                        self._directionsMarkers[j].setMap(null);
+                    }
                 }
             }
         },
