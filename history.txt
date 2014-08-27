@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.9.4
+修正 clear 方法無法清除 規劃路徑 (direction) 自訂圖示的錯誤。
+
 2.9.3
 新增 direction.icon 參數可設置 from, to, waypoint 的自訂 icon url。
 
