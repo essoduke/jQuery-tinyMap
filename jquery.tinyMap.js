@@ -22,21 +22,27 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.4
+ * @version: 2.9.5
  *
  * [Changelog]
- * 修正 clear 方法無法清除 規劃路徑 (direction) 自訂圖示的錯誤。
+ * 清除及修正冗餘的程式碼。
+ * 修正 modify 方法無法綁定地圖事件的問題。
+ * 修改 kml 參數支援陣列型態 (string|Array)，可同時顯示多組 KML 軌跡檔，並取消原物件型態的參數。
+ * 新增 direction.event 綁定事件。
+ * 新增 destroy 方法可移除地圖。
  *
- * Release 2014.08.27.100610
+ * Release 2014.08.28.102924
  */
 ;(function ($, window, document, undefined) {
 
     'use strict';
 
-    var pluginName = 'tinyMap',
     // Plugin default settings
-        defaults = {
-            'center': {x: '', y: ''},
+    var defaults = {
+            'center': {
+                'lat': '',
+                'lng': ''
+            },
             'control': true,
             'disableDoubleClickZoom': false, //2.6.4
             'disableDefaultUI': false, //2.5.1
@@ -87,7 +93,7 @@
                 'viewport': true,
                 'infowindow': false
             },
-            'interval': 100, //2.5.0
+            'interval': 200, //2.5.0
             'event': null, //2.7.0
             'showStreetView': false, // 2.7.5
             'autoLocation': false //2.8.2
@@ -101,11 +107,10 @@
         // Grey Scale
         'greyscale': [{
             'featureType': 'all',
-            'stylers': [{
-                'saturation': -100
-            }, {
-                'gamma': 0.5
-            }]
+            'stylers': [
+                {'saturation': -100},
+                {'gamma': 0.5}
+            ]
         }]
     };
     //#!#END
@@ -115,7 +120,7 @@
      * @param {Object} obj Object
      * @param {string} property Property name
      * @return {boolean}
-     * @version 2.4.3
+     * @version 2.4.4
      */
     function _hasOwnProperty (obj, property) {
         try {
@@ -123,28 +128,29 @@
                    Object.prototype.hasOwnProperty.call(obj, property.toString()) :
                    obj.hasOwnProperty(property.toString());
         } catch (ignore) {
+            console.dir(ignore);
         }
     }
 
     /**
      * Parsing the location
-     * @param {string|array|Object} loc Location
-     * @param {bool} formatting Format to Google Maps LatLng Object
+     * @param {string|Array|Object} loc Location
+     * @param {boolean} formatting to Google Maps LatLng object
      * @return {Object}
      */
     function parseLatLng (loc, formatting) {
-        var arr = [],
+        var array = [],
             re = /^[+-]?\d+(\.\d+)?$/,
             result = {
                 'lat': '',
                 'lng': ''
             };
         if ('string' === typeof loc || $.isArray(loc)) {
-            arr = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
-            if (2 === arr.length) {
-                if (re.test(arr[0]) && re.test(arr[1])) {
-                    result.lat = arr[0];
-                    result.lng = arr[1];
+            array = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
+            if (2 === array.length) {
+                if (re.test(array[0]) && re.test(array[1])) {
+                    result.lat = array[0];
+                    result.lng = array[1];
                 }
             } else {
                 return loc;
@@ -198,9 +204,8 @@
      * @this {Label}
      */
     Label.prototype.onAdd = function () {
-        var self = this,
-            pane = self.getPanes().overlayLayer;
-        self.div.appendTo($(pane));
+        var self = this;
+        self.div.appendTo($(self.getPanes().overlayLayer));
         self.listeners = [
             google.maps.event.addListener(self, 'visible_changed', self.onRemove)
         ];
@@ -212,7 +217,6 @@
     Label.prototype.draw = function () {
         var projection = this.getProjection(),
             position   = {};
-
         try {
             position = projection.fromLatLngToDivPixel(this.get('position'));
             this.div.css({
@@ -243,9 +247,7 @@
      */
     function TinyMap (container, options) {
 
-        var div = {},
-            loc = {},
-            opt = {};
+        var opt = {};
 
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
@@ -288,7 +290,7 @@
          * Interval for geocoder's query interval
          * @type {number}
          */
-        this.interval = parseInt(this.options.interval, 10) || 1100;
+        this.interval = parseInt(this.options.interval, 10) || 200;
         /**
          * Google Maps options
          * @type {Object}
@@ -368,9 +370,9 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.4',
+        VERSION: '2.9.5',
 
-        // Layers container
+        // Layers
         _polylines: [],
         _polygons: [],
         _circles: [],
@@ -378,7 +380,7 @@
         _directions: [],
         _directionsMarkers: [],
 
-        // Google Maps LatLngClass
+        // Google Maps LatLngBounds Class
         bounds: new google.maps.LatLngBounds(),
         /**
          * Set zoom level of the map
@@ -386,7 +388,7 @@
          * @param {Object} opt tinyMap options
          */
         setZoom: function (map, opt) {
-            if (_hasOwnProperty(opt, 'zoom') && map) {
+            if (_hasOwnProperty(opt, 'zoom') && 'function' === typeof map.setZoom) {
                 map.setZoom(opt.zoom);
             }
         },
@@ -397,21 +399,28 @@
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
-            var kml_opt = {},
-                kml_url = '',
-                kml = {};
-            opt = (!opt ? this.options : opt);
-            if (undefined !== opt.kml) {
-                kml_opt = {
-                    preserveViewport: true,
-                    suppressInfoWindows: false
-                };
-                kml_url = ('string' === typeof opt.kml && 0 !== opt.kml.length) ?
-                          opt.kml :
-                          (undefined !== opt.kml.url ? opt.kml.url : '');
-                kml = new google.maps.KmlLayer(kml_url, $.extend(kml_opt, opt.kml));
-                this._kmls.push(kml);
-                kml.setMap(map);
+            
+            var kml = {},
+                kmlOpt = {
+                    'preserveViewport': false,
+                    'suppressInfoWindows': false
+                },
+                i = 0;
+
+            if (_hasOwnProperty(opt, 'kml')) {
+                if ('string' === typeof opt.kml) {
+                    kml = new google.maps.KmlLayer(opt.kml, kmlOpt);
+                    kml.setMap(map);
+                    this._kmls.push(kml);
+                } else if ($.isArray(opt.kml)) {
+                    for (i = 0; i < opt.kml.length; i += 1) {
+                        if ('string' === typeof opt.kml[i]) {
+                            kml = new google.maps.KmlLayer(opt.kml[i], kmlOpt);
+                            kml.setMap(map);
+                            this._kmls.push(kml);
+                        }
+                    }
+                }
             }
         },
         //#!#END
@@ -422,13 +431,9 @@
          * @param {Object} opt Direction options
          */
         direction: function (map, opt) {
-            var d = '';
-            opt = !opt ? this.options : opt;
-            if (_hasOwnProperty(opt, 'direction') && 0 < opt.direction.length) {
-                for (d in opt.direction) {
-                    if (_hasOwnProperty(opt.direction, d)) {
-                        this.directionService(opt.direction[d]);
-                    }
+            if (_hasOwnProperty(opt, 'direction') && $.isArray(opt.direction)) {
+                for (var d = 0; d < opt.direction.length; d += 1) {
+                    this.directionService(opt.direction[d]);
                 }
             }
         },
@@ -441,47 +446,41 @@
          */
         markers: function (map, opt, source) {
             var self = this,
-                m = '',
+                m = {},
+                c = 0,
                 i = 0,
                 j = 0,
+                k = 0,
                 markers = [],
                 labels  = [];
                 
-            opt = !opt ? this.options : opt;
-
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
             
             markers = self._markers;
 
             // For first initialize of instance.
-            if (!source || 0 === markers.length) {
-                if ($.isArray(opt.marker)) {
-                    for (m in opt.marker) {
-                        if (_hasOwnProperty(opt.marker, m) &&
-                            _hasOwnProperty(opt.marker[m], 'addr')
-                        ) {
-                            opt.marker[m].parseAddr = parseLatLng(opt.marker[m].addr, true);
-                            if ('string' === typeof opt.marker[m].parseAddr) {
-                                this.markerByGeocoder(map, opt.marker[m], opt);
-                            } else {
-                                this.markerDirect(map, opt.marker[m], opt);
-                            }
+            if (!source || 0 === markers.length && $.isArray(opt.marker)) {
+                for (i = 0, c = opt.marker.length; i < c; i += 1) {
+                    m = opt.marker[i];
+                    if (_hasOwnProperty(m, 'addr')) {
+                        m.parseAddr = parseLatLng(m.addr, true);
+                        if ('string' === typeof m.parseAddr) {
+                            this.markerByGeocoder(map, m, opt);
+                        } else {
+                            this.markerDirect(map, m, opt);
                         }
                     }
                 }
             }
             
-            /**
-             * Put existed markers to the new position
-             */
+            // Modify markers
             if ('modify' === source) {
-
                 labels  = this._labels;
-
-                for (i = 0; i < opt.marker.length; i += 1) {
+                for (i = 0, c = opt.marker.length; i < c; i += 1) {
                     if (_hasOwnProperty(opt.marker[i], 'id')) {
                         for (j = 0; j < markers.length; j += 1) {
+                            // Moving matched markers to the new position.
                             if (opt.marker[i].id === markers[j].id &&
                                 _hasOwnProperty(opt.marker[i], 'addr')
                             ) {
@@ -509,7 +508,8 @@
                                 continue;
                             }
                         }
-                        for (j = 0; j < labels.length; j += 1) {
+                        // Redrawing the labels
+                        for (j = 0, k = labels.length; j < k; j += 1) {
                             if (opt.marker[i].id === labels[j].id) {
                                 if (_hasOwnProperty(opt.marker[i], 'label')) {
                                     labels[j].text = opt.marker[i].label;
@@ -518,7 +518,7 @@
                                 continue;
                             }
                         }
-                    // Insert the new marker if it is not existed.
+                    // Insert the new marker if it is not matched.
                     } else {
                         if (_hasOwnProperty(opt.marker[i], 'addr')) {
                             opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
@@ -531,7 +531,6 @@
                     }
                 }
             }
-
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
@@ -553,7 +552,7 @@
         drawPolyline: function (map, opt) {
             var polyline = {},
                 i = 0,
-                p = '',
+                p = {},
                 c = {},
                 len = 0,
                 coords = new google.maps.MVCArray(),
@@ -562,19 +561,17 @@
                 waypoints = [],
                 distance = {};
 
-            opt = !opt ? this.options : opt;
             if (_hasOwnProperty(opt, 'polyline') &&
-                _hasOwnProperty(opt.polyline, 'coords')
+                _hasOwnProperty(opt.polyline, 'coords') &&
+                $.isArray(opt.polyline.coords)
             ) {
-                for (p in opt.polyline.coords) {
-                    if (_hasOwnProperty(opt.polyline.coords, p)) {
-                        c = opt.polyline.coords;
-                        if (undefined !== c[p]) {
-                            coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
-                        }
+                for (i = 0; i < opt.polyline.coords.length; i += 1) {
+                    p = opt.polyline.coords[i];
+                    c = parseLatLng(p, true);
+                    if ('function' === typeof c.lat) {
+                        coords.push(c);
                     }
                 }
-
                 polyline = new google.maps.Polyline({
                     'strokeColor': opt.polyline.color || '#FF0000',
                     'strokeOpacity': 1.0,
@@ -585,26 +582,28 @@
 
                 if (2 < coords.getLength()) {
                     for (i = 0; i < coords.length; i += 1) {
-                        if (0 < i && (coords.getLength() - 1 > i)) {
+                        if (0 < i && (coords.length - 1 > i)) {
                             waypoints.push({
-                                'location': coords[i],
+                                'location': coords.getAt(i),
                                 'stopover': false
                             });
                         }
                     }
                 }
 
-                if (true === opt.polyline.snap) {
+                if (_hasOwnProperty(opt.polyline, 'snap') &&
+                    true === opt.polyline.snap
+                ) {
                     service = new google.maps.DirectionsService();
                     service.route({
                         'origin': coords.getAt(0),
                         'waypoints': waypoints,
-                        'destination': coords.getAt(coords.getLength() - 1),
+                        'destination': coords.getAt(coords.length - 1),
                         'travelMode': google.maps.DirectionsTravelMode.DRIVING
                     }, function (result, status) {
                         if (status === google.maps.DirectionsStatus.OK) {
-                            for (i = 0, len = result.routes[0].overview_path.length; i < len; i += 1) {
-                                path.push(result.routes[0].overview_path[i]);
+                            for (i = 0, len = result.routes[0].overview_path; i < len.length; i += 1) {
+                                path.push(len[i]);
                             }
                             polyline.setPath(path);
                             if ('function' === typeof opt.polyline.getDistance) {
@@ -617,7 +616,7 @@
                     polyline.setPath(coords);
                     if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
                         if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.getLength() - 1));
+                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.length - 1));
                             if ('function' === typeof opt.polyline.getDistance) {
                                 opt.polyline.getDistance.call(this, distance);
                             }
@@ -636,20 +635,20 @@
          */
         drawPolygon: function (map, opt) {
             var polygon = {},
-                p = '',
+                i = 0,
+                p = {},
                 c = {},
                 coords = [];
-            opt = !opt ? this.options : opt;
+
             if (_hasOwnProperty(opt, 'polygon') &&
-                _hasOwnProperty(opt.polygon, 'coords')
+                _hasOwnProperty(opt.polygon, 'coords') &&
+                $.isArray(opt.polygon.coords)
             ) {
-            
-                for (p in opt.polygon.coords) {
-                    if (_hasOwnProperty(opt.polygon.coords, p)) {
-                        c = opt.polygon.coords;
-                        if (undefined !== c[p]) {
-                            coords.push(new google.maps.LatLng(c[p][0], c[p][1]));
-                        }
+                for (i = 0; i < opt.polygon.coords.length; i += 1) {
+                    p = opt.polygon.coords[i];
+                    c = parseLatLng(p, true);
+                    if ('function' === typeof c.lat) {
+                        coords.push(c);
                     }
                 }
                 polygon = new google.maps.Polygon({
@@ -662,7 +661,9 @@
                 });
                 this._polygons.push(polygon);
                 polygon.setMap(this.map);
-                if ('function' === typeof opt.polygon.click) {
+                if (_hasOwnProperty(opt.polygon, 'click') &&
+                    'function' === typeof opt.polygon.click
+                ) {
                     google.maps.event.addListener(polygon, 'click', opt.polygon.click);
                 }
             }
@@ -676,21 +677,17 @@
          */
         drawCircle: function (map, opt) {
             var c = 0,
-                loc = {
-                    'lat': '',
-                    'lng': ''
-                },
-                locArray = [],
+                loc = {},
                 circle = {},
                 circles = {};
-            opt = !opt ? this.options : opt;
+            
             if (_hasOwnProperty(opt, 'circle') && $.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
                     if (_hasOwnProperty(circle, 'center')) {
-                        loc = parseLatLng(circle.center);
+                        loc = parseLatLng(circle.center, true);
                     }
-                    if (loc.lat && loc.lng) {
+                    if ('function' === typeof loc.lat) {
                         circles = new google.maps.Circle({
                             'strokeColor': circle.color || '#FF0000',
                             'strokeOpacity': circle.opacity || 0.8,
@@ -698,7 +695,7 @@
                             'fillColor': circle.fillcolor || '#FF0000',
                             'fillOpacity': circle.fillopacity || 0.35,
                             'map': this.map,
-                            'center': new google.maps.LatLng(loc.lat, loc.lng),
+                            'center': loc,
                             'radius': circle.radius || 10,
                             'zIndex': 100,
                             'id' : _hasOwnProperty(opt, 'id') ? opt.id : ''
@@ -761,7 +758,6 @@
         markerIcon: function (opt) {
             var icons = {};
             if (_hasOwnProperty(opt, 'icon')) {
-
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
                 }
@@ -769,9 +765,7 @@
                     icons.url = opt.icon.url;
                 }
                 if (_hasOwnProperty(opt.icon, 'size')) {
-                    if (undefined !== opt.icon.size[0] &&
-                        undefined !== opt.icon.size[1]
-                    ) {
+                    if ($.isArray(opt.icon.size) && 2 === opt.icon.size.length) {
                         icons.scaledSize = new google.maps.Size(
                             opt.icon.size[0],
                             opt.icon.size[1]
@@ -779,9 +773,7 @@
                     }
                 }
                 if (_hasOwnProperty(opt.icon, 'anchor')) {
-                    if (undefined !== opt.icon.anchor[0] &&
-                        undefined !== opt.icon.anchor[1]
-                    ) {
+                    if ($.isArray(opt.icon.anchor) && 2 === opt.icon.anchor.length) {
                         icons.anchor = new google.maps.Point(
                             opt.icon.anchor[0],
                             opt.icon.anchor[1]
@@ -797,7 +789,6 @@
          * @this {tinyMap}
          */
         markerDirect: function (map, opt) {
-        
             var self     = this,
                 marker   = {},
                 labelOpt = {},
@@ -830,7 +821,7 @@
                 markerOptions.icon = icons;
             }
 
-            if (_hasOwnProperty(opt.animation)) {
+            if (_hasOwnProperty(opt, 'animation')) {
                 if ('string' === typeof opt.animation) {
                     markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                 }
@@ -841,7 +832,7 @@
 
             // Apply marker fitbounds
             if (_hasOwnProperty(marker, 'position')) {
-                if (marker.getPosition().lat() && marker.getPosition().lng()) {
+                if ('function' === typeof marker.getPosition) {
                     self.bounds.extend(marker.position);
                 }
                 if (true === self.options.markerFitBounds) {
@@ -860,18 +851,16 @@
             if (true === self.options.markerCluster) {
                 if ('function' === typeof MarkerClusterer) {
                     if (_directMarkersLength === self.options.marker.length) {
-                        self.markerCluster = new MarkerClusterer(map, self._markers);
-                        return;
+                        //self.markerCluster = new MarkerClusterer(map, self._markers);
+                        return new MarkerClusterer(map, self._markers);
                     }
                 }
             }
-
             labelOpt = {
-                map: map,
-                css: undefined !== opt.css ? opt.css : '',
-                id:  id
+                'map': map,
+                'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : '',
+                'id':  id
             };
-
             if ('string' === typeof opt.label && 0 !== opt.label.length) {
                 labelOpt.text = opt.label;
                 label = new Label(labelOpt);
@@ -888,7 +877,6 @@
          * @this {tinyMap}
          */
         markerByGeocoder: function (map, opt) {
-
             var geocoder = new google.maps.Geocoder(),
                 self = this;
 
@@ -939,7 +927,7 @@
 
                     // Apply marker fitbounds
                     if (_hasOwnProperty(marker, 'position')) {
-                        if (marker.getPosition().lat() && marker.getPosition().lng()) {
+                        if ('function' === typeof marker.getPosition) {
                             self.bounds.extend(markerOptions.position);
                         }
                     }
@@ -957,15 +945,14 @@
                     if (_hasOwnProperty(self.options, 'markerCluster')) {
                         if ('function' === typeof MarkerClusterer) {
                             if (_geoMarkersLength === self.options.marker.length) {
-                                self.markerCluster = new MarkerClusterer(map, self._markers);
-                                return;
+                                //self.markerCluster = new MarkerClusterer(map, self._markers);
+                                return new MarkerClusterer(map, self._markers);
                             }
                         }
                     }
-
                     labelOpt = {
-                        map: self.map,
-                        css: opt.css || ''
+                        'map': self.map,
+                        'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : ''
                     };
                     if ('string' === typeof opt.label && 0 !== opt.label.length) {
                         labelOpt.text = opt.label;
@@ -1010,19 +997,19 @@
             if (_hasOwnProperty(opt, 'travel') &&
                 google.maps.TravelMode[opt.travel.toString().toUpperCase()]
             ) {
-                    request.travelMode = google.maps.TravelMode[opt.travel.toString().toUpperCase()];
+                request.travelMode = google.maps.TravelMode[opt.travel.toString().toUpperCase()];
             }
 
             if (_hasOwnProperty(opt, 'panel')) {
                 panel = $(opt.panel);
             }
 
-            if (undefined !== opt.waypoint && 0 !== opt.waypoint) {
+            if (_hasOwnProperty(opt, 'waypoint') && $.isArray(opt.waypoint)) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypointsOpts = {};
                     if ('string' === typeof opt.waypoint[i]) {
                         waypointsOpts = {
-                            'location' : opt.waypoint[i].toString(),
+                            'location' : opt.waypoint[i],
                             'stopover' : true
                         };
                     } else {
@@ -1039,71 +1026,76 @@
                 request.waypoints = waypoints;
             }
 
-            if (undefined !== request.origin && undefined !== request.destination) {
-                directionsService.route(request, function (response, status) {
-                    var legs = 0,
-                        i = 0;
-                    if (status === google.maps.DirectionsStatus.OK) {
-                        legs = response.routes[0].legs;
-                        if (_hasOwnProperty(opt, 'autoViewport')) {
-                            renderOpts.preserveViewport = false === opt.autoViewport ? true : false;
-                        }
-                        try {
-                            if (_hasOwnProperty(opt, 'fromText')) {
-                                legs[0].start_address = opt.fromText;
-                            }
-                            if (_hasOwnProperty(opt, 'toText')) {
-                                if (1 === legs.length) {
-                                    legs[0].end_address = opt.toText;
-                                } else {
-                                    legs[legs.length - 1].end_address = opt.toText;
-                                }
-                            }
-
-                            endLocation = 1 === legs.length ?
-                                          legs[0].end_location :
-                                          legs[legs.length - 1].end_location;
-                            endText     = 1 === legs.length ?
-                                          legs[0].end_address :
-                                          legs[legs.length - 1].end_address;
-
-                            if (_hasOwnProperty(opt, 'icon')) {
-                                renderOpts.suppressMarkers = true;
-                                if (_hasOwnProperty(opt.icon, 'from') && 'string' === typeof opt.icon.from) {
-                                    self.directionServiceMarker(legs[0].start_location, {
-                                        'icon': opt.icon.from,
-                                        'text': legs[0].start_address
-                                    });
-                                }
-                                if (_hasOwnProperty(opt.icon, 'to') && 'string' === typeof opt.icon.to) {
-                                    self.directionServiceMarker(endLocation, {
-                                        'icon': opt.icon.to,
-                                        'text': endText
-                                    });
-                                }
-                            }
-                            for (i = 1; i < legs.length; i += 1) {
-                                legs[i].start_address = waypointsText[i - 1];
-                                if (_hasOwnProperty(opt, 'icon') && _hasOwnProperty(opt.icon, 'waypoint')) {
-                                    self.directionServiceMarker(legs[i].start_location, {
-                                        'icon': opt.icon.waypoint,
-                                        'text': legs[i].start_address
-                                    });
-                                }
-                            }
-                        } catch (ignore) {
-                        }
-                        directionsDisplay.setOptions(renderOpts);
-                        directionsDisplay.setDirections(response);
+            directionsService.route(request, function (response, status) {
+                var legs = 0,
+                    i = 0;
+                if (status === google.maps.DirectionsStatus.OK) {
+                    legs = response.routes[0].legs;
+                    if (_hasOwnProperty(opt, 'autoViewport')) {
+                        renderOpts.preserveViewport = false === opt.autoViewport ? true : false;
                     }
-                });
-                directionsDisplay.setMap(self.map);
-                if (panel.length) {
-                    directionsDisplay.setPanel(panel.get(0));
+                    try {
+                        if (_hasOwnProperty(opt, 'fromText')) {
+                            legs[0].start_address = opt.fromText;
+                        }
+                        if (_hasOwnProperty(opt, 'toText')) {
+                            if (1 === legs.length) {
+                                legs[0].end_address = opt.toText;
+                            } else {
+                                legs[legs.length - 1].end_address = opt.toText;
+                            }
+                        }
+
+                        if (1 === legs.length) {
+                            endLocation = legs[0].end_location;
+                            endText = legs[0].end_address;
+                        } else {
+                            endLocation = legs[legs.length - 1].end_location;
+                            endText = legs[legs.length - 1].end_address;
+                        }
+                        
+                        if (_hasOwnProperty(opt, 'icon')) {
+                            renderOpts.suppressMarkers = true;
+                            if (_hasOwnProperty(opt.icon, 'from') && 'string' === typeof opt.icon.from) {
+                                self.directionServiceMarker(legs[0].start_location, {
+                                    'icon': opt.icon.from,
+                                    'text': legs[0].start_address
+                                });
+                            }
+                            if (_hasOwnProperty(opt.icon, 'to') && 'string' === typeof opt.icon.to) {
+                                self.directionServiceMarker(endLocation, {
+                                    'icon': opt.icon.to,
+                                    'text': endText
+                                });
+                            }
+                        }
+                        for (i = 1; i < legs.length; i += 1) {
+                            legs[i].start_address = waypointsText[i - 1];
+                            if (_hasOwnProperty(opt, 'icon') && _hasOwnProperty(opt.icon, 'waypoint')) {
+                                self.directionServiceMarker(legs[i].start_location, {
+                                    'icon': opt.icon.waypoint,
+                                    'text': legs[i].start_address
+                                });
+                            }
+                        }
+                    } catch (ignore) {
+                    }
+                    self.bindEvents(directionsDisplay, opt.event);
+                    directionsDisplay.setOptions(renderOpts);
+                    directionsDisplay.setDirections(response);
                 }
-                self._directions.push(directionsDisplay);
+            });
+            directionsDisplay.setMap(self.map);
+            if (panel.length) {
+                directionsDisplay.setPanel(panel.get(0));
             }
+            self._directions.push(directionsDisplay);
         },
+        /**
+         * Create the marker for directions
+         * @param {Object} loc LatLng Location
+         * @param {Object} opt MarkerOptions
+         */
         directionServiceMarker: function (loc, opt) {
             var def = {
                     'position': loc,
@@ -1111,7 +1103,6 @@
                 },
                 setting = $.extend({}, def, opt),
                 marker  = {};
-            
             if (_hasOwnProperty(setting, 'text')) {
                 setting.infoWindow = new google.maps.InfoWindow({
                     'content': setting.text
@@ -1129,15 +1120,14 @@
          * @this {tinyMap}
          */
         bindEvents: function (target, event) {
-
             var self = this,
                 e = {};
-
             switch (typeof event) {
             case 'function':
                 google.maps.event.addListener(target, 'click', event);
                 break;
             case 'object':
+                
                 for (e in event) {
                     if ('function' === typeof event[e]) {
                         google.maps.event.addListener(target, e, event[e]);
@@ -1164,7 +1154,7 @@
                     ) {
                         for (i = 0; i < self._markers.length; i += 1) {
                             m = self._markers[i];
-                            if (undefined !== m.infoWindow) {
+                            if (_hasOwnProperty(m, 'infoWindow')) {
                                 if ('function' === typeof m.infoWindow.close) {
                                     m.infoWindow.close();
                                 }
@@ -1180,10 +1170,15 @@
          * @this {tinyMap}
          */
         streetView: function (map, opt) {
-            var pano = map.getStreetView();
-            pano.setPosition(map.getCenter());
-            if (_hasOwnProperty(opt, 'showStreetView')) {
-                pano.setVisible(opt.showStreetView);
+            var pano = {};
+            if ('function' === typeof map.getStreetView &&
+                'function' === typeof map.getCenter
+            ) {
+                pano = map.getStreetView();
+                pano.setPosition(map.getCenter());
+                if (_hasOwnProperty(opt, 'showStreetView')) {
+                    pano.setVisible(opt.showStreetView);
+                }
             }
         },
         //#!#START PANTO
@@ -1193,25 +1188,23 @@
          * @public
          */
         panto: function (addr) {
-            var self = this,
-                loc = '',
-                latlng = '',
+            var loc = {},
                 geocoder = {},
-                m = self.map;
-            if (_hasOwnProperty(self, 'map')) {
-                if (null !== m && undefined !== m) {
-                    loc = parseLatLng(addr, true);
-                    if ('string' === typeof addr) {
-                        geocoder = new google.maps.Geocoder();
-                        geocoder.geocode({'address': addr}, function (results, status) {
-                            if (status === google.maps.GeocoderStatus.OK) {
-                                if ('function' === typeof m.panTo && undefined !== results[0]) {
-                                    m.panTo(results[0].geometry.location);
-                                }
+                m = this.map;
+            if (null !== m && undefined !== m) {
+                loc = parseLatLng(addr, true);
+                if ('string' === typeof addr) {
+                    geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({'address': addr}, function (results, status) {
+                        if (status === google.maps.GeocoderStatus.OK) {
+                            if ('function' === typeof m.panTo && results.length) {
+                                m.panTo(results[0].geometry.location);
                             }
-                        });
-                        return;
-                    }
+                        } else {
+                            console.error(status);
+                        }
+                    });
+                } else {
                     if ('function' === typeof m.panTo) {
                         m.panTo(loc);
                     }
@@ -1230,14 +1223,11 @@
                 layers = [],
                 label = '',
                 i = 0,
-                j = 0,
-                k = 0;
+                j = 0;
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
-                     ($.isArray(layer) ? layer : []);
-
-            layers = !layers.length ? ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml'] : layers;
+                     ($.isArray(layer) ? layer : ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml']);
 
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
@@ -1298,7 +1288,19 @@
                     } else {
                         m.setOptions(options);
                     }
+                    if (_hasOwnProperty(options, 'event')) {
+                        self.bindEvents(m, options.event);
+                    }
                 }
+            }
+        },
+        //#!#END
+        //#!#START DESTROY
+        destroy: function () {
+            var container = $(this.container);
+            $.data(container.get(0), 'tinyMap', null);
+            if (container.length) {
+                return container.empty();
             }
         },
         //#!#END
@@ -1309,14 +1311,7 @@
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
-
-            var self = this,
-                watch = false,
-                positionOptions = {
-                    'maximumAge': 600000,
-                    'timeout': 3000,
-                    'enableHighAccuracy': false
-                },
+            var watch = false,
                 geolocation = navigator.geolocation;
 
             if (!geolocation) {
@@ -1326,18 +1321,21 @@
             if (true === opt.autoLocation) {
                 geolocation.getCurrentPosition(
                     function (loc) {
-                        if (loc) {
-                            map.panTo(
-                                new google.maps.LatLng(
-                                    loc.coords.latitude,
-                                    loc.coords.longitude
-                                )
-                            );
+                        if (loc && _hasOwnProperty(loc, 'coords')) {
+                            map.panTo(new google.maps.LatLng(
+                                loc.coords.latitude,
+                                loc.coords.longitude
+                            ));
                         }
                     },
                     function (error) {
+                        console.error(error);
                     },
-                    positionOptions
+                    {
+                        'maximumAge': 600000,
+                        'timeout': 3000,
+                        'enableHighAccuracy': false
+                    }
                 );
             } 
         },
@@ -1348,9 +1346,7 @@
          */
         init: function () {
             var self = this,
-                error = {},
-                geocoder = {},
-                msg = '';
+                geocoder = {};
 
             if ('string' === typeof self.options.center) {
                 geocoder = new google.maps.Geocoder();
@@ -1359,25 +1355,22 @@
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                             self.init();
                         } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
-                            self.googleMapOptions
-                                .center = (status === google.maps.GeocoderStatus.OK && 0 !== results.length) ?
-                                          results[0].geometry.location :
-                                          '';
-                            self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                            google.maps.event.addListenerOnce(self.map, 'idle', function () {
-                                self.overlay();
-                            });
-                            // Events binding
-                            self.bindEvents(self.map, self.options.event);
+                            if (undefined !== results[0] && _hasOwnProperty(results[0], 'geometry')) {
+                                self.googleMapOptions.center = results[0].geometry.location;
+                                self.map = new google.maps.Map(self.container, self.googleMapOptions);
+                                google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                                    self.overlay();
+                                });
+                                // Events binding
+                                self.bindEvents(self.map, self.options.event);
+                            }
                         } else {
-                            msg = self.options.notfound.text || status;
-                            error.html(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                            console.error(status);
                         }
                     } catch (ignore) {
-                        error.html((undefined !== ignore.message ? ignore.message : ignore.description).toString());
+                        console.error(ignore);
                     }
                 });
-                
             } else {
                 self.map = new google.maps.Map(self.container, self.googleMapOptions);
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
@@ -1393,13 +1386,13 @@
      * @param {Object} options Plugin settings
      * @public
      */
-    $.fn[pluginName] = function (options) {
+    $.fn.tinyMap = function (options) {
         var args = arguments,
             result = [],
             instance = {};
         if ('string' === typeof options) {
             this.each(function () {
-                instance = $.data(this, pluginName);
+                instance = $.data(this, 'tinyMap');
                 if (instance instanceof TinyMap && 'function' === typeof instance[options]) {
                     result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
@@ -1407,8 +1400,8 @@
             return undefined !== result ? result : this;
         } else {
             return this.each(function () {
-                if (!$.data(this, pluginName)) {
-                    $.data(this, pluginName, new TinyMap(this, options));
+                if (!$.data(this, 'tinyMap')) {
+                    $.data(this, 'tinyMap', new TinyMap(this, options));
                 }
             });
         }
