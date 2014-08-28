@@ -3,7 +3,8 @@ jQuery tinyMap Changelog
 2.9.5
 清除及修正冗餘的程式碼。
 修正 modify 方法無法綁定地圖事件的問題。
-修改 kml 參數支援陣列型態，可同時輸入多組 KML 軌跡檔。
+修改 kml 參數支援陣列型態 (string|Array)，可同時顯示多組 KML 軌跡檔，並取消原物件型態的參數。
+新增 direction.event 綁定事件。
 新增 destroy 方法可移除地圖。
 
 2.9.4
