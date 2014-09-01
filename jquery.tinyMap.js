@@ -22,16 +22,15 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.5
+ * @version: 2.9.6
  *
  * [Changelog]
- * 清除及修正冗餘的程式碼。
- * 修正 modify 方法無法綁定地圖事件的問題。
- * 修改 kml 參數支援陣列型態 (string|Array)，可同時顯示多組 KML 軌跡檔，並取消原物件型態的參數。
- * 新增 direction.event 綁定事件。
- * 新增 destroy 方法可移除地圖。
+ * 現在 marker.icon 已經可以完整支援 Icon 以及 Symbol 了。
+ * 修正 direction.waypoint 無法使用 [[lat, lng]...] 格式的錯誤。
+ * 新增 streetView 參數，可設置更詳細的街景選項及綁定事件。
+ * 移除 showStreetView 參數（由 streetView.visible 取代）。
  *
- * Release 2014.08.28.102924
+ * Release 2014.09.01.161518
  */
 ;(function ($, window, document, undefined) {
 
@@ -95,7 +94,7 @@
             },
             'interval': 200, //2.5.0
             'event': null, //2.7.0
-            'showStreetView': false, // 2.7.5
+            'streetView': {}, //2.9.6
             'autoLocation': false //2.8.2
         },
         _directMarkersLength = 0,
@@ -114,13 +113,12 @@
         }]
     };
     //#!#END
-
     /**
      * _hasOwnProperty for compatibility IE
      * @param {Object} obj Object
      * @param {string} property Property name
      * @return {boolean}
-     * @version 2.4.4
+     * @version 2.4.3
      */
     function _hasOwnProperty (obj, property) {
         try {
@@ -131,7 +129,6 @@
             console.dir(ignore);
         }
     }
-
     /**
      * Parsing the location
      * @param {string|Array|Object} loc Location
@@ -172,7 +169,6 @@
         }
         return result;
     }
-
     //#!#START LABEL
     /**
      * Label in Maps
@@ -238,7 +234,6 @@
         $(this.div).remove();
     };
     //#!#END
-
     /**
      * tinyMap Constructor
      * @param {Object} container HTML element
@@ -370,7 +365,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.5',
+        VERSION: '2.9.6',
 
         // Layers
         _polylines: [],
@@ -741,8 +736,10 @@
                 // circle overlay
                 this.drawCircle(map, opt);
                 //#!#END
+                //#!#START STREETVIEW
                 // StreetView service
                 this.streetView(map, opt);
+                //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
             } catch (ignore) {
@@ -756,7 +753,7 @@
          * @this {tinyMap}
          */
         markerIcon: function (opt) {
-            var icons = {};
+            var icons = $.extend({}, icons, opt.icon);;
             if (_hasOwnProperty(opt, 'icon')) {
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
@@ -766,9 +763,17 @@
                 }
                 if (_hasOwnProperty(opt.icon, 'size')) {
                     if ($.isArray(opt.icon.size) && 2 === opt.icon.size.length) {
-                        icons.scaledSize = new google.maps.Size(
+                        icons.size = new google.maps.Size(
                             opt.icon.size[0],
                             opt.icon.size[1]
+                        );
+                    }
+                }
+                if (_hasOwnProperty(opt.icon, 'scaledSize')) {
+                    if ($.isArray(opt.icon.scaledSize) && 2 === opt.icon.scaledSize.length) {
+                        icons.scaledSize = new google.maps.Size(
+                            opt.icon.scaledSize[0],
+                            opt.icon.scaledSize[1]
                         );
                     }
                 }
@@ -779,6 +784,9 @@
                             opt.icon.anchor[1]
                         );
                     }
+                }
+                if (_hasOwnProperty(opt.icon, 'path') && 'string' === typeof opt.icon.path) {
+                    icons.path = google.maps.SymbolPath[opt.icon.path];
                 }
             }
             return icons;
@@ -817,10 +825,8 @@
                 });
             }
 
-            if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
-                markerOptions.icon = icons;
-            }
-
+            markerOptions.icon = icons;
+            
             if (_hasOwnProperty(opt, 'animation')) {
                 if ('string' === typeof opt.animation) {
                     markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
@@ -912,10 +918,9 @@
                             'content': content
                         });
                     }
-                    if ('string' === typeof icons || _hasOwnProperty(icons, 'url')) {
-                        markerOptions.icon = icons;
-                    }
 
+                    markerOptions.icon = icons;
+                    
                     if (_hasOwnProperty(opt, 'animation')) {
                         if ('string' === typeof opt.animation) {
                             markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
@@ -1007,9 +1012,9 @@
             if (_hasOwnProperty(opt, 'waypoint') && $.isArray(opt.waypoint)) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypointsOpts = {};
-                    if ('string' === typeof opt.waypoint[i]) {
+                    if ('string' === typeof opt.waypoint[i] || $.isArray(opt.waypoint[i])) {
                         waypointsOpts = {
-                            'location' : opt.waypoint[i],
+                            'location' : parseLatLng(opt.waypoint[i], true),
                             'stopover' : true
                         };
                     } else {
@@ -1045,7 +1050,6 @@
                                 legs[legs.length - 1].end_address = opt.toText;
                             }
                         }
-
                         if (1 === legs.length) {
                             endLocation = legs[0].end_location;
                             endText = legs[0].end_address;
@@ -1053,7 +1057,6 @@
                             endLocation = legs[legs.length - 1].end_location;
                             endText = legs[legs.length - 1].end_address;
                         }
-                        
                         if (_hasOwnProperty(opt, 'icon')) {
                             renderOpts.suppressMarkers = true;
                             if (_hasOwnProperty(opt.icon, 'from') && 'string' === typeof opt.icon.from) {
@@ -1165,22 +1168,69 @@
                 });
             }
         },
+        //#!#START STREETVIEW
         /**
          * Switch StreetView
          * @this {tinyMap}
          */
         streetView: function (map, opt) {
-            var pano = {};
+            var self = this,
+                pano = {},
+                opts = _hasOwnProperty(opt, 'streetView') ? opt.streetView : {},
+                svOpt = {
+                    'heading': 0,
+                    'pitch': 0
+                },
+                events = [
+                    'closeclick',
+                    'links_changed',
+                    'pano_changed',
+                    'position_changed',
+                    'pov_changed',
+                    'resize',
+                    'status_changed',
+                    'visible_changed',
+                    'zoom_changed'
+                ],
+                i = 0,
+                loc = {};
+
             if ('function' === typeof map.getStreetView &&
-                'function' === typeof map.getCenter
+                _hasOwnProperty(opt, 'streetView')
             ) {
                 pano = map.getStreetView();
-                pano.setPosition(map.getCenter());
-                if (_hasOwnProperty(opt, 'showStreetView')) {
-                    pano.setVisible(opt.showStreetView);
+                // Default position of streetView
+                if (_hasOwnProperty(opts, 'position')) {
+                    loc = parseLatLng(opts.position, true);
+                    if ('object' !== typeof loc) {
+                        opts.position = map.getCenter();
+                    } else {
+                        opts.position = loc;
+                    }
+                } else {
+                    opts.position = map.getCenter();
+                }
+                
+                // Pov configure
+                if (_hasOwnProperty(opts, 'pov')) {
+                    pano.setPov($.extend({}, svOpt, opts.pov));
+                }
+                if (_hasOwnProperty(opts, 'visible')) {
+                    pano.setVisible(opts.visible);
+                }
+                // Apply options
+                pano.setOptions(opts);
+                // Events Binding
+                if (_hasOwnProperty(opts, 'events')) {
+                    for (i = 0; i < events.length; i += 1) {
+                        if (_hasOwnProperty(opts.events, events[i])) {
+                            self.bindEvents(pano, opts.events[events[i]]);
+                        }
+                    }
                 }
             }
         },
+        //#!#END
         //#!#START PANTO
         /**
          * Method: Google Maps PanTo
@@ -1267,7 +1317,7 @@
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
                     ['zoom', 'setZoom'],
-                    ['showStreetView', 'streetView']
+                    ['streetView', 'streetView']
                 ],
                 i = 0,
                 m = self.map;
@@ -1297,14 +1347,13 @@
         //#!#END
         //#!#START DESTROY
         destroy: function () {
-            var container = $(this.container);
-            $.data(container.get(0), 'tinyMap', null);
+            var container = $(this.container),
+                data = $.data(container.get(0), 'tinyMap', null);
             if (container.length) {
                 return container.empty();
             }
         },
         //#!#END
-        //#!#START AUTOLOCATION
         /**
          * Use HTML5 Geolocation API to detect the client's location.
          * @param {Object} map Map intance
@@ -1339,7 +1388,6 @@
                 );
             } 
         },
-        //#!#END
         /**
          * tinyMap Initialize
          * @this {tinyMap}
