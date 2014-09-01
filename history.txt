@@ -1,5 +1,11 @@
 jQuery tinyMap Changelog
 
+2.9.6
+現在 marker.icon 已經可以完整支援 Icon 以及 Symbol 了。
+修正 direction.waypoint 無法使用 [[lat, lng]...] 格式的錯誤。
+新增 streetView 參數，可設置更詳細的街景選項及綁定事件。
+移除 showStreetView 參數（由 streetView.visible 取代）。
+
 2.9.5
 清除及修正冗餘的程式碼。
 修正 modify 方法無法綁定地圖事件的問題。
