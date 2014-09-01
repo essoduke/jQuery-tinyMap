@@ -30,7 +30,7 @@
  * 新增 streetView 參數，可設置更詳細的街景選項及綁定事件。
  * 移除 showStreetView 參數（由 streetView.visible 取代）。
  *
- * Release 2014.09.01.174408
+ * Release 2014.09.01.175302
  */
 ;(function ($, window, document, undefined) {
 
@@ -1222,12 +1222,8 @@
                 // Apply options
                 pano.setOptions(opts);
                 // Events Binding
-                if (_hasOwnProperty(opts, 'events')) {
-                    for (i = 0; i < events.length; i += 1) {
-                        if (_hasOwnProperty(opts.events, events[i])) {
-                            self.bindEvents(pano, opts.events[events[i]]);
-                        }
-                    }
+                if (_hasOwnProperty(opts, 'event')) {
+                    self.bindEvents(pano, opts.event);
                 }
             }
         },
