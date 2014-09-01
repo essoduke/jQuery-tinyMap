@@ -30,7 +30,7 @@
  * 新增 streetView 參數，可設置更詳細的街景選項及綁定事件。
  * 移除 showStreetView 參數（由 streetView.visible 取代）。
  *
- * Release 2014.09.01.161518
+ * Release 2014.09.01.174408
  */
 ;(function ($, window, document, undefined) {
 
@@ -711,7 +711,7 @@
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            try {
+            //try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -742,9 +742,10 @@
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
+                /*
             } catch (ignore) {
                 console.dir(ignore);
-            }
+            }*/
         },
         //#!#START MARKER
         /**
@@ -1179,7 +1180,8 @@
                 opts = _hasOwnProperty(opt, 'streetView') ? opt.streetView : {},
                 svOpt = {
                     'heading': 0,
-                    'pitch': 0
+                    'pitch': 0,
+                    'zoom': 1
                 },
                 events = [
                     'closeclick',
@@ -1210,10 +1212,9 @@
                 } else {
                     opts.position = map.getCenter();
                 }
-                
                 // Pov configure
                 if (_hasOwnProperty(opts, 'pov')) {
-                    pano.setPov($.extend({}, svOpt, opts.pov));
+                    opts.pov = $.extend({}, svOpt, opts.pov);
                 }
                 if (_hasOwnProperty(opts, 'visible')) {
                     pano.setVisible(opts.visible);
