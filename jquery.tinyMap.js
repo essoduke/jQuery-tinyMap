@@ -22,15 +22,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.6
+ * @version: 2.9.7
  *
  * [Changelog]
- * 現在 marker.icon 已經可以完整支援 Icon 以及 Symbol 了。
- * 修正 direction.waypoint 無法使用 [[lat, lng]...] 格式的錯誤。
- * 新增 streetView 參數，可設置更詳細的街景選項及綁定事件。
- * 移除 showStreetView 參數（由 streetView.visible 取代）。
+ * 修正無法建立 marker 的錯誤。
+ * 現在 marker, polyline, polygon, circle 除了原有參數以外，也支援了原生參數，並可以綁定所有原生事件。
  *
- * Release 2014.09.01.175302
+ * Release 2014.09.02.100432
  */
 ;(function ($, window, document, undefined) {
 
@@ -365,7 +363,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.6',
+        VERSION: '2.9.7',
 
         // Layers
         _polylines: [],
@@ -551,6 +549,7 @@
                 c = {},
                 len = 0,
                 coords = new google.maps.MVCArray(),
+                defOpt = {},
                 path   = [],
                 service = {},
                 waypoints = [],
@@ -567,11 +566,14 @@
                         coords.push(c);
                     }
                 }
-                polyline = new google.maps.Polyline({
+
+                defOpt = $.extend({}, {
                     'strokeColor': opt.polyline.color || '#FF0000',
                     'strokeOpacity': 1.0,
                     'strokeWeight': opt.polyline.width || 2
-                });
+                }, opt.polyline);
+
+                polyline = new google.maps.Polyline(defOpt);
 
                 this._polylines.push(polyline);
 
@@ -584,6 +586,10 @@
                             });
                         }
                     }
+                }
+
+                if (_hasOwnProperty(opt.polyline, 'event')) {
+                    self.bindEvents(polyline, opt.polyline.event);
                 }
 
                 if (_hasOwnProperty(opt.polyline, 'snap') &&
@@ -609,7 +615,9 @@
                     });
                 } else {
                     polyline.setPath(coords);
-                    if (_hasOwnProperty(google.maps.geometry, 'spherical')) {
+                    if (_hasOwnProperty(google.maps, 'geometry') &&
+                        _hasOwnProperty(google.maps.geometry, 'spherical')
+                    ) {
                         if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
                             distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.length - 1));
                             if ('function' === typeof opt.polyline.getDistance) {
@@ -633,6 +641,7 @@
                 i = 0,
                 p = {},
                 c = {},
+                defOpt = {},
                 coords = [];
 
             if (_hasOwnProperty(opt, 'polygon') &&
@@ -646,21 +655,22 @@
                         coords.push(c);
                     }
                 }
-                polygon = new google.maps.Polygon({
+
+                defOpt = $.extend({}, {
                     'path': coords,
                     'strokeColor': opt.polygon.color || '#FF0000',
                     'strokeOpacity': 1.0,
                     'strokeWeight': opt.polygon.width || 2,
                     'fillColor': opt.polygon.fillcolor || '#CC0000',
                     'fillOpacity': 0.35
-                });
-                this._polygons.push(polygon);
-                polygon.setMap(this.map);
-                if (_hasOwnProperty(opt.polygon, 'click') &&
-                    'function' === typeof opt.polygon.click
-                ) {
-                    google.maps.event.addListener(polygon, 'click', opt.polygon.click);
+                }, opt.polygon);
+
+                polygon = new google.maps.Polygon(defOpt);
+                if (_hasOwnProperty(opt.polygon, 'event')) {
+                    this.bindEvents(polygon, opt.polygon.event);
                 }
+                this._polygons.push(polygon);
+                polygon.setMap(map);
             }
         },
         //#!#END
@@ -671,33 +681,39 @@
          * @param {Object} opt Circle options
          */
         drawCircle: function (map, opt) {
-            var c = 0,
+            var self = this,
+                c = 0,
                 loc = {},
+                defOpt = {},
                 circle = {},
                 circles = {};
             
             if (_hasOwnProperty(opt, 'circle') && $.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
+                    
+                    defOpt = $.extend({}, {
+                        'map': map,
+                        'strokeColor': circle.color || '#FF0000',
+                        'strokeOpacity': circle.opacity || 0.8,
+                        'strokeWeight': circle.width || 2,
+                        'fillColor': circle.fillcolor || '#FF0000',
+                        'fillOpacity': circle.fillopacity || 0.35,
+                        'radius': circle.radius || 10,
+                        'zIndex': 100,
+                        'id' : _hasOwnProperty(circle, 'id') ? circle.id : ''
+                    }, circle);
+
                     if (_hasOwnProperty(circle, 'center')) {
                         loc = parseLatLng(circle.center, true);
+                        defOpt.center = loc;
                     }
+
                     if ('function' === typeof loc.lat) {
-                        circles = new google.maps.Circle({
-                            'strokeColor': circle.color || '#FF0000',
-                            'strokeOpacity': circle.opacity || 0.8,
-                            'strokeWeight': circle.width || 2,
-                            'fillColor': circle.fillcolor || '#FF0000',
-                            'fillOpacity': circle.fillopacity || 0.35,
-                            'map': this.map,
-                            'center': loc,
-                            'radius': circle.radius || 10,
-                            'zIndex': 100,
-                            'id' : _hasOwnProperty(opt, 'id') ? opt.id : ''
-                        });
+                        circles = new google.maps.Circle(defOpt);
                         this._circles.push(circles);
-                        if ('function' === typeof opt.circle[c].click) {
-                            google.maps.event.addListener(circles, 'click', opt.circle[c].click);
+                        if (_hasOwnProperty(circle, 'event')) {
+                            self.bindEvents(circles, circle.event);
                         }
                     }
                 }
@@ -711,7 +727,7 @@
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            //try {
+            try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -742,10 +758,9 @@
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-                /*
             } catch (ignore) {
                 console.dir(ignore);
-            }*/
+            }
         },
         //#!#START MARKER
         /**
@@ -807,12 +822,12 @@
                            opt.title.toString().replace(/<([^>]+)>/g, '') :
                            false,
                 content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
-                markerOptions = {
+                markerOptions = $.extend({}, {
                     'map': map,
                     'position': opt.parseAddr,
                     'animation': null,
                     'id': id
-                },
+                }, opt),
                 icons = self.markerIcon(opt);
 
             if (title) {
@@ -825,15 +840,18 @@
                     'content': content
                 });
             }
-
-            markerOptions.icon = icons;
             
+            if (!$.isEmptyObject(icons)) {
+                markerOptions.icon = icons;
+            }
+
             if (_hasOwnProperty(opt, 'animation')) {
                 if ('string' === typeof opt.animation) {
                     markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                 }
             }
 
+            //markerOptions = $.extend({}, markerOptions, opt);
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
@@ -920,7 +938,9 @@
                         });
                     }
 
-                    markerOptions.icon = icons;
+                    if (!$.isEmptyObject(icons)) {
+                        markerOptions.icon = icons;
+                    }
                     
                     if (_hasOwnProperty(opt, 'animation')) {
                         if ('string' === typeof opt.animation) {
@@ -928,6 +948,7 @@
                         }
                     }
 
+                    markerOptions = $.extend({}, markerOptions, opt);
                     marker = new google.maps.Marker(markerOptions);
                     self._markers.push(marker);
 
