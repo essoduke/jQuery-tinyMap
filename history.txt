@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+2.9.7
+修正無法建立 marker 的錯誤。
+現在 marker, polyline, polygon, circle 除了原有參數以外，也支援了原生參數，並可以綁定所有原生事件。
+
 2.9.6
 現在 marker.icon 已經可以完整支援 Icon 以及 Symbol 了。
 修正 direction.waypoint 無法使用 [[lat, lng]...] 格式的錯誤。
