@@ -1,5 +1,10 @@
 jQuery tinyMap Changelog
 
+2.9.8
+新增 google.maps.MapOptions 原生屬性的支援，例如 backgroundColor, heading...。
+修正 direction.waypoint.text 無法正確設置的錯誤。
+修正 modify 方法無法變更 streetView 的錯誤。
+
 2.9.7
 修正無法建立 marker 的錯誤。
 現在 marker, polyline, polygon, circle 除了原有參數以外，也支援了原生參數，並可以綁定所有原生事件。
