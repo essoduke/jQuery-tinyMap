@@ -1,20 +1,24 @@
-/*jshint undef:false, unused:false */
+/*jshint unused:false */
 /**
  * MIT License
  * Copyright(c) 2014 essoduke.org
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
- * and associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED 『AS IS』, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED 『AS IS』, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  *
  * jQuery tinyMap 輕鬆建立 Google Maps 的 jQuery 擴充套件
  * 短小精幹！拯救你免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
@@ -22,82 +26,38 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.7
+ * @version: 2.9.8
  *
  * [Changelog]
- * 修正無法建立 marker 的錯誤。
- * 現在 marker, polyline, polygon, circle 除了原有參數以外，也支援了原生參數，並可以綁定所有原生事件。
+ * 新增 google.maps.MapOptions 原生屬性的支援，例如 backgroundColor, heading...。
+ * 修正 direction.waypoint.text 無法正確設置的錯誤。
+ * 修正 modify 方法無法變更 streetView 的錯誤。
  *
- * Release 2014.09.02.100432
+ * Release 2014.09.18.185856
  */
 ;(function ($, window, document, undefined) {
 
     'use strict';
 
-    // Plugin default settings
+    // Default settings
     var defaults = {
-            'center': {
-                'lat': '',
-                'lng': ''
-            },
-            'control': true,
-            'disableDoubleClickZoom': false, //2.6.4
-            'disableDefaultUI': false, //2.5.1
-            'draggable': true,
-            'infoWindowAutoClose':  true, //2.8.4
-            'keyboardShortcuts': true,
-            'mapTypeControl': true,
-            'mapTypeControlOptions': {
-                'position': 'TOP_RIGHT',
-                'style': 'DEFAULT'
-            },
-            'mapTypeId': 'ROADMAP',
-            'marker': [],
-            'markerFitBounds': false,
-            'markerCluster': false, //2.6.0
-            'maxZoom': null, //2.5.1
-            'minZoom': null, //2.5.1
-            'panControl': true, //2.5.1
-            'panControlOptions': {
-                'position': 'LEFT_TOP'
-            },
-            'polyline': [], // 2.8.0 update
-            'navigationControl': true,
-            'navigationControlOptions': {
-                'position': 'TOP_LEFT',
-                'style': 'DEFAULT'
-            },
-            'scaleControl': true,
-            'scaleControlOptions': {
-                'position': 'BOTTOM_LEFT',
-                'style': 'DEFAULT'
-            },
-            'scrollwheel': true,
-            'streetViewControl': true, //2.5.1
-            'streetViewControlOptions': {
-                'position': 'LEFT_TOP'
-            },
-            'zoom': 4,
-            'zoomControl': true,
-            'zoomControlOptions': {
-                'style': 'LARGE',
-                'position': 'LEFT_TOP'
-            },
-            'notfound': '找不到查詢的地點',
+            'autoLocation': false,
+            'center': [24, 121],
+            'event': null,
+            'infoWindowAutoClose':  true,
+            'interval': 200,
+            'kml': [],
             'loading': '讀取中&hellip;',
-            'kml': {
-                'url': '',
-                'viewport': true,
-                'infowindow': false
-            },
-            'interval': 200, //2.5.0
-            'event': null, //2.7.0
-            'streetView': {}, //2.9.6
-            'autoLocation': false //2.8.2
+            'marker': [],
+            'markerCluster': false,
+            'markerFitBounds': false,
+            'notfound': '找不到查詢的地點',
+            'polyline': [],
+            'zoom': 8
         },
         _directMarkersLength = 0,
         _geoMarkersLength = 0,
-        styles = {}; //2.8.8
+        styles = {};
 
     //#!#START STYLES
     styles = {
@@ -130,7 +90,7 @@
     /**
      * Parsing the location
      * @param {string|Array|Object} loc Location
-     * @param {boolean} formatting to Google Maps LatLng object
+     * @param {boolean} formatting Format to Google Maps LatLng object
      * @return {Object}
      */
     function parseLatLng (loc, formatting) {
@@ -240,25 +200,19 @@
      */
     function TinyMap (container, options) {
 
-        var opt = {};
+        var opt = $.extend({}, defaults, options),
+            vo = {},
+            o = '';
 
         // Make sure the API has loaded.
         if (!_hasOwnProperty(window, 'google')) {
             return;
         }
-
-        opt = $.extend({}, defaults, options);
-
         /**
          * Map instance
          * @type {Object}
          */
         this.map = null;
-        /**
-         * Map marker cluster
-         * @type {Object}
-         */
-        this.markerCluster = null;
         /**
          * Map markers
          * @type {Object}
@@ -280,71 +234,44 @@
          */
         this.options = opt;
         /**
+         * Google Map options
+         * @type {Object}
+         */
+        this.googleMapOptions = {};
+        /**
          * Interval for geocoder's query interval
          * @type {number}
          */
         this.interval = parseInt(this.options.interval, 10) || 200;
-        /**
-         * Google Maps options
-         * @type {Object}
-         */
-        this.googleMapOptions = {
-            'center': '',
-            'control': opt.control,
-            'disableDoubleClickZoom': opt.disableDoubleClickZoom,
-            'disableDefaultUI': opt.disableDefaultUI,
-            'draggable': opt.draggable,
-            'keyboardShortcuts': opt.keyboardShortcuts,
-            'mapTypeId': google.maps.MapTypeId[opt.mapTypeId.toUpperCase()],
-            'mapTypeControl': opt.mapTypeControl,
-            'mapTypeControlOptions': {
-                'position': google.maps.ControlPosition[opt.mapTypeControlOptions.position],
-                'style': google.maps.MapTypeControlStyle[opt.mapTypeControlOptions.style.toUpperCase()]
-            },
-            'maxZoom': opt.maxZoom,
-            'minZoom': opt.minZoom,
-            'navigationControl': opt.navigationControl,
-            'navigationControlOptions': {
-                'position': google.maps.ControlPosition[opt.navigationControlOptions.position],
-                'style': google.maps.NavigationControlStyle[opt.navigationControlOptions.style.toUpperCase()]
-            },
-            'panControl': opt.panControl,
-            'panControlOptions': {
-                'position': google.maps.ControlPosition[opt.panControlOptions.position]
-            },
-            'rotateControl': opt.rotateControl,
-            'scaleControl': opt.scaleControl,
-            'scaleControlOptions': {
-                'position': google.maps.ControlPosition[opt.scaleControlOptions.position],
-                'style': google.maps.ScaleControlStyle[opt.scaleControlOptions.style.toUpperCase()]
-            },
-            'scrollwheel': opt.scrollwheel,
-            'streetViewControl': opt.streetViewControl,
-            'streetViewControlOptions': {
-                'position': google.maps.ControlPosition[opt.streetViewControlOptions.position]
-            },
-            'zoom': opt.zoom,
-            'zoomControl': opt.zoomControl,
-            'zoomControlOptions': {
-                'position': google.maps.ControlPosition[opt.zoomControlOptions.position],
-                'style': google.maps.ZoomControlStyle[opt.zoomControlOptions.style.toUpperCase()]
+
+        // Parsing ControlOptions
+        for (o in this.options) {
+            if (_hasOwnProperty(this.options, o)) {
+                vo = this.options[o];
+                if (/ControlOptions/g.test(o)) {
+                    if (_hasOwnProperty(vo, 'position')) {
+                        if ('string' === typeof vo.position) {
+                            this.options[o].position = google.maps.ControlPosition[vo.position.toUpperCase()];
+                        }
+                    }
+                }
             }
-        };
-
-        // tinyMap.center parsing
-        this.options.center = this.googleMapOptions.center = parseLatLng(opt.center, true);
-
-        if (true === opt.disableDefaultUI) {
-            this.googleMapOptions.mapTypeControl = false;
-            this.googleMapOptions.navigationControl = false;
-            this.googleMapOptions.panControl = false;
-            this.googleMapOptions.rotateControl = false;
-            this.googleMapOptions.scaleControl = false;
-            this.googleMapOptions.streetViewControl = false;
-            this.googleMapOptions.zoomControl = false;
         }
 
+        // Merge options
+        this.googleMapOptions = this.options;
+
+        // Process streetView conflict
+        if (_hasOwnProperty(opt, 'streetView')) {
+            this.googleMapOptions.streetViewObj = opt.streetView;
+            delete this.googleMapOptions.streetView;
+        }
+
+        // Parsing Center location
+        this.googleMapOptions.center = parseLatLng(opt.center, true);
+        
         //#!#START STYLES
+        // Map styles apply
         if (_hasOwnProperty(opt, 'styles')) {
             if ('string' === typeof opt.styles) {
                 if (_hasOwnProperty(styles, opt.styles)) {
@@ -363,7 +290,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.7',
+        VERSION: '2.9.8',
 
         // Layers
         _polylines: [],
@@ -375,16 +302,6 @@
 
         // Google Maps LatLngBounds Class
         bounds: new google.maps.LatLngBounds(),
-        /**
-         * Set zoom level of the map
-         * @param {Object} map Map instance
-         * @param {Object} opt tinyMap options
-         */
-        setZoom: function (map, opt) {
-            if (_hasOwnProperty(opt, 'zoom') && 'function' === typeof map.setZoom) {
-                map.setZoom(opt.zoom);
-            }
-        },
         //#!#START KML
         /**
          * KML overlay
@@ -619,7 +536,13 @@
                         _hasOwnProperty(google.maps.geometry, 'spherical')
                     ) {
                         if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-                            distance = google.maps.geometry.spherical.computeDistanceBetween(coords.getAt(0), coords.getAt(coords.length - 1));
+                            distance = google.maps
+                                             .geometry
+                                             .spherical
+                                             .computeDistanceBetween(
+                                                coords.getAt(0),
+                                                coords.getAt(coords.length - 1)
+                                             );
                             if ('function' === typeof opt.polyline.getDistance) {
                                 opt.polyline.getDistance.call(this, distance);
                             }
@@ -691,7 +614,6 @@
             if (_hasOwnProperty(opt, 'circle') && $.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
-                    
                     defOpt = $.extend({}, {
                         'map': map,
                         'strokeColor': circle.color || '#FF0000',
@@ -769,7 +691,7 @@
          * @this {tinyMap}
          */
         markerIcon: function (opt) {
-            var icons = $.extend({}, icons, opt.icon);;
+            var icons = $.extend({}, icons, opt.icon);
             if (_hasOwnProperty(opt, 'icon')) {
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
@@ -800,9 +722,6 @@
                             opt.icon.anchor[1]
                         );
                     }
-                }
-                if (_hasOwnProperty(opt.icon, 'path') && 'string' === typeof opt.icon.path) {
-                    icons.path = google.maps.SymbolPath[opt.icon.path];
                 }
             }
             return icons;
@@ -845,10 +764,10 @@
                 markerOptions.icon = icons;
             }
 
-            if (_hasOwnProperty(opt, 'animation')) {
-                if ('string' === typeof opt.animation) {
-                    markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
-                }
+            if (_hasOwnProperty(opt, 'animation') &&
+                'string' === typeof opt.animation
+            ) {
+                markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
 
             //markerOptions = $.extend({}, markerOptions, opt);
@@ -867,7 +786,6 @@
                     }
                 }
             }
-
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
@@ -876,7 +794,6 @@
             if (true === self.options.markerCluster) {
                 if ('function' === typeof MarkerClusterer) {
                     if (_directMarkersLength === self.options.marker.length) {
-                        //self.markerCluster = new MarkerClusterer(map, self._markers);
                         return new MarkerClusterer(map, self._markers);
                     }
                 }
@@ -955,13 +872,13 @@
                     // Apply marker fitbounds
                     if (_hasOwnProperty(marker, 'position')) {
                         if ('function' === typeof marker.getPosition) {
-                            self.bounds.extend(markerOptions.position);
+                            self.bounds.extend(marker.position);
                         }
-                    }
-                    if (true === self.options.markerFitBounds) {
-                        // Make sure fitBounds call after the last marker created.
-                        if (self._markers.length === self.options.marker.length) {
-                            map.fitBounds(self.bounds);
+                        if (true === self.options.markerFitBounds) {
+                            // Make sure fitBounds call after the last marker created.
+                            if (self._markers.length === self.options.marker.length) {
+                                map.fitBounds(self.bounds);
+                            }
                         }
                     }
                     /**
@@ -972,7 +889,6 @@
                     if (_hasOwnProperty(self.options, 'markerCluster')) {
                         if ('function' === typeof MarkerClusterer) {
                             if (_geoMarkersLength === self.options.marker.length) {
-                                //self.markerCluster = new MarkerClusterer(map, self._markers);
                                 return new MarkerClusterer(map, self._markers);
                             }
                         }
@@ -1001,12 +917,18 @@
          * @this {tinyMap}
          */
         directionService: function (opt) {
+
+            // Make sure the `from` and `to` have setting.
+            if (!(_hasOwnProperty(opt, 'from') && _hasOwnProperty(opt, 'to'))) {
+                return;
+            }
+
             var self = this,
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
                 request = {
                     'travelMode': google.maps.DirectionsTravelMode.DRIVING,
-                    'optimizeWaypoints': opt.optimize || false
+                    'optimizeWaypoints': _hasOwnProperty(opt, 'optimize') ? opt.optimize : false
                 },
                 panel = {},
                 renderOpts = {},
@@ -1055,6 +977,7 @@
 
             directionsService.route(request, function (response, status) {
                 var legs = 0,
+                    modify = {},
                     i = 0;
                 if (status === google.maps.DirectionsStatus.OK) {
                     legs = response.routes[0].legs;
@@ -1094,8 +1017,8 @@
                                 });
                             }
                         }
-                        for (i = 1; i < legs.length; i += 1) {
-                            legs[i].start_address = waypointsText[i - 1];
+                        for (i = 0; i < legs.length - 1; i += 1) {
+                            legs[i].end_address = waypointsText[i];
                             if (_hasOwnProperty(opt, 'icon') && _hasOwnProperty(opt.icon, 'waypoint')) {
                                 self.directionServiceMarker(legs[i].start_location, {
                                     'icon': opt.icon.waypoint,
@@ -1152,7 +1075,6 @@
                 google.maps.event.addListener(target, 'click', event);
                 break;
             case 'object':
-                
                 for (e in event) {
                     if ('function' === typeof event[e]) {
                         google.maps.event.addListener(target, e, event[e]);
@@ -1198,7 +1120,7 @@
         streetView: function (map, opt) {
             var self = this,
                 pano = {},
-                opts = _hasOwnProperty(opt, 'streetView') ? opt.streetView : {},
+                opts = _hasOwnProperty(opt, 'streetViewObj') ? opt.streetViewObj : {},
                 svOpt = {
                     'heading': 0,
                     'pitch': 0,
@@ -1219,7 +1141,7 @@
                 loc = {};
 
             if ('function' === typeof map.getStreetView &&
-                _hasOwnProperty(opt, 'streetView')
+                _hasOwnProperty(opt, 'streetViewObj')
             ) {
                 pano = map.getStreetView();
                 // Default position of streetView
@@ -1252,7 +1174,7 @@
         //#!#START PANTO
         /**
          * Method: Google Maps PanTo
-         * @param {string} addr Text address or "latitude, longitude" format
+         * @param {string|Array|Object} addr Location
          * @public
          */
         panto: function (addr) {
@@ -1261,9 +1183,9 @@
                 m = this.map;
             if (null !== m && undefined !== m) {
                 loc = parseLatLng(addr, true);
-                if ('string' === typeof addr) {
+                if ('string' === typeof loc) {
                     geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({'address': addr}, function (results, status) {
+                    geocoder.geocode({'address': loc}, function (results, status) {
                         if (status === google.maps.GeocoderStatus.OK) {
                             if ('function' === typeof m.panTo && results.length) {
                                 m.panTo(results[0].geometry.location);
@@ -1283,19 +1205,19 @@
         //#!#START CLEAR
         /**
          * Method: Google Maps clear the specificed layer
-         * @param {string} type Layer type (markers, polylines, polygons, circles, kmls, directions)
+         * @param {string} type Layer type
          * @public
          */
         clear: function (layer) {
             var self = this,
-                layers = [],
+                layers = 'marker,circle,polygon,polyline,direction,kml',
                 label = '',
                 i = 0,
                 j = 0;
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
-                     ($.isArray(layer) ? layer : ['marker', 'circle', 'polygon', 'polyline', 'direction', 'kml']);
+                     ($.isArray(layer) ? layer : layers.split(','));
 
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
@@ -1309,7 +1231,7 @@
                     }
                     self[label].length = 0;
                 }
-                // Remove the custom icons of directions
+                // Remove the direction icons.
                 if ('direction' === layers[i]) {
                     for (j = 0; j < self._directionsMarkers.length; j += 1) {
                         self._directionsMarkers[j].setMap(null);
@@ -1334,7 +1256,6 @@
                     ['polyline', 'drawPolyline'],
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
-                    ['zoom', 'setZoom'],
                     ['streetView', 'streetView']
                 ],
                 i = 0,
@@ -1350,6 +1271,10 @@
                     if (func.length) {
                         for (i = 0; i < func.length; i += 1) {
                             if ('function' === typeof self[func[i]]) {
+                                if ('streetView' === func[i]) {
+                                    options.streetViewObj = options.streetView;
+                                    delete options.streetView;
+                                }
                                 self[func[i]](m, options, 'modify');
                             }
                         }
@@ -1365,11 +1290,8 @@
         //#!#END
         //#!#START DESTROY
         destroy: function () {
-            var container = $(this.container),
-                data = $.data(container.get(0), 'tinyMap', null);
-            if (container.length) {
-                return container.empty();
-            }
+            var container = $(this.container);
+            $.data(container.get(0), 'tinyMap', null);
         },
         //#!#END
         /**
@@ -1378,6 +1300,7 @@
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
+
             var watch = false,
                 geolocation = navigator.geolocation;
 
@@ -1427,7 +1350,6 @@
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                     self.overlay();
                                 });
-                                // Events binding
                                 self.bindEvents(self.map, self.options.event);
                             }
                         } else {
@@ -1442,7 +1364,6 @@
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
                 });
-                // Events binding
                 self.bindEvents(self.map, self.options.event);
             }
         }
@@ -1454,20 +1375,21 @@
      */
     $.fn.tinyMap = function (options) {
         var args = arguments,
+            id   = 'tinyMap',
             result = [],
             instance = {};
         if ('string' === typeof options) {
             this.each(function () {
-                instance = $.data(this, 'tinyMap');
-                if (instance instanceof TinyMap && 'function' === typeof instance[options]) {
+                instance = $.data(this, id);
+                if (instance instanceof TinyMap &&'function' === typeof instance[options]) {
                     result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
             });
             return undefined !== result ? result : this;
         } else {
             return this.each(function () {
-                if (!$.data(this, 'tinyMap')) {
-                    $.data(this, 'tinyMap', new TinyMap(this, options));
+                if (!$.data(this, id)) {
+                    $.data(this, id, new TinyMap(this, options));
                 }
             });
         }
