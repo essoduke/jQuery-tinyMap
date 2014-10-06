@@ -26,14 +26,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.8
+ * @version: 2.9.9
  *
  * [Changelog]
- * 新增 google.maps.MapOptions 原生屬性的支援，例如 backgroundColor, heading...。
- * 修正 direction.waypoint.text 無法正確設置的錯誤。
- * 修正 modify 方法無法變更 streetView 的錯誤。
+ * polyline, polygon 參數改為陣列型態以支援繪製多組線條和幾何圖形（感謝 karry chang 修正)
  *
- * Release 2014.09.18.185856
+ * Release 2014.10.06.112312
  */
 ;(function ($, window, document, undefined) {
 
@@ -290,7 +288,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.8',
+        VERSION: '2.9.9',
 
         // Layers
         _polylines: [],
@@ -453,106 +451,118 @@
             }
         },
         //#!#END
-        //#!#START POLYLINE
+        
+		
+		//#!#START POLYLINE
+		//begin add Multiple POLYLINE by Karry
         /**
          * Polyline overlay
          * @param {Object} map Map instance
          * @param {Object} opt Polyline options
          */
         drawPolyline: function (map, opt) {
+			
             var polyline = {},
                 i = 0,
                 p = {},
+				polylineX={},
                 c = {},
                 len = 0,
-                coords = new google.maps.MVCArray(),
+				c1 = 0,
                 defOpt = {},
                 path   = [],
                 service = {},
                 waypoints = [],
                 distance = {};
 
-            if (_hasOwnProperty(opt, 'polyline') &&
-                _hasOwnProperty(opt.polyline, 'coords') &&
-                $.isArray(opt.polyline.coords)
-            ) {
-                for (i = 0; i < opt.polyline.coords.length; i += 1) {
-                    p = opt.polyline.coords[i];
-                    c = parseLatLng(p, true);
-                    if ('function' === typeof c.lat) {
-                        coords.push(c);
-                    }
-                }
+			if (_hasOwnProperty(opt, 'polyline') && $.isArray(opt.polyline)) {
+				for (c1 = opt.polyline.length - 1; c1 >= 0; c1 -= 1) {
+					polylineX = opt.polyline[c1];
+					if (_hasOwnProperty(polylineX, 'coords') &&
+						$.isArray(polylineX.coords) 
+					) {
+						var coords = new google.maps.MVCArray();
+						for (i = 0; i < polylineX.coords.length; i += 1) {
+							p = polylineX.coords[i];
+							c = parseLatLng(p, true);
+							if ('function' === typeof c.lat) {
+								coords.push(c);
+							}
+						}
 
-                defOpt = $.extend({}, {
-                    'strokeColor': opt.polyline.color || '#FF0000',
-                    'strokeOpacity': 1.0,
-                    'strokeWeight': opt.polyline.width || 2
-                }, opt.polyline);
+						defOpt = $.extend({}, {
+							'strokeColor': polylineX.color || '#FF0000',
+							'strokeOpacity': 1.0,
+							'strokeWeight': polylineX.width || 2
+						}, polylineX);
 
-                polyline = new google.maps.Polyline(defOpt);
+						polyline = new google.maps.Polyline(defOpt);
 
-                this._polylines.push(polyline);
+						this._polylines.push(polyline);
 
-                if (2 < coords.getLength()) {
-                    for (i = 0; i < coords.length; i += 1) {
-                        if (0 < i && (coords.length - 1 > i)) {
-                            waypoints.push({
-                                'location': coords.getAt(i),
-                                'stopover': false
-                            });
-                        }
-                    }
-                }
+						if (2 < coords.getLength()) {
+							for (i = 0; i < coords.length; i += 1) {
+								if (0 < i && (coords.length - 1 > i)) {
+									waypoints.push({
+										'location': coords.getAt(i),
+										'stopover': false
+									});
+								}
+							}
+						}
 
-                if (_hasOwnProperty(opt.polyline, 'event')) {
-                    self.bindEvents(polyline, opt.polyline.event);
-                }
+						if (_hasOwnProperty(polylineX, 'event')) {
+							self.bindEvents(polyline, polylineX.event);
+						}
 
-                if (_hasOwnProperty(opt.polyline, 'snap') &&
-                    true === opt.polyline.snap
-                ) {
-                    service = new google.maps.DirectionsService();
-                    service.route({
-                        'origin': coords.getAt(0),
-                        'waypoints': waypoints,
-                        'destination': coords.getAt(coords.length - 1),
-                        'travelMode': google.maps.DirectionsTravelMode.DRIVING
-                    }, function (result, status) {
-                        if (status === google.maps.DirectionsStatus.OK) {
-                            for (i = 0, len = result.routes[0].overview_path; i < len.length; i += 1) {
-                                path.push(len[i]);
-                            }
-                            polyline.setPath(path);
-                            if ('function' === typeof opt.polyline.getDistance) {
-                                distance = result.routes[0].legs[0].distance;
-                                opt.polyline.getDistance.call(this, distance);
-                            }
-                        }
-                    });
-                } else {
-                    polyline.setPath(coords);
-                    if (_hasOwnProperty(google.maps, 'geometry') &&
-                        _hasOwnProperty(google.maps.geometry, 'spherical')
-                    ) {
-                        if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-                            distance = google.maps
-                                             .geometry
-                                             .spherical
-                                             .computeDistanceBetween(
-                                                coords.getAt(0),
-                                                coords.getAt(coords.length - 1)
-                                             );
-                            if ('function' === typeof opt.polyline.getDistance) {
-                                opt.polyline.getDistance.call(this, distance);
-                            }
-                        }
-                    }
-                }
-                polyline.setMap(map);
-            }
+						if (_hasOwnProperty(polylineX, 'snap') &&
+							true === polylineX.snap
+						) {
+							service = new google.maps.DirectionsService();
+							service.route({
+								'origin': coords.getAt(0),
+								'waypoints': waypoints,
+								'destination': coords.getAt(coords.length - 1),
+								'travelMode': google.maps.DirectionsTravelMode.DRIVING
+							}, function (result, status) {
+								if (status === google.maps.DirectionsStatus.OK) {
+									for (i = 0, len = result.routes[0].overview_path; i < len.length; i += 1) {
+										path.push(len[i]);
+									}
+									polyline.setPath(path);
+									if ('function' === typeof polylineX.getDistance) {
+										distance = result.routes[0].legs[0].distance;
+										polylineX.getDistance.call(this, distance);
+									}
+								}
+							});
+						} else {
+							polyline.setPath(coords);
+							if (_hasOwnProperty(google.maps, 'geometry') &&
+								_hasOwnProperty(google.maps.geometry, 'spherical')
+							) {
+								if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+									distance = google.maps
+													 .geometry
+													 .spherical
+													 .computeDistanceBetween(
+														coords.getAt(0),
+														coords.getAt(coords.length - 1)
+													 );
+									if ('function' === typeof polylineX.getDistance) {
+										polylineX.getDistance.call(this, distance);
+									}
+								}
+							}
+						}
+						polyline.setMap(map);
+					}
+				}
+			}
         },
         //#!#END
+		//end add Multiple POLYLINE by karry
+		
         //#!#START POLYGON
         /**
          * Polygon overlay
@@ -562,38 +572,45 @@
         drawPolygon: function (map, opt) {
             var polygon = {},
                 i = 0,
+                j = 0,
                 p = {},
                 c = {},
+                len = 0,
                 defOpt = {},
                 coords = [];
 
-            if (_hasOwnProperty(opt, 'polygon') &&
+            if (_hasOwnProperty(opt, 'polygon') && $.isArray(opt.polygon)) {
+                /*
                 _hasOwnProperty(opt.polygon, 'coords') &&
                 $.isArray(opt.polygon.coords)
             ) {
-                for (i = 0; i < opt.polygon.coords.length; i += 1) {
-                    p = opt.polygon.coords[i];
-                    c = parseLatLng(p, true);
-                    if ('function' === typeof c.lat) {
-                        coords.push(c);
+                */
+                for (len = opt.polygon.length; i < len; i += 1) {
+                    if (_hasOwnProperty(opt.polygon[i], 'coords')) {
+                        for (j = 0; j < opt.polygon[i].coords.length; j += 1) {
+                            p = opt.polygon[i].coords[j];
+                            c = parseLatLng(p, true);
+                            if ('function' === typeof c.lat) {
+                                coords.push(c);
+                            }
+                        }
+                        defOpt = $.extend({}, {
+                            'path': coords,
+                            'strokeColor': opt.polygon[i].color || '#FF0000',
+                            'strokeOpacity': 1.0,
+                            'strokeWeight': opt.polygon[i].width || 2,
+                            'fillColor': opt.polygon[i].fillcolor || '#CC0000',
+                            'fillOpacity': 0.35
+                        }, opt.polygon[i]);
+
+                        polygon = new google.maps.Polygon(defOpt);
+                        if (_hasOwnProperty(opt.polygon[i], 'event')) {
+                            this.bindEvents(polygon, opt.polygon[i].event);
+                        }
+                        this._polygons.push(polygon);
+                        polygon.setMap(map);
                     }
                 }
-
-                defOpt = $.extend({}, {
-                    'path': coords,
-                    'strokeColor': opt.polygon.color || '#FF0000',
-                    'strokeOpacity': 1.0,
-                    'strokeWeight': opt.polygon.width || 2,
-                    'fillColor': opt.polygon.fillcolor || '#CC0000',
-                    'fillOpacity': 0.35
-                }, opt.polygon);
-
-                polygon = new google.maps.Polygon(defOpt);
-                if (_hasOwnProperty(opt.polygon, 'event')) {
-                    this.bindEvents(polygon, opt.polygon.event);
-                }
-                this._polygons.push(polygon);
-                polygon.setMap(map);
             }
         },
         //#!#END
