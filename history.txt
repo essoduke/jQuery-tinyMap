@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+2.9.9
+polyline, polygon 參數改為陣列型態以支援繪製多組線條和幾何圖形（感謝 karry chang 修正)
+
 2.9.8
 新增 google.maps.MapOptions 原生屬性的支援，例如 backgroundColor, heading...。
 修正 direction.waypoint.text 無法正確設置的錯誤。
