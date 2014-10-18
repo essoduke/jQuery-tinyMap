@@ -1,6 +1,6 @@
 # jQuery-tinyMap
 
-This plugin will helping you to create the simple or complex Google Maps on the page.
+This plugin will help you to create simple or complex Google Maps on the page.
 
 
 For complete options, methods and examples (Traditional Chinese):  
@@ -14,7 +14,7 @@ http://app.essoduke.org/tinyMap/customize/
  * Easy to configure and use.
  * Supports Marker, Text label, Polyline, Polygon, Circle, KML, Direction layers. 
  * Custom events of map or layers.
- * Dynamic change the map. 
+ * Dynamically change the map. 
  * MarkerClusterer support.
 
 
