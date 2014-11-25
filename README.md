@@ -16,7 +16,7 @@ http://app.essoduke.org/tinyMap/customize/
  * Custom events of map or layers.
  * Dynamically change the map. 
  * MarkerClusterer support.
-
+ * KML file output.
 
 ## Install
 
@@ -132,6 +132,18 @@ $(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
 $(selector).tinyMap('clear', ['marker', 'polyline', 'polygon'...]);
 // or clear all layers
 $(selector).tinyMap('clear'); 
+
+// Overlays KML output
+// Get the kml string.
+var kml = $(selector).tinyMap('getKML'); 
+// Or using options:
+$(selector).tinyMap('getKML', {
+    'download': true|false,  // Direct download KML not return the string.
+    'marker': true|false,    // Include marker overlay
+    'polyline': true|false,  // Include polyline overlay
+    'direction': true|false  // Include direction overlay
+});
+
 ```
 
 ## Using tinyMap instance
