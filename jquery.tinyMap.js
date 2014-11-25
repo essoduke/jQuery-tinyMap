@@ -1456,14 +1456,7 @@
                                   );
 
                 if (true === opts.download) {
-                    $('<a/>').attr({
-                        'href': mime + window.btoa(unescape(encodeURIComponent(output))),
-                        'download': 'tinyMap.kml'
-                    })
-                    .css('display', 'none')
-                    .appendTo('body')
-                    .trigger('click');
-                    
+                    window.open(mime + window.btoa(unescape(encodeURIComponent(output))));
                 } else {
                     return output;
                 }
