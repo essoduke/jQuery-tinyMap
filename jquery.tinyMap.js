@@ -26,12 +26,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 2.9.9
+ * @version: 3.0.0
  *
  * [Changelog]
- * polyline, polygon 參數改為陣列型態以支援繪製多組線條和幾何圖形（感謝 karry chang 修正)
+ * 新增 getKML 方法，可以將目前地圖上的圖層輸出為 KML。
+ * 修正 modify marker 如果傳入的 id 不存在時不會新增至地圖的錯誤。
  *
- * Release 2014.10.06.112312
+ * Release 2014.11.25.123427
  */
 ;(function ($, window, document, undefined) {
 
@@ -288,7 +289,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '2.9.9',
+        VERSION: '3.0.0',
 
         // Layers
         _polylines: [],
@@ -307,9 +308,10 @@
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
-            
             var kml = {},
                 kmlOpt = {
+                    'url': '',
+                    'map': map,
                     'preserveViewport': false,
                     'suppressInfoWindows': false
                 },
@@ -317,14 +319,14 @@
 
             if (_hasOwnProperty(opt, 'kml')) {
                 if ('string' === typeof opt.kml) {
-                    kml = new google.maps.KmlLayer(opt.kml, kmlOpt);
-                    kml.setMap(map);
+                    kmlOpt.url = opt.kml;
+                    kml = new google.maps.KmlLayer(kmlOpt);
                     this._kmls.push(kml);
                 } else if ($.isArray(opt.kml)) {
                     for (i = 0; i < opt.kml.length; i += 1) {
                         if ('string' === typeof opt.kml[i]) {
-                            kml = new google.maps.KmlLayer(opt.kml[i], kmlOpt);
-                            kml.setMap(map);
+                            kmlOpt.url = opt.kml[i];
+                            kml = new google.maps.KmlLayer(kmlOpt);
                             this._kmls.push(kml);
                         }
                     }
@@ -414,6 +416,16 @@
                                     markers[j].setIcon(opt.marker[i].icon);
                                 }
                                 continue;
+                            // v3.0.0 fixed
+                            } else {
+                                if (_hasOwnProperty(opt.marker[i], 'addr')) {
+                                    opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
+                                    if ('string' === typeof opt.marker[i].parseAddr) {
+                                        this.markerByGeocoder(map, opt.marker[i]);
+                                    } else {
+                                        this.markerDirect(map, opt.marker[i]);
+                                    }
+                                }
                             }
                         }
                         // Redrawing the labels
@@ -1311,6 +1323,154 @@
             $.data(container.get(0), 'tinyMap', null);
         },
         //#!#END
+        //#!#START GETKML
+        getKML: function (opt) {
+            var m = $(this.container),
+                md = m.data('tinyMap'),
+                // Options
+                opts = $.extend({}, {
+                    'marker'   : true,
+                    'polyline' : true,
+                    'direction': true,
+                    'download' : false
+                }, opt),
+                // MIME TYPE of KML
+                mime = 'data:application/vnd.google-earth.kml+xml;charset=utf-8;base64,',
+                // KML template
+                templates = {
+                    'xml': [
+                        '<?xml version="1.0" encoding="UTF-8"?>',
+                        '<kml xmlns="http://earth.google.com/kml/2.2">',
+                        '<Document>',
+                        '<name><![CDATA[]]></name>',
+                        '<description><![CDATA[]]></description>',
+                        '<Style id="style1">',
+                        '<IconStyle>',
+                        '<Icon>',
+                        '<href>http://maps.google.com/mapfiles/kml/paddle/grn-circle_maps.png</href>',
+                        '</Icon>',
+                        '</IconStyle>',
+                        '</Style>',
+                        '#PLACEMARKS#',
+                        '</Document>',
+                        '</kml>'
+                    ],
+                    'placemark': [
+                        '<Placemark>',
+                        '<name><![CDATA[]]></name>',
+                        '<Snippet></Snippet>',
+                        '<description><![CDATA[]]></description>',
+                        '<styleUrl>#style1</styleUrl>',
+                        '<ExtendedData>',
+                        '</ExtendedData>',
+                        '#DATA#',
+                        '</Placemark>'
+                    ],
+                    'linestring': '<LineString><tessellate>1</tessellate><coordinates>#LATLNG#</coordinates></LineString>',
+                    'point': '<Point><coordinates>#LATLNG#,0.000000</coordinates></Point>'
+                },
+                markers = [],
+                polylines = [],
+                polygons = [], // keep
+                circles = [], // keep
+                directions = [],
+                legs = [],
+                path = [],
+                strMarker = '',
+                strPolyline = '',
+                strDirection = '',
+                output = '',
+                latlng = '',
+                i = 0,
+                j = 0,
+                k = 0,
+                m = 0;
+
+            if (md) {
+                // Build markers
+                if (true === opts.marker) {
+                    markers = md._markers;
+                    for (i = 0; i < markers.length; i += 1) {
+                        latlng = markers[i].position.lng() + ',' + markers[i].position.lat();
+                        strMarker += templates.placemark.join('')
+                                              .replace(
+                                                  /#DATA#/gi,
+                                                  templates.point.replace(/#LATLNG#/gi, latlng)
+                                              );
+                    }
+                }
+                // Build Polygons, Polylines and circles
+                if (true === opts.polyline) {
+                    polylines = md._polylines;
+                    for (i = 0; i < polylines.length; i += 1) {
+                        obj = polylines[i].getPath().getArray();
+                        latlng = '';
+                        for (j = 0; j < obj.length; j += 1) {
+                            latlng += obj[j].lng() + ',' + obj[j].lat() + ',0.000000\n';
+                        }
+                        strPolyline += templates.placemark.join('')
+                                                .replace(
+                                                    /#DATA#/gi,
+                                                    templates.linestring.replace(/#LATLNG#/gi, latlng)
+                                                );
+
+                    }
+                }
+                // Build Directions
+                if (true === opts.direction) {
+                    directions = md._directions;
+                    for (i = 0; i < directions.length; i += 1) {
+                        if ($.isArray(directions[i].directions.routes) &&
+                            $.isArray(directions[i].directions.routes[0].legs)
+                        ) {
+                            legs = directions[i].directions.routes[0].legs;
+                            for (j = 0; j < legs.length; j += 1) {
+                                if ($.isArray(legs[j].steps)) {
+                                    for (k = 0; k < legs[j].steps.length; k += 1) {
+                                        latlng = '';
+                                        if ($.isArray(legs[j].steps[k].path)) {
+                                            for (m = 0; m < legs[j].steps[k].path.length; m += 1) {
+                                                path = legs[j].steps[k].path[m];
+                                                if (undefined !== path && $.isFunction(path.lat)) {
+                                                    latlng += path.lng() + ',' + path.lat() + ',0.000000\n';
+                                                }
+                                            }
+                                        }
+                                        strDirection += templates.placemark.join('')
+                                                                 .replace(
+                                                                     /#DATA#/gi,
+                                                                     templates.linestring.replace(/#LATLNG#/gi, latlng)
+                                                                 );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Output KML
+                output = templates.xml
+                                  .join('')
+                                  .replace(
+                                      /#PLACEMARKS#/gi,
+                                      strMarker + strPolyline + strDirection
+                                  );
+
+                if (true === opts.download) {
+                    $('<a/>').attr({
+                        'href': mime + window.btoa(unescape(encodeURIComponent(output))),
+                        'download': 'tinyMap.kml'
+                    })
+                    .css('display', 'none')
+                    .appendTo('body')
+                    .trigger('click');
+                    
+                } else {
+                    return output;
+                }
+            }
+
+        },
+        //#!#END
         /**
          * Use HTML5 Geolocation API to detect the client's location.
          * @param {Object} map Map intance
@@ -1398,7 +1558,7 @@
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, id);
-                if (instance instanceof TinyMap &&'function' === typeof instance[options]) {
+                if (instance instanceof TinyMap && 'function' === typeof instance[options]) {
                     result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
             });
