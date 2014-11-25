@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+3.0.0
+新增 getKML 方法，可以將目前地圖上的圖層輸出為 KML。
+修正 modify marker 如果傳入的 id 不存在時不會新增至地圖的錯誤。
+
 2.9.9
 polyline, polygon 參數改為陣列型態以支援繪製多組線條和幾何圖形（感謝 karry chang 修正)
 
