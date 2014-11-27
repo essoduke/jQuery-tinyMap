@@ -392,7 +392,6 @@
                     if (_hasOwnProperty(opt.marker[i], 'id')) {
                         for (j = 0; j < markers.length; j += 1) {
                             // Moving matched markers to the new position.
-                            console.dir(j);
                             if (opt.marker[i].id === markers[j].id &&
                                 _hasOwnProperty(opt.marker[i], 'addr')
                             ) {
@@ -422,7 +421,6 @@
                             } else {
                                 if (_hasOwnProperty(opt.marker[i], 'addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
-                                    console.log(i + "," + opt.marker[i].parseAddr );
                                     if ('string' === typeof opt.marker[i].parseAddr) {
                                         this.markerByGeocoder(map, opt.marker[i]);
                                     } else {
