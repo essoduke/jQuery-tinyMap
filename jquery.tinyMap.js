@@ -26,13 +26,14 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.0.0
+ * @version: 3.0.1
  *
  * [Changelog]
- * 新增 getKML 方法，可以將目前地圖上的圖層輸出為 KML。
- * 修正 modify marker 如果傳入的 id 不存在時不會新增至地圖的錯誤。
+ * 修正 modify 大量 marker 時造成效能低落甚至當機的問題。
+ * 修正 marker.label 未設置時，使用 modify 會無法加入文字層的問題。
+ * 修正 modify marker 不會套入文字層 css 的錯誤。
  *
- * Release 2014.11.25.123427
+ * Release 2014.11.27.100415
  */
 ;(function ($, window, document, undefined) {
 
@@ -289,7 +290,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.0.0',
+        VERSION: '3.0.1',
 
         // Layers
         _polylines: [],
@@ -391,6 +392,7 @@
                     if (_hasOwnProperty(opt.marker[i], 'id')) {
                         for (j = 0; j < markers.length; j += 1) {
                             // Moving matched markers to the new position.
+                            console.dir(j);
                             if (opt.marker[i].id === markers[j].id &&
                                 _hasOwnProperty(opt.marker[i], 'addr')
                             ) {
@@ -415,27 +417,19 @@
                                 if (_hasOwnProperty(opt.marker[i], 'icon')) {
                                     markers[j].setIcon(opt.marker[i].icon);
                                 }
-                                continue;
-                            // v3.0.0 fixed
+                            // If id was not matched.
+                            // v3.0.1 fixed
                             } else {
                                 if (_hasOwnProperty(opt.marker[i], 'addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
+                                    console.log(i + "," + opt.marker[i].parseAddr );
                                     if ('string' === typeof opt.marker[i].parseAddr) {
                                         this.markerByGeocoder(map, opt.marker[i]);
                                     } else {
                                         this.markerDirect(map, opt.marker[i]);
                                     }
+                                    break;
                                 }
-                            }
-                        }
-                        // Redrawing the labels
-                        for (j = 0, k = labels.length; j < k; j += 1) {
-                            if (opt.marker[i].id === labels[j].id) {
-                                if (_hasOwnProperty(opt.marker[i], 'label')) {
-                                    labels[j].text = opt.marker[i].label;
-                                }
-                                labels[j].draw();
-                                continue;
                             }
                         }
                     // Insert the new marker if it is not matched.
@@ -447,6 +441,18 @@
                             } else {
                                 this.markerDirect(map, opt.marker[i]);
                             }
+                        }
+                    }
+                    // Redrawing the labels
+                    for (j = 0, k = labels.length; j < k; j += 1) {
+                        if (opt.marker[i].id === labels[j].id) {
+                            if (_hasOwnProperty(opt.marker[i], 'label')) {
+                                labels[j].text = opt.marker[i].label;
+                            }
+                            if (_hasOwnProperty(opt.marker[i], 'css')) {
+                                $(labels[j].span).addClass(opt.marker[i].css);
+                            }
+                            labels[j].draw();
                         }
                     }
                 }
@@ -832,7 +838,7 @@
                 'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : '',
                 'id':  id
             };
-            if ('string' === typeof opt.label && 0 !== opt.label.length) {
+            if (_hasOwnProperty(opt, 'label')) {
                 labelOpt.text = opt.label;
                 label = new Label(labelOpt);
                 label.bindTo('position', marker, 'position');
@@ -926,7 +932,7 @@
                         'map': self.map,
                         'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : ''
                     };
-                    if ('string' === typeof opt.label && 0 !== opt.label.length) {
+                    if (_hasOwnProperty(opt, 'label')) {
                         labelOpt.text = opt.label;
                         label = new Label(labelOpt);
                         label.bindTo('position', marker, 'position');
