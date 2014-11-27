@@ -26,14 +26,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.0.1
+ * @version: 3.1.0
  *
  * [Changelog]
- * 修正 modify 大量 marker 時造成效能低落甚至當機的問題。
- * 修正 marker.label 未設置時，使用 modify 會無法加入文字層的問題。
- * 修正 modify marker 不會套入文字層 css 的錯誤。
+ * 捨棄老舊瀏覽器（IE6,7,8）的支援，程式碼改用 javascript 原生語法。
+ * 修正 modify 無法設置 markerFitBounds 的問題。
  *
- * Release 2014.11.27.100415
+ * Release 2014.11.27.171522
  */
 ;(function ($, window, document, undefined) {
 
@@ -71,25 +70,20 @@
         }]
     };
     //#!#END
-    /**
-     * _hasOwnProperty for compatibility IE
-     * @param {Object} obj Object
-     * @param {string} property Property name
-     * @return {boolean}
-     * @version 2.4.3
-     */
-    function _hasOwnProperty (obj, property) {
-        try {
-            return (!window.hasOwnProperty) ?
-                   Object.prototype.hasOwnProperty.call(obj, property.toString()) :
-                   obj.hasOwnProperty(property.toString());
-        } catch (ignore) {
-            console.dir(ignore);
+    function markersExisted(markers, marker) {
+        for (var i = 0; i < markers.length; i += 1) {
+            if (markers[i].hasOwnProperty('parseAddr') && marker.hasOwnProperty('parseAddr')) {
+                if (markers[i].parseAddr === marker.parseAddr) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
+
     /**
      * Parsing the location
-     * @param {string|Array|Object} loc Location
+     * @param {(string|Array|Object)} loc Location
      * @param {boolean} formatting Format to Google Maps LatLng object
      * @return {Object}
      */
@@ -100,7 +94,7 @@
                 'lat': '',
                 'lng': ''
             };
-        if ('string' === typeof loc || $.isArray(loc)) {
+        if ('string' === typeof loc || Array.isArray(loc)) {
             array = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
             if (2 === array.length) {
                 if (re.test(array[0]) && re.test(array[1])) {
@@ -114,15 +108,15 @@
             // Google LatLng Class
             if ('function' === typeof loc.lat || 'function' === typeof loc.lng) {
                 return loc;
-            } else if (_hasOwnProperty(loc, 'x') && _hasOwnProperty(loc, 'y')) {
+            } else if (loc.hasOwnProperty('x') && loc.hasOwnProperty('y')) {
                 result.lat = loc.x;
                 result.lng = loc.y;
-            } else if (_hasOwnProperty(loc, 'lat') && _hasOwnProperty(loc, 'lng')) {
+            } else if (loc.hasOwnProperty('lat') && loc.hasOwnProperty('lng')) {
                 result.lat = loc.lat;
                 result.lng = loc.lng;
             }
         }
-        if (undefined !== formatting && true === formatting) {
+        if (true === formatting) {
             return new google.maps.LatLng(result.lat, result.lng);
         }
         return result;
@@ -134,7 +128,7 @@
      * @constructor
      */
     function Label (options) {
-        var css = (options.css || '');
+        var css = options.hasOwnProperty('css') ? options.css.toString() : '';
         this.setValues(options);
         this.span = $('<span/>').css({
             'position': 'relative',
@@ -205,7 +199,8 @@
             o = '';
 
         // Make sure the API has loaded.
-        if (!_hasOwnProperty(window, 'google')) {
+        if (!window.hasOwnProperty('google')) {
+            console.error('Google Maps API was not loaded.');
             return;
         }
         /**
@@ -246,14 +241,13 @@
 
         // Parsing ControlOptions
         for (o in this.options) {
-            if (_hasOwnProperty(this.options, o)) {
+            if (this.options.hasOwnProperty(o)) {
                 vo = this.options[o];
-                if (/ControlOptions/g.test(o)) {
-                    if (_hasOwnProperty(vo, 'position')) {
-                        if ('string' === typeof vo.position) {
-                            this.options[o].position = google.maps.ControlPosition[vo.position.toUpperCase()];
-                        }
-                    }
+                if (/ControlOptions/g.test(o) &&
+                    vo.hasOwnProperty('position') &&
+                    'string' === typeof vo.position
+                ) {
+                    this.options[o].position = google.maps.ControlPosition[vo.position.toUpperCase()];
                 }
             }
         }
@@ -262,7 +256,7 @@
         this.googleMapOptions = this.options;
 
         // Process streetView conflict
-        if (_hasOwnProperty(opt, 'streetView')) {
+        if (opt.hasOwnProperty('streetView')) {
             this.googleMapOptions.streetViewObj = opt.streetView;
             delete this.googleMapOptions.streetView;
         }
@@ -272,12 +266,12 @@
         
         //#!#START STYLES
         // Map styles apply
-        if (_hasOwnProperty(opt, 'styles')) {
-            if ('string' === typeof opt.styles) {
-                if (_hasOwnProperty(styles, opt.styles)) {
-                    this.googleMapOptions.styles = styles[opt.styles];
-                }
-            } else if ($.isArray(opt.styles)) {
+        if (opt.hasOwnProperty('styles')) {
+            if ('string' === typeof opt.styles &&
+                styles.hasOwnProperty(opt.styles)
+            ) {
+                this.googleMapOptions.styles = styles[opt.styles];
+            } else if (Array.isArray(opt.styles)) {
                 this.googleMapOptions.styles = opt.styles;
             }
         }
@@ -290,7 +284,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.0.1',
+        VERSION: '3.1.0',
 
         // Layers
         _polylines: [],
@@ -318,12 +312,12 @@
                 },
                 i = 0;
 
-            if (_hasOwnProperty(opt, 'kml')) {
+            if (opt.hasOwnProperty('kml')) {
                 if ('string' === typeof opt.kml) {
                     kmlOpt.url = opt.kml;
                     kml = new google.maps.KmlLayer(kmlOpt);
                     this._kmls.push(kml);
-                } else if ($.isArray(opt.kml)) {
+                } else if (Array.isArray(opt.kml)) {
                     for (i = 0; i < opt.kml.length; i += 1) {
                         if ('string' === typeof opt.kml[i]) {
                             kmlOpt.url = opt.kml[i];
@@ -342,7 +336,7 @@
          * @param {Object} opt Direction options
          */
         direction: function (map, opt) {
-            if (_hasOwnProperty(opt, 'direction') && $.isArray(opt.direction)) {
+            if (opt.hasOwnProperty('direction') && Array.isArray(opt.direction)) {
                 for (var d = 0; d < opt.direction.length; d += 1) {
                     this.directionService(opt.direction[d]);
                 }
@@ -367,14 +361,13 @@
                 
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
-            
             markers = self._markers;
 
             // For first initialize of instance.
-            if (!source || 0 === markers.length && $.isArray(opt.marker)) {
+            if (!source || 0 === markers.length && Array.isArray(opt.marker)) {
                 for (i = 0, c = opt.marker.length; i < c; i += 1) {
                     m = opt.marker[i];
-                    if (_hasOwnProperty(m, 'addr')) {
+                    if (m.hasOwnProperty('addr')) {
                         m.parseAddr = parseLatLng(m.addr, true);
                         if ('string' === typeof m.parseAddr) {
                             this.markerByGeocoder(map, m, opt);
@@ -389,11 +382,11 @@
             if ('modify' === source) {
                 labels  = this._labels;
                 for (i = 0, c = opt.marker.length; i < c; i += 1) {
-                    if (_hasOwnProperty(opt.marker[i], 'id')) {
+                    if (opt.marker[i].hasOwnProperty('id')) {
                         for (j = 0; j < markers.length; j += 1) {
                             // Moving matched markers to the new position.
                             if (opt.marker[i].id === markers[j].id &&
-                                _hasOwnProperty(opt.marker[i], 'addr')
+                                opt.marker[i].hasOwnProperty('addr')
                             ) {
                                 markers[j].setPosition(
                                     new google.maps.LatLng(
@@ -401,8 +394,8 @@
                                         opt.marker[i].addr[1]
                                     )
                                 );
-                                if (_hasOwnProperty(opt.marker[i], 'text')) {
-                                    if (_hasOwnProperty(markers[j], 'infoWindow')) {
+                                if (opt.marker[i].hasOwnProperty('text')) {
+                                    if (markers[j].hasOwnProperty('infoWindow')) {
                                         if ('function' === typeof markers[j].infoWindow.setContent) {
                                             markers[j].infoWindow.setContent(opt.marker[i].text);
                                         }
@@ -413,13 +406,13 @@
                                         self.bindEvents(markers[j], opt.marker[i].event);
                                     }
                                 }
-                                if (_hasOwnProperty(opt.marker[i], 'icon')) {
+                                if (opt.marker[i].hasOwnProperty('icon')) {
                                     markers[j].setIcon(opt.marker[i].icon);
                                 }
                             // If id was not matched.
                             // v3.0.1 fixed
                             } else {
-                                if (_hasOwnProperty(opt.marker[i], 'addr')) {
+                                if (opt.marker[i].hasOwnProperty('addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                                     if ('string' === typeof opt.marker[i].parseAddr) {
                                         this.markerByGeocoder(map, opt.marker[i]);
@@ -432,7 +425,7 @@
                         }
                     // Insert the new marker if it is not matched.
                     } else {
-                        if (_hasOwnProperty(opt.marker[i], 'addr')) {
+                        if (opt.marker[i].hasOwnProperty('addr')) {
                             opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                             if ('string' === typeof opt.marker[i].parseAddr) {
                                 this.markerByGeocoder(map, opt.marker[i]);
@@ -444,10 +437,10 @@
                     // Redrawing the labels
                     for (j = 0, k = labels.length; j < k; j += 1) {
                         if (opt.marker[i].id === labels[j].id) {
-                            if (_hasOwnProperty(opt.marker[i], 'label')) {
+                            if (opt.marker[i].hasOwnProperty('label')) {
                                 labels[j].text = opt.marker[i].label;
                             }
-                            if (_hasOwnProperty(opt.marker[i], 'css')) {
+                            if (opt.marker[i].hasOwnProperty('css')) {
                                 $(labels[j].span).addClass(opt.marker[i].css);
                             }
                             labels[j].draw();
@@ -460,125 +453,125 @@
              * Require markerclusterer.js
              * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
              */
-            if (_hasOwnProperty(opt, 'markerCluster') && true === opt.markerCluster) {
-                if ('function' === typeof MarkerClusterer) {
-                    return new MarkerClusterer(map, this._markers);
-                }
+            if (opt.hasOwnProperty('markerCluster') &&
+                true === opt.markerCluster &&
+                'function' === typeof MarkerClusterer
+            ) {
+                return new MarkerClusterer(map, this._markers);
             }
         },
         //#!#END
         
-		
-		//#!#START POLYLINE
-		//begin add Multiple POLYLINE by Karry
+        //#!#START POLYLINE
+        //begin add Multiple POLYLINE by Karry
         /**
          * Polyline overlay
          * @param {Object} map Map instance
          * @param {Object} opt Polyline options
          */
         drawPolyline: function (map, opt) {
-			
+
             var polyline = {},
                 i = 0,
                 p = {},
-				polylineX={},
+                polylineX={},
                 c = {},
                 len = 0,
-				c1 = 0,
+                c1 = 0,
                 defOpt = {},
                 path   = [],
                 service = {},
+                coords = [],
                 waypoints = [],
                 distance = {};
 
-			if (_hasOwnProperty(opt, 'polyline') && $.isArray(opt.polyline)) {
-				for (c1 = opt.polyline.length - 1; c1 >= 0; c1 -= 1) {
-					polylineX = opt.polyline[c1];
-					if (_hasOwnProperty(polylineX, 'coords') &&
-						$.isArray(polylineX.coords) 
-					) {
-						var coords = new google.maps.MVCArray();
-						for (i = 0; i < polylineX.coords.length; i += 1) {
-							p = polylineX.coords[i];
-							c = parseLatLng(p, true);
-							if ('function' === typeof c.lat) {
-								coords.push(c);
-							}
-						}
+            if (opt.hasOwnProperty('polyline') && Array.isArray(opt.polyline)) {
+                for (c1 = opt.polyline.length - 1; c1 >= 0; c1 -= 1) {
+                    polylineX = opt.polyline[c1];
+                    if (polylineX.hasOwnProperty('coords') &&
+                        Array.isArray(polylineX.coords)
+                    ) {
+                        coords = new google.maps.MVCArray();
+                        for (i = 0; i < polylineX.coords.length; i += 1) {
+                            p = polylineX.coords[i];
+                            c = parseLatLng(p, true);
+                            if ('function' === typeof c.lat) {
+                                coords.push(c);
+                            }
+                        }
+                        // Options merge
+                        defOpt = $.extend({}, {
+                            'strokeColor': polylineX.color || '#FF0000',
+                            'strokeOpacity': 1.0,
+                            'strokeWeight': polylineX.width || 2
+                        }, polylineX);
 
-						defOpt = $.extend({}, {
-							'strokeColor': polylineX.color || '#FF0000',
-							'strokeOpacity': 1.0,
-							'strokeWeight': polylineX.width || 2
-						}, polylineX);
+                        polyline = new google.maps.Polyline(defOpt);
+                        this._polylines.push(polyline);
 
-						polyline = new google.maps.Polyline(defOpt);
+                        if (2 < coords.getLength()) {
+                            for (i = 0; i < coords.length; i += 1) {
+                                if (0 < i && (coords.length - 1 > i)) {
+                                    waypoints.push({
+                                        'location': coords.getAt(i),
+                                        'stopover': false
+                                    });
+                                }
+                            }
+                        }
+                        // Events binding
+                        if (polylineX.hasOwnProperty('event')) {
+                            self.bindEvents(polyline, polylineX.event);
+                        }
 
-						this._polylines.push(polyline);
-
-						if (2 < coords.getLength()) {
-							for (i = 0; i < coords.length; i += 1) {
-								if (0 < i && (coords.length - 1 > i)) {
-									waypoints.push({
-										'location': coords.getAt(i),
-										'stopover': false
-									});
-								}
-							}
-						}
-
-						if (_hasOwnProperty(polylineX, 'event')) {
-							self.bindEvents(polyline, polylineX.event);
-						}
-
-						if (_hasOwnProperty(polylineX, 'snap') &&
-							true === polylineX.snap
-						) {
-							service = new google.maps.DirectionsService();
-							service.route({
-								'origin': coords.getAt(0),
-								'waypoints': waypoints,
-								'destination': coords.getAt(coords.length - 1),
-								'travelMode': google.maps.DirectionsTravelMode.DRIVING
-							}, function (result, status) {
-								if (status === google.maps.DirectionsStatus.OK) {
-									for (i = 0, len = result.routes[0].overview_path; i < len.length; i += 1) {
-										path.push(len[i]);
-									}
-									polyline.setPath(path);
-									if ('function' === typeof polylineX.getDistance) {
-										distance = result.routes[0].legs[0].distance;
-										polylineX.getDistance.call(this, distance);
-									}
-								}
-							});
-						} else {
-							polyline.setPath(coords);
-							if (_hasOwnProperty(google.maps, 'geometry') &&
-								_hasOwnProperty(google.maps.geometry, 'spherical')
-							) {
-								if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
-									distance = google.maps
-													 .geometry
-													 .spherical
-													 .computeDistanceBetween(
-														coords.getAt(0),
-														coords.getAt(coords.length - 1)
-													 );
-									if ('function' === typeof polylineX.getDistance) {
-										polylineX.getDistance.call(this, distance);
-									}
-								}
-							}
-						}
-						polyline.setMap(map);
-					}
-				}
-			}
+                        if (polylineX.hasOwnProperty('snap') &&
+                            true === polylineX.snap
+                        ) {
+                            service = new google.maps.DirectionsService();
+                            service.route({
+                                'origin': coords.getAt(0),
+                                'waypoints': waypoints,
+                                'destination': coords.getAt(coords.length - 1),
+                                'travelMode': google.maps.DirectionsTravelMode.DRIVING
+                            }, function (result, status) {
+                                if (status === google.maps.DirectionsStatus.OK) {
+                                    for (i = 0, len = result.routes[0].overview_path; i < len.length; i += 1) {
+                                        path.push(len[i]);
+                                    }
+                                    polyline.setPath(path);
+                                    if ('function' === typeof polylineX.getDistance) {
+                                        distance = result.routes[0].legs[0].distance;
+                                        polylineX.getDistance.call(this, distance);
+                                    }
+                                }
+                            });
+                        } else {
+                            polyline.setPath(coords);
+                            if (google.maps.hasOwnProperty('geometry') &&
+                                google.maps.geometry.hasOwnProperty('spherical')
+                            ) {
+                                if ('function' === typeof google.maps.geometry.spherical.computeDistanceBetween) {
+                                    distance = google.maps
+                                                     .geometry
+                                                     .spherical
+                                                     .computeDistanceBetween(
+                                                         coords.getAt(0),
+                                                         coords.getAt(coords.length - 1)
+                                                     );
+                                    if ('function' === typeof polylineX.getDistance) {
+                                        polylineX.getDistance.call(this, distance);
+                                    }
+                                }
+                            }
+                        }
+                        polyline.setMap(map);
+                    }
+                }
+            }
         },
         //#!#END
-		//end add Multiple POLYLINE by karry
-		
+        //end add Multiple POLYLINE by karry
+
         //#!#START POLYGON
         /**
          * Polygon overlay
@@ -595,14 +588,9 @@
                 defOpt = {},
                 coords = [];
 
-            if (_hasOwnProperty(opt, 'polygon') && $.isArray(opt.polygon)) {
-                /*
-                _hasOwnProperty(opt.polygon, 'coords') &&
-                $.isArray(opt.polygon.coords)
-            ) {
-                */
+            if (opt.hasOwnProperty('polygon') && Array.isArray(opt.polygon)) {
                 for (len = opt.polygon.length; i < len; i += 1) {
-                    if (_hasOwnProperty(opt.polygon[i], 'coords')) {
+                    if (opt.polygon[i].hasOwnProperty('coords')) {
                         for (j = 0; j < opt.polygon[i].coords.length; j += 1) {
                             p = opt.polygon[i].coords[j];
                             c = parseLatLng(p, true);
@@ -618,9 +606,8 @@
                             'fillColor': opt.polygon[i].fillcolor || '#CC0000',
                             'fillOpacity': 0.35
                         }, opt.polygon[i]);
-
                         polygon = new google.maps.Polygon(defOpt);
-                        if (_hasOwnProperty(opt.polygon[i], 'event')) {
+                        if (opt.polygon[i].hasOwnProperty('event')) {
                             this.bindEvents(polygon, opt.polygon[i].event);
                         }
                         this._polygons.push(polygon);
@@ -644,7 +631,7 @@
                 circle = {},
                 circles = {};
             
-            if (_hasOwnProperty(opt, 'circle') && $.isArray(opt.circle)) {
+            if (opt.hasOwnProperty('circle') && Array.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
                     circle = opt.circle[c];
                     defOpt = $.extend({}, {
@@ -656,18 +643,16 @@
                         'fillOpacity': circle.fillopacity || 0.35,
                         'radius': circle.radius || 10,
                         'zIndex': 100,
-                        'id' : _hasOwnProperty(circle, 'id') ? circle.id : ''
+                        'id' : circle.hasOwnProperty('id') ? circle.id : ''
                     }, circle);
-
-                    if (_hasOwnProperty(circle, 'center')) {
+                    if (circle.hasOwnProperty('center')) {
                         loc = parseLatLng(circle.center, true);
                         defOpt.center = loc;
                     }
-
                     if ('function' === typeof loc.lat) {
                         circles = new google.maps.Circle(defOpt);
                         this._circles.push(circles);
-                        if (_hasOwnProperty(circle, 'event')) {
+                        if (circle.hasOwnProperty('event')) {
                             self.bindEvents(circles, circle.event);
                         }
                     }
@@ -725,31 +710,28 @@
          */
         markerIcon: function (opt) {
             var icons = $.extend({}, icons, opt.icon);
-            if (_hasOwnProperty(opt, 'icon')) {
+            if (opt.hasOwnProperty('icon')) {
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
                 }
-                if (_hasOwnProperty(opt.icon, 'url')) {
+                if (opt.icon.hasOwnProperty('url')) {
                     icons.url = opt.icon.url;
                 }
-                if (_hasOwnProperty(opt.icon, 'size')) {
-                    if ($.isArray(opt.icon.size) && 2 === opt.icon.size.length) {
-                        icons.size = new google.maps.Size(
-                            opt.icon.size[0],
-                            opt.icon.size[1]
-                        );
+                if (opt.icon.hasOwnProperty('size')) {
+                    if (Array.isArray(opt.icon.size) && 2 === opt.icon.size.length) {
+                        icons.size = new google.maps.Size(opt.icon.size[0], opt.icon.size[1]);
                     }
                 }
-                if (_hasOwnProperty(opt.icon, 'scaledSize')) {
-                    if ($.isArray(opt.icon.scaledSize) && 2 === opt.icon.scaledSize.length) {
+                if (opt.icon.hasOwnProperty('scaledSize')) {
+                    if (Array.isArray(opt.icon.scaledSize) && 2 === opt.icon.scaledSize.length) {
                         icons.scaledSize = new google.maps.Size(
                             opt.icon.scaledSize[0],
                             opt.icon.scaledSize[1]
                         );
                     }
                 }
-                if (_hasOwnProperty(opt.icon, 'anchor')) {
-                    if ($.isArray(opt.icon.anchor) && 2 === opt.icon.anchor.length) {
+                if (opt.icon.hasOwnProperty('anchor')) {
+                    if (Array.isArray(opt.icon.anchor) && 2 === opt.icon.anchor.length) {
                         icons.anchor = new google.maps.Point(
                             opt.icon.anchor[0],
                             opt.icon.anchor[1]
@@ -767,13 +749,12 @@
         markerDirect: function (map, opt) {
             var self     = this,
                 marker   = {},
-                labelOpt = {},
                 label    = {},
-                id       = _hasOwnProperty(opt, 'id') ? opt.id : '',
-                title    = _hasOwnProperty(opt, 'title') ?
+                id       = opt.hasOwnProperty('id') ? opt.id : '',
+                title    = opt.hasOwnProperty('title') ?
                            opt.title.toString().replace(/<([^>]+)>/g, '') :
                            false,
-                content  = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
+                content  = opt.hasOwnProperty('text') ? opt.text.toString() : false,
                 markerOptions = $.extend({}, {
                     'map': map,
                     'position': opt.parseAddr,
@@ -785,30 +766,26 @@
             if (title) {
                 markerOptions.title = title;
             }
-
             if (content) {
                 markerOptions.text = content;
                 markerOptions.infoWindow = new google.maps.InfoWindow({
                     'content': content
                 });
             }
-            
             if (!$.isEmptyObject(icons)) {
                 markerOptions.icon = icons;
             }
-
-            if (_hasOwnProperty(opt, 'animation') &&
-                'string' === typeof opt.animation
-            ) {
+            if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
 
-            //markerOptions = $.extend({}, markerOptions, opt);
+            markerOptions = $.extend({}, markerOptions, opt);
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
+            
 
             // Apply marker fitbounds
-            if (_hasOwnProperty(marker, 'position')) {
+            if (marker.hasOwnProperty('position')) {
                 if ('function' === typeof marker.getPosition) {
                     self.bounds.extend(marker.position);
                 }
@@ -831,14 +808,13 @@
                     }
                 }
             }
-            labelOpt = {
-                'map': map,
-                'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : '',
-                'id':  id
-            };
-            if (_hasOwnProperty(opt, 'label')) {
-                labelOpt.text = opt.label;
-                label = new Label(labelOpt);
+            if (opt.hasOwnProperty('label')) {
+                label = new Label({
+                    'text': opt.label,
+                    'map' : map,
+                    'css' : opt.hasOwnProperty('css') ? opt.css.toString() : '',
+                    'id'  :  id
+                });
                 label.bindTo('position', marker, 'position');
                 label.bindTo('text', marker, 'position');
                 label.bindTo('visible', marker);
@@ -854,7 +830,6 @@
         markerByGeocoder: function (map, opt) {
             var geocoder = new google.maps.Geocoder(),
                 self = this;
-
             geocoder.geocode({'address': opt.parseAddr}, function (results, status) {
                 // If exceeded, call it later;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -863,13 +838,12 @@
                     }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker = {},
-                        labelOpt = {},
                         label = {},
-                        id    = _hasOwnProperty(opt, 'id') ? opt.id : '',
-                        title = _hasOwnProperty(opt, 'title') ?
+                        id    = opt.hasOwnProperty('id') ? opt.id : '',
+                        title = opt.hasOwnProperty('title') ?
                                 opt.title.toString().replace(/<([^>]+)>/g, '') :
                                 false,
-                        content = _hasOwnProperty(opt, 'text') ? opt.text.toString() : false,
+                        content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
                         markerOptions = {
                             'map': map,
                             'position': results[0].geometry.location,
@@ -887,15 +861,11 @@
                             'content': content
                         });
                     }
-
                     if (!$.isEmptyObject(icons)) {
                         markerOptions.icon = icons;
                     }
-                    
-                    if (_hasOwnProperty(opt, 'animation')) {
-                        if ('string' === typeof opt.animation) {
-                            markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
-                        }
+                    if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
+                        markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                     }
 
                     markerOptions = $.extend({}, markerOptions, opt);
@@ -903,7 +873,7 @@
                     self._markers.push(marker);
 
                     // Apply marker fitbounds
-                    if (_hasOwnProperty(marker, 'position')) {
+                    if (marker.hasOwnProperty('position')) {
                         if ('function' === typeof marker.getPosition) {
                             self.bounds.extend(marker.position);
                         }
@@ -919,20 +889,19 @@
                      * Require markerclusterer.js
                      * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
                      */
-                    if (_hasOwnProperty(self.options, 'markerCluster')) {
-                        if ('function' === typeof MarkerClusterer) {
-                            if (_geoMarkersLength === self.options.marker.length) {
-                                return new MarkerClusterer(map, self._markers);
-                            }
-                        }
+                    if (self.options.hasOwnProperty('markerCluster') && 
+                        'function' === typeof MarkerClusterer &&
+                        _geoMarkersLength === self.options.marker.length
+                    ) {
+                        return new MarkerClusterer(map, self._markers);
                     }
-                    labelOpt = {
-                        'map': self.map,
-                        'css': _hasOwnProperty(opt, 'css') ? opt.css.toString() : ''
-                    };
-                    if (_hasOwnProperty(opt, 'label')) {
-                        labelOpt.text = opt.label;
-                        label = new Label(labelOpt);
+                    if (opt.hasOwnProperty('label')) {
+                        label = new Label({
+                            'text': opt.label,
+                            'map' : self.map,
+                            'css' : opt.hasOwnProperty('css') ? opt.css.toString() : '',
+                            'id'  : id
+                        });
                         label.bindTo('position', marker, 'position');
                         label.bindTo('text', marker, 'position');
                         label.bindTo('visible', marker);
@@ -952,7 +921,7 @@
         directionService: function (opt) {
 
             // Make sure the `from` and `to` have setting.
-            if (!(_hasOwnProperty(opt, 'from') && _hasOwnProperty(opt, 'to'))) {
+            if (!(opt.hasOwnProperty('from') && opt.hasOwnProperty('to'))) {
                 return;
             }
 
@@ -961,7 +930,7 @@
                 directionsDisplay = new google.maps.DirectionsRenderer(),
                 request = {
                     'travelMode': google.maps.DirectionsTravelMode.DRIVING,
-                    'optimizeWaypoints': _hasOwnProperty(opt, 'optimize') ? opt.optimize : false
+                    'optimizeWaypoints': opt.hasOwnProperty('optimize') ? opt.optimize : false
                 },
                 panel = {},
                 renderOpts = {},
@@ -976,29 +945,29 @@
             request.origin = parseLatLng(opt.from, true);
             request.destination = parseLatLng(opt.to, true);
 
-            if (_hasOwnProperty(opt, 'travel') &&
+            if (opt.hasOwnProperty('travel') &&
                 google.maps.TravelMode[opt.travel.toString().toUpperCase()]
             ) {
                 request.travelMode = google.maps.TravelMode[opt.travel.toString().toUpperCase()];
             }
 
-            if (_hasOwnProperty(opt, 'panel')) {
+            if (opt.hasOwnProperty('panel')) {
                 panel = $(opt.panel);
             }
 
-            if (_hasOwnProperty(opt, 'waypoint') && $.isArray(opt.waypoint)) {
+            if (opt.hasOwnProperty('waypoint') && Array.isArray(opt.waypoint)) {
                 for (i = 0, c = opt.waypoint.length; i < c; i += 1) {
                     waypointsOpts = {};
-                    if ('string' === typeof opt.waypoint[i] || $.isArray(opt.waypoint[i])) {
+                    if ('string' === typeof opt.waypoint[i] || Array.isArray(opt.waypoint[i])) {
                         waypointsOpts = {
                             'location' : parseLatLng(opt.waypoint[i], true),
                             'stopover' : true
                         };
                     } else {
-                        if (_hasOwnProperty(opt.waypoint[i], 'location')) {
+                        if (opt.waypoint[i].hasOwnProperty('location')) {
                             waypointsOpts.location = parseLatLng(opt.waypoint[i].location, true);
                         }
-                        waypointsOpts.stopover = _hasOwnProperty(opt.waypoint[i], 'stopover') ?
+                        waypointsOpts.stopover = opt.waypoint[i].hasOwnProperty('stopover') ?
                                                  opt.waypoint[i].stopover :
                                                  true;
                     }
@@ -1014,14 +983,14 @@
                     i = 0;
                 if (status === google.maps.DirectionsStatus.OK) {
                     legs = response.routes[0].legs;
-                    if (_hasOwnProperty(opt, 'autoViewport')) {
+                    if (opt.hasOwnProperty('autoViewport')) {
                         renderOpts.preserveViewport = false === opt.autoViewport ? true : false;
                     }
                     try {
-                        if (_hasOwnProperty(opt, 'fromText')) {
+                        if (opt.hasOwnProperty('fromText')) {
                             legs[0].start_address = opt.fromText;
                         }
-                        if (_hasOwnProperty(opt, 'toText')) {
+                        if (opt.hasOwnProperty('toText')) {
                             if (1 === legs.length) {
                                 legs[0].end_address = opt.toText;
                             } else {
@@ -1035,15 +1004,15 @@
                             endLocation = legs[legs.length - 1].end_location;
                             endText = legs[legs.length - 1].end_address;
                         }
-                        if (_hasOwnProperty(opt, 'icon')) {
+                        if (opt.hasOwnProperty('icon')) {
                             renderOpts.suppressMarkers = true;
-                            if (_hasOwnProperty(opt.icon, 'from') && 'string' === typeof opt.icon.from) {
+                            if (opt.icon.hasOwnProperty('from') && 'string' === typeof opt.icon.from) {
                                 self.directionServiceMarker(legs[0].start_location, {
                                     'icon': opt.icon.from,
                                     'text': legs[0].start_address
                                 });
                             }
-                            if (_hasOwnProperty(opt.icon, 'to') && 'string' === typeof opt.icon.to) {
+                            if (opt.icon.hasOwnProperty('to') && 'string' === typeof opt.icon.to) {
                                 self.directionServiceMarker(endLocation, {
                                     'icon': opt.icon.to,
                                     'text': endText
@@ -1052,7 +1021,7 @@
                         }
                         for (i = 0; i < legs.length - 1; i += 1) {
                             legs[i].end_address = waypointsText[i];
-                            if (_hasOwnProperty(opt, 'icon') && _hasOwnProperty(opt.icon, 'waypoint')) {
+                            if (opt.hasOwnProperty('icon') && opt.icon.hasOwnProperty('waypoint')) {
                                 self.directionServiceMarker(legs[i].start_location, {
                                     'icon': opt.icon.waypoint,
                                     'text': legs[i].start_address
@@ -1084,7 +1053,7 @@
                 },
                 setting = $.extend({}, def, opt),
                 marker  = {};
-            if (_hasOwnProperty(setting, 'text')) {
+            if (setting.hasOwnProperty('text')) {
                 setting.infoWindow = new google.maps.InfoWindow({
                     'content': setting.text
                 });
@@ -1097,7 +1066,7 @@
         /**
          * bind events
          * @param {Object} marker Marker objects
-         * @param {function|Object} event Events
+         * @param {(function|Object)} event Events
          * @this {tinyMap}
          */
         bindEvents: function (target, event) {
@@ -1112,8 +1081,8 @@
                     if ('function' === typeof event[e]) {
                         google.maps.event.addListener(target, e, event[e]);
                     } else {
-                        if (_hasOwnProperty(event[e], 'func') && 'function' === typeof event[e].func) {
-                            if (_hasOwnProperty(event[e], 'once') && true === event[e].once) {
+                        if (event[e].hasOwnProperty('func') && 'function' === typeof event[e].func) {
+                            if (event[e].hasOwnProperty('once') && true === event[e].once) {
                                 google.maps.event.addListenerOnce(target, e, event[e].func);
                             } else {
                                 google.maps.event.addListener(target, e, event[e].func);
@@ -1124,25 +1093,29 @@
                     }
                 }
             }
-            if (_hasOwnProperty(target, 'infoWindow')) {
+            if (target.hasOwnProperty('infoWindow')) {
                 google.maps.event.addListener(target, 'click', function () {
                     var i = 0,
                         m = {};
                     // Close all infoWindows if `infoWindowAutoClose` was true.
-                    if (_hasOwnProperty(self.options, 'infoWindowAutoClose') &&
+                    if (self.options.hasOwnProperty('infoWindowAutoClose') &&
                         true === self.options.infoWindowAutoClose
                     ) {
                         for (i = 0; i < self._markers.length; i += 1) {
                             m = self._markers[i];
-                            if (_hasOwnProperty(m, 'infoWindow')) {
-                                if ('function' === typeof m.infoWindow.close) {
-                                    m.infoWindow.close();
-                                }
+                            if (m.hasOwnProperty('infoWindow') && 'function' === typeof m.infoWindow.close) {
+                                m.infoWindow.close();
                             }
                         }
                     }
                     target.infoWindow.open(self.map, target);
                 });
+            }
+        },
+        markerFitBounds: function (map, opts) {
+            var self = this;
+            if (opts.hasOwnProperty('markerFitBounds') && true === opts.markerFitBounds) {
+                map.fitBounds(self.bounds);
             }
         },
         //#!#START STREETVIEW
@@ -1153,7 +1126,7 @@
         streetView: function (map, opt) {
             var self = this,
                 pano = {},
-                opts = _hasOwnProperty(opt, 'streetViewObj') ? opt.streetViewObj : {},
+                opts = opt.hasOwnProperty('streetViewObj') ? opt.streetViewObj : {},
                 svOpt = {
                     'heading': 0,
                     'pitch': 0,
@@ -1173,12 +1146,10 @@
                 i = 0,
                 loc = {};
 
-            if ('function' === typeof map.getStreetView &&
-                _hasOwnProperty(opt, 'streetViewObj')
-            ) {
+            if ('function' === typeof map.getStreetView && opt.hasOwnProperty('streetViewObj')) {
                 pano = map.getStreetView();
                 // Default position of streetView
-                if (_hasOwnProperty(opts, 'position')) {
+                if (opts.hasOwnProperty('position')) {
                     loc = parseLatLng(opts.position, true);
                     if ('object' !== typeof loc) {
                         opts.position = map.getCenter();
@@ -1189,16 +1160,16 @@
                     opts.position = map.getCenter();
                 }
                 // Pov configure
-                if (_hasOwnProperty(opts, 'pov')) {
+                if (opts.hasOwnProperty('pov')) {
                     opts.pov = $.extend({}, svOpt, opts.pov);
                 }
-                if (_hasOwnProperty(opts, 'visible')) {
+                if (opts.hasOwnProperty('visible')) {
                     pano.setVisible(opts.visible);
                 }
                 // Apply options
                 pano.setOptions(opts);
                 // Events Binding
-                if (_hasOwnProperty(opts, 'event')) {
+                if (opts.hasOwnProperty('event')) {
                     self.bindEvents(pano, opts.event);
                 }
             }
@@ -1207,7 +1178,7 @@
         //#!#START PANTO
         /**
          * Method: Google Maps PanTo
-         * @param {string|Array|Object} addr Location
+         * @param {(string|Array|Object)} addr Location
          * @public
          */
         panto: function (addr) {
@@ -1219,10 +1190,10 @@
                 if ('string' === typeof loc) {
                     geocoder = new google.maps.Geocoder();
                     geocoder.geocode({'address': loc}, function (results, status) {
-                        if (status === google.maps.GeocoderStatus.OK) {
-                            if ('function' === typeof m.panTo && results.length) {
-                                m.panTo(results[0].geometry.location);
-                            }
+                        if (status === google.maps.GeocoderStatus.OK &&
+                            'function' === typeof m.panTo && results.length
+                        ) {
+                            m.panTo(results[0].geometry.location);
                         } else {
                             console.error(status);
                         }
@@ -1250,7 +1221,7 @@
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
-                     ($.isArray(layer) ? layer : layers.split(','));
+                     (Array.isArray(layer) ? layer : layers.split(','));
 
             for (i = 0; i < layers.length; i += 1) {
                 label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
@@ -1289,14 +1260,15 @@
                     ['polyline', 'drawPolyline'],
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
-                    ['streetView', 'streetView']
+                    ['streetView', 'streetView'],
+                    ['markerFitBounds', 'markerFitBounds']
                 ],
                 i = 0,
                 m = self.map;
 
             if (undefined !== options) {
                 for (i = 0; i < label.length; i += 1) {
-                    if (_hasOwnProperty(options, label[i][0])) {
+                    if (options.hasOwnProperty(label[i][0])) {
                         func.push(label[i][1]);
                     }
                 }
@@ -1314,7 +1286,7 @@
                     } else {
                         m.setOptions(options);
                     }
-                    if (_hasOwnProperty(options, 'event')) {
+                    if (options.hasOwnProperty('event')) {
                         self.bindEvents(m, options.event);
                     }
                 }
@@ -1323,8 +1295,7 @@
         //#!#END
         //#!#START DESTROY
         destroy: function () {
-            var container = $(this.container);
-            $.data(container.get(0), 'tinyMap', null);
+            $.data($(this.container).get(0), 'tinyMap', null);
         },
         //#!#END
         //#!#START GETKML
@@ -1388,7 +1359,7 @@
                 i = 0,
                 j = 0,
                 k = 0,
-                m = 0;
+                v = 0;
 
             if (md) {
                 // Build markers
@@ -1424,18 +1395,18 @@
                 if (true === opts.direction) {
                     directions = md._directions;
                     for (i = 0; i < directions.length; i += 1) {
-                        if ($.isArray(directions[i].directions.routes) &&
-                            $.isArray(directions[i].directions.routes[0].legs)
+                        if (Array.isArray(directions[i].directions.routes) &&
+                            Array.isArray(directions[i].directions.routes[0].legs)
                         ) {
                             legs = directions[i].directions.routes[0].legs;
                             for (j = 0; j < legs.length; j += 1) {
-                                if ($.isArray(legs[j].steps)) {
+                                if (Array.isArray(legs[j].steps)) {
                                     for (k = 0; k < legs[j].steps.length; k += 1) {
                                         latlng = '';
-                                        if ($.isArray(legs[j].steps[k].path)) {
-                                            for (m = 0; m < legs[j].steps[k].path.length; m += 1) {
-                                                path = legs[j].steps[k].path[m];
-                                                if (undefined !== path && $.isFunction(path.lat)) {
+                                        if (Array.isArray(legs[j].steps[k].path)) {
+                                            for (v = 0; v < legs[j].steps[k].path.length; v += 1) {
+                                                path = legs[j].steps[k].path[v];
+                                                if (undefined !== path && 'function' === typeof path.lat) {
                                                     latlng += path.lng() + ',' + path.lat() + ',0.000000\n';
                                                 }
                                             }
@@ -1474,18 +1445,15 @@
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
-
             var watch = false,
                 geolocation = navigator.geolocation;
-
             if (!geolocation) {
                 return;
             }
-
             if (true === opt.autoLocation) {
                 geolocation.getCurrentPosition(
                     function (loc) {
-                        if (loc && _hasOwnProperty(loc, 'coords')) {
+                        if (loc && loc.hasOwnProperty('coords')) {
                             map.panTo(new google.maps.LatLng(
                                 loc.coords.latitude,
                                 loc.coords.longitude
@@ -1510,15 +1478,16 @@
         init: function () {
             var self = this,
                 geocoder = {};
-
             if ('string' === typeof self.options.center) {
                 geocoder = new google.maps.Geocoder();
+                console.dir(self.options.center);
                 geocoder.geocode({'address': self.options.center}, function (results, status) {
                     try {
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                             self.init();
                         } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
-                            if (undefined !== results[0] && _hasOwnProperty(results[0], 'geometry')) {
+                            if (undefined !== results[0] && results[0].hasOwnProperty('geometry')) {
+                                console.dir(results);
                                 self.googleMapOptions.center = results[0].geometry.location;
                                 self.map = new google.maps.Map(self.container, self.googleMapOptions);
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
@@ -1527,7 +1496,7 @@
                                 self.bindEvents(self.map, self.options.event);
                             }
                         } else {
-                            console.error(status);
+                            console.error('Geocoder Error Code: ' + status);
                         }
                     } catch (ignore) {
                         console.error(ignore);
@@ -1569,3 +1538,4 @@
         }
     };
 })(jQuery, window, document);
+//#EOF
