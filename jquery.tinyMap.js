@@ -779,7 +779,7 @@
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
 
-            markerOptions = $.extend({}, markerOptions, opt);
+            //markerOptions = $.extend({}, markerOptions, opt);
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
             
