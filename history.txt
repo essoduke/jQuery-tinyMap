@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+3.1.1
+修正繪製多個 polygon 時，第二個 polygon 之後的選項沒有作用的錯誤。
+
 3.1.0
 捨棄老舊瀏覽器（IE6,7,8）的支援，程式碼改用 javascript 原生語法。
 修正 modify 無法設置 markerFitBounds 的問題。
