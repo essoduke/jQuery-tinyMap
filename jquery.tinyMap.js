@@ -26,13 +26,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.0
+ * @version: 3.1.1
  *
  * [Changelog]
- * 捨棄老舊瀏覽器（IE6,7,8）的支援，程式碼改用 javascript 原生語法。
- * 修正 modify 無法設置 markerFitBounds 的問題。
+ * 修正繪製多個 polygon 時，第二個 polygon 之後的選項沒有作用的錯誤。
  *
- * Release 2014.11.27.171522
+ * Release 2014.12.04.100138
  */
 ;(function ($, window, document, undefined) {
 
@@ -284,7 +283,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.0',
+        VERSION: '3.1.1',
 
         // Layers
         _polylines: [],
@@ -590,6 +589,7 @@
 
             if (opt.hasOwnProperty('polygon') && Array.isArray(opt.polygon)) {
                 for (len = opt.polygon.length; i < len; i += 1) {
+                    coords = [];
                     if (opt.polygon[i].hasOwnProperty('coords')) {
                         for (j = 0; j < opt.polygon[i].coords.length; j += 1) {
                             p = opt.polygon[i].coords[j];
@@ -615,6 +615,7 @@
                     }
                 }
             }
+            console.dir(this._polygons);
         },
         //#!#END
         //#!#START CIRCLE
