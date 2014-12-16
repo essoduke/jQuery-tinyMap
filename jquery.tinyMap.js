@@ -26,12 +26,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.1
+ * @version: 3.1.2
  *
  * [Changelog]
- * 修正繪製多個 polygon 時，第二個 polygon 之後的選項沒有作用的錯誤。
+ * 修正 polyline 無法綁定事件的錯誤。
+ * 修正 modify marker 若 marker.id 不存在，則需要設置 forceInsert: true 才會新增至地圖。
  *
- * Release 2014.12.04.100138
+ * Release 2014.12.16.115716
  */
 ;(function ($, window, document, undefined) {
 
@@ -283,7 +284,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.1',
+        VERSION: '3.1.2',
 
         // Layers
         _polylines: [],
@@ -360,7 +361,7 @@
                 
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
-            markers = self._markers;
+            markers = this._markers;
 
             // For first initialize of instance.
             if (!source || 0 === markers.length && Array.isArray(opt.marker)) {
@@ -408,10 +409,13 @@
                                 if (opt.marker[i].hasOwnProperty('icon')) {
                                     markers[j].setIcon(opt.marker[i].icon);
                                 }
-                            // If id was not matched.
-                            // v3.0.1 fixed
+                            // When id property was not matched.
+                            // Insert if the forceInsert was true.
+                            // v3.1.2 fixed
                             } else {
-                                if (opt.marker[i].hasOwnProperty('addr')) {
+                                if (opt.marker[i].hasOwnProperty('forceInsert') &&
+                                    opt.marker[i].forceInsert === true &&
+                                    opt.marker[i].hasOwnProperty('addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                                     if ('string' === typeof opt.marker[i].parseAddr) {
                                         this.markerByGeocoder(map, opt.marker[i]);
@@ -470,7 +474,8 @@
          */
         drawPolyline: function (map, opt) {
 
-            var polyline = {},
+            var self = this,
+                polyline = {},
                 i = 0,
                 p = {},
                 polylineX={},
@@ -570,7 +575,6 @@
         },
         //#!#END
         //end add Multiple POLYLINE by karry
-
         //#!#START POLYGON
         /**
          * Polygon overlay
@@ -615,7 +619,6 @@
                     }
                 }
             }
-            console.dir(this._polygons);
         },
         //#!#END
         //#!#START CIRCLE
@@ -780,10 +783,8 @@
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
 
-            //markerOptions = $.extend({}, markerOptions, opt);
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
-            
 
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
@@ -821,6 +822,7 @@
                 label.bindTo('visible', marker);
                 this._labels.push(label);
             }
+            // Binding events
             self.bindEvents(marker, opt.event);
         },
         /**
@@ -908,6 +910,7 @@
                         label.bindTo('visible', marker);
                         self._labels.push(label);
                     }
+                    // Binding events
                     self.bindEvents(marker, opt.event);
                 }
             });
@@ -921,7 +924,7 @@
          */
         directionService: function (opt) {
 
-            // Make sure the `from` and `to` have setting.
+            // Make sure the `from` and `to` properties has setting.
             if (!(opt.hasOwnProperty('from') && opt.hasOwnProperty('to'))) {
                 return;
             }
@@ -1481,14 +1484,12 @@
                 geocoder = {};
             if ('string' === typeof self.options.center) {
                 geocoder = new google.maps.Geocoder();
-                console.dir(self.options.center);
                 geocoder.geocode({'address': self.options.center}, function (results, status) {
                     try {
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                             self.init();
                         } else if (status === google.maps.GeocoderStatus.OK && 0 !== results.length) {
                             if (undefined !== results[0] && results[0].hasOwnProperty('geometry')) {
-                                console.dir(results);
                                 self.googleMapOptions.center = results[0].geometry.location;
                                 self.map = new google.maps.Map(self.container, self.googleMapOptions);
                                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
