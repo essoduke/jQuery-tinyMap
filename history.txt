@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+3.1.2
+修正 polyline 無法綁定事件的錯誤。
+修正 modify marker 若 marker.id 不存在，則需要設置 forceInsert: true 才會新增至地圖。
+
 3.1.1
 修正繪製多個 polygon 時，第二個 polygon 之後的選項沒有作用的錯誤。
 
