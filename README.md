@@ -153,9 +153,9 @@ var map = $(selector);
 var instance = map.data('tinyMap'); 
 var markers = instance._markers; // All markers on the Map.
 var polylines = instance._polylines; // All polyline layers
-var polygons = instance._polygons; // All polyline layers
+var polygons = instance._polygons; // All polygon layers
 var circles = instance._circles; // All circle layers
-// You could display all objects by `console.dir(instance)`
+// You could display all available objects by `console.dir(instance)`
 ```
 
 ## License
