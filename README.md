@@ -72,23 +72,24 @@ $('#map').tinyMap({
 $(selector).tinyMap({
     'marker': [
         {
+            // Marker place location
             'addr': ['Lat', 'Lng'],
             // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
             // Or {lat: 'lat', lng: 'lng'}
-            'title': 'Hello World!', // (Optional)
-            'text': 'Cogito ergo sum!', // (optional)
+            'title': 'Display on Mouseover', // (Optional)
+            'text': 'Display in infoWindow', // (optional)
             'icon': 'http://domain/icon.png' // (optional)
             // Binding Click event
             'event': function (event) {
                 console.log(this.text); // Marker text property.
                 console.log(event.latLng.lat()); // Mousr event
             }
-            /* OR 
+            /* OR more events
             'event': {
                 'click': function (event) {...},
                 'mouseover': function (event) {...}
             }
-               OR
+               OR runeonce
             'event': {
                 'click': {
                     'func': function () {...}
@@ -117,7 +118,6 @@ $(selector).tinyMap('panto', {lat: 'Lat', lng: 'Lng'});
 
 // Dynamic setting up
 $(selector).tinyMap('modify', {OPTIONS});
-
 // e.g. Disable draggable
 $(selector).tinyMap('modify', {
     'draggable': false
@@ -125,7 +125,7 @@ $(selector).tinyMap('modify', {
     'zoom': 16
 });
 
-// Clear specified layers
+// Clear overlayers
 // Options: marker, polyline, polygon, circle, direction, kml
 $(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
 // or use array
@@ -152,10 +152,13 @@ $(selector).tinyMap('getKML', {
 var map = $(selector);
 var instance = map.data('tinyMap'); 
 var markers = instance._markers; // All markers on the Map.
+var polylines = instance._polylines; // All polyline layers
+var polygons = instance._polygons; // All polyline layers
+var circles = instance._circles; // All circle layers
+// You could display all objects by `console.dir(instance)`
 ```
 
 ## License
 
 This plugin is released under the [MIT License](http://opensource.org/licenses/MIT).
-
 
