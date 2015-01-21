@@ -26,13 +26,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.2
+ * @version: 3.1.3
  *
  * [Changelog]
- * 修正 polyline 無法綁定事件的錯誤。
- * 修正 modify marker 若 marker.id 不存在，則需要設置 forceInsert: true 才會新增至地圖。
- *
- * Release 2014.12.16.115716
+ * 修正使用 modify 建立 marker 時，第一個 marker 會建立兩次的錯誤。
+  *
+ * Release 2015.01.21.170137
  */
 ;(function ($, window, document, undefined) {
 
@@ -284,7 +283,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.2',
+        VERSION: '3.1.3',
 
         // Layers
         _polylines: [],
@@ -376,6 +375,7 @@
                         }
                     }
                 }
+                return;
             }
             
             // Modify markers
