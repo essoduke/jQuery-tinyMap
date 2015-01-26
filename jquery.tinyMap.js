@@ -26,10 +26,10 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.3
+ * @version: 3.1.4
  *
  * [Changelog]
- * 修正使用 modify 建立 marker 時，第一個 marker 會建立兩次的錯誤。
+ * 修正前一版本 markerCluster 參數失去作用的錯誤。
   *
  * Release 2015.01.21.170137
  */
@@ -283,7 +283,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.3',
+        VERSION: '3.1.4',
 
         // Layers
         _polylines: [],
@@ -375,7 +375,8 @@
                         }
                     }
                 }
-                return;
+                //return;
+                source = undefined;
             }
             
             // Modify markers
