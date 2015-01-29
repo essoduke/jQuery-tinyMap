@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+3.1.5
+修正 direction.waypoint.text 無法設置的錯誤。
+新增 direction.color 路徑顏色值的設置。
+
 3.1.4
 修正前一版本 markerCluster 參數失去作用的錯誤。
 
