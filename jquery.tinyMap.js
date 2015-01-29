@@ -26,12 +26,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.4
+ * @version: 3.1.5
  *
  * [Changelog]
- * 修正前一版本 markerCluster 參數失去作用的錯誤。
-  *
- * Release 2015.01.21.170137
+ * 修正 direction.waypoint.text 無法設置的錯誤。
+ * 新增 direction.color 路徑顏色值的設置。
+ *
+ * Release 2015.01.29.105700
  */
 ;(function ($, window, document, undefined) {
 
@@ -218,6 +219,36 @@
          */
         this._labels = [];
         /**
+         * Polylines layer
+         * @type {Object}
+         */
+        this._polylines = [];
+        /**
+         * Polygons layer
+         * @type {Object}
+         */
+        this._polygons = [];
+        /**
+         * Circles layer
+         * @type {Object}
+         */
+        this._circles = [];
+        /**
+         * KML layer
+         * @type {Object}
+         */
+        this._kmls = [];
+        /**
+         * Directions layer
+         * @type {Object}
+         */
+        this._directions = [];
+        /**
+         * Directions icon layer
+         * @type {Object}
+         */
+        this._directionsMarkers = [];
+        /**
          * DOM of selector
          * @type {Object}
          */
@@ -283,15 +314,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.4',
-
-        // Layers
-        _polylines: [],
-        _polygons: [],
-        _circles: [],
-        _kmls: [],
-        _directions: [],
-        _directionsMarkers: [],
+        VERSION: '3.1.5',
 
         // Google Maps LatLngBounds Class
         bounds: new google.maps.LatLngBounds(),
@@ -375,7 +398,6 @@
                         }
                     }
                 }
-                //return;
                 source = undefined;
             }
             
@@ -985,6 +1007,7 @@
             directionsService.route(request, function (response, status) {
                 var legs = 0,
                     modify = {},
+                    wp = {},
                     i = 0;
                 if (status === google.maps.DirectionsStatus.OK) {
                     legs = response.routes[0].legs;
@@ -992,6 +1015,11 @@
                         renderOpts.preserveViewport = false === opt.autoViewport ? true : false;
                     }
                     try {
+                        if (opt.hasOwnProperty('color') && 'string' === typeof opt.color) {
+                            renderOpts.polylineOptions = {
+                                strokeColor: opt.color
+                            };
+                        }
                         if (opt.hasOwnProperty('fromText')) {
                             legs[0].start_address = opt.fromText;
                         }
@@ -1024,14 +1052,12 @@
                                 });
                             }
                         }
-                        for (i = 0; i < legs.length - 1; i += 1) {
-                            legs[i].end_address = waypointsText[i];
-                            if (opt.hasOwnProperty('icon') && opt.icon.hasOwnProperty('waypoint')) {
-                                self.directionServiceMarker(legs[i].start_location, {
-                                    'icon': opt.icon.waypoint,
-                                    'text': legs[i].start_address
-                                });
+                        for (i = 0; i < legs.length; i += 1) {
+                            if (opt.hasOwnProperty('icon')) {
+                                wp.icon = opt.icon.waypoint;
                             }
+                            wp.text = waypointsText[i - 1];
+                            self.directionServiceMarker(legs[i].start_location, wp);
                         }
                     } catch (ignore) {
                     }
