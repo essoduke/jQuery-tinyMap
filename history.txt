@@ -1,5 +1,8 @@
 jQuery tinyMap Changelog
 
+3.1.6
+修正執行 modify 時，若傳入的 marker 設有 id 且 addr 為地址字串，會導致該標記消失的錯誤。
+
 3.1.5
 修正 direction.waypoint.text 無法設置的錯誤。
 新增 direction.color 路徑顏色值的設置。
