@@ -26,13 +26,12 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.5
+ * @version: 3.1.6
  *
  * [Changelog]
- * 修正 direction.waypoint.text 無法設置的錯誤。
- * 新增 direction.color 路徑顏色值的設置。
+ * 修正執行 modify 時，若傳入的 marker 設有 id 且 addr 為地址字串，會導致該標記消失的錯誤。
  *
- * Release 2015.01.29.105700
+ * Release 2015.01.30.151458
  */
 ;(function ($, window, document, undefined) {
 
@@ -314,7 +313,7 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.5',
+        VERSION: '3.1.6',
 
         // Google Maps LatLngBounds Class
         bounds: new google.maps.LatLngBounds(),
@@ -378,8 +377,10 @@
                 i = 0,
                 j = 0,
                 k = 0,
+                loc = '',
                 markers = [],
-                labels  = [];
+                labels  = [],
+                geocoder = new google.maps.Geocoder();
                 
             _directMarkersLength = 0;
             _geoMarkersLength = 0;
@@ -411,12 +412,20 @@
                             if (opt.marker[i].id === markers[j].id &&
                                 opt.marker[i].hasOwnProperty('addr')
                             ) {
-                                markers[j].setPosition(
-                                    new google.maps.LatLng(
-                                        opt.marker[i].addr[0],
-                                        opt.marker[i].addr[1]
-                                    )
-                                );
+                                // Fix the marker which has `id` and `addr` will disappear when call the modify.
+                                // @v3.1.6 fixed
+                                loc = parseLatLng(opt.marker[i].addr, true);
+                                if ('string' === typeof loc) {
+                                    geocoder.geocode({'address': loc}, function (results, status) {
+                                        if (status === google.maps.GeocoderStatus.OK) {
+                                            markers[j].setPosition(results[0].geometry.location);
+                                        } else {
+                                            throw 'Geocoder Status: ' + status;
+                                        }
+                                    });
+                                } else {
+                                    markers[j].setPosition(loc);
+                                }
                                 if (opt.marker[i].hasOwnProperty('text')) {
                                     if (markers[j].hasOwnProperty('infoWindow')) {
                                         if ('function' === typeof markers[j].infoWindow.setContent) {
