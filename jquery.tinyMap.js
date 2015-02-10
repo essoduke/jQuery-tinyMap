@@ -26,12 +26,13 @@
  * http://app.essoduke.org/tinyMap/
  *
  * @author: Essoduke Chang
- * @version: 3.1.6
+ * @version: 3.1.7
  *
  * [Changelog]
- * 修正執行 modify 時，若傳入的 marker 設有 id 且 addr 為地址字串，會導致該標記消失的錯誤。
+ * 修正 marker 使用字串位置時且使用 map idle 事件建立時，markerFitBounds 會無效的錯誤。
+ * 修正使用  markerclusterer 時，clear 方法無法移除 marker 的錯誤。
  *
- * Release 2015.01.30.151458
+ * Release 2015.02.10.113132
  */
 ;(function ($, window, document, undefined) {
 
@@ -313,7 +314,9 @@
      */
     TinyMap.prototype = {
 
-        VERSION: '3.1.6',
+        VERSION: '3.1.7',
+
+        _clusters: [],
 
         // Google Maps LatLngBounds Class
         bounds: new google.maps.LatLngBounds(),
@@ -450,7 +453,7 @@
                                     opt.marker[i].hasOwnProperty('addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                                     if ('string' === typeof opt.marker[i].parseAddr) {
-                                        this.markerByGeocoder(map, opt.marker[i]);
+                                        this.markerByGeocoder(map, opt.marker[i], opt);
                                     } else {
                                         this.markerDirect(map, opt.marker[i]);
                                     }
@@ -492,7 +495,7 @@
                 true === opt.markerCluster &&
                 'function' === typeof MarkerClusterer
             ) {
-                return new MarkerClusterer(map, this._markers);
+                self._clusters.push(new MarkerClusterer(map, this._markers));
             }
         },
         //#!#END
@@ -538,7 +541,7 @@
                         // Options merge
                         defOpt = $.extend({}, {
                             'strokeColor': polylineX.color || '#FF0000',
-                            'strokeOpacity': 1.0,
+                            'strokeOpacity': polylineX.opacity || 1.0,
                             'strokeWeight': polylineX.width || 2
                         }, polylineX);
 
@@ -838,7 +841,7 @@
             if (true === self.options.markerCluster) {
                 if ('function' === typeof MarkerClusterer) {
                     if (_directMarkersLength === self.options.marker.length) {
-                        return new MarkerClusterer(map, self._markers);
+                        self._clusters.push(new MarkerClusterer(map, self._markers));
                     }
                 }
             }
@@ -862,7 +865,7 @@
          * @param {Object} opt Options
          * @this {tinyMap}
          */
-        markerByGeocoder: function (map, opt) {
+        markerByGeocoder: function (map, opt, def) {
             var geocoder = new google.maps.Geocoder(),
                 self = this;
             geocoder.geocode({'address': opt.parseAddr}, function (results, status) {
@@ -914,7 +917,8 @@
                         }
                         if (true === self.options.markerFitBounds) {
                             // Make sure fitBounds call after the last marker created.
-                            if (self._markers.length === self.options.marker.length) {
+                            // @fixed 3.1.7
+                            if (self._markers.length === def.marker.length) {
                                 map.fitBounds(self.bounds);
                             }
                         }
@@ -1254,33 +1258,49 @@
          */
         clear: function (layer) {
             var self = this,
-                layers = 'marker,circle,polygon,polyline,direction,kml',
+                layers = 'marker,circle,polygon,polyline,direction,kml,cluster',
                 label = '',
+                labels = self._labels,
+                n = labels.length,
                 i = 0,
-                j = 0;
+                j = 0,
+                k = 0;
 
             layers = 'string' === typeof layer ?
                      layer.split(',') :
                      (Array.isArray(layer) ? layer : layers.split(','));
 
-            for (i = 0; i < layers.length; i += 1) {
-                label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
-                if (undefined !== self[label] && self[label].length) {
-                    for (j = 0; j < self[label].length; j += 1) {
-                        if (self.map === self[label][j].getMap()) {
-                            self[label][j].set('visible', false);
-                            self[label][j].set('directions', null);
-                            self[label][j].setMap(null);
+            try {
+                for (i = 0; i < layers.length; i += 1) {
+                    label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
+                    if (undefined !== self[label] && self[label].length) {
+                        for (j = 0; j < self[label].length; j += 1) {
+                            if (self.map === self[label][j].getMap()) {
+                                if ('function' === typeof self[label][j].clearMarkers) {
+                                    self[label][j].clearMarkers();
+                                }
+                                if ('function' === typeof self[label][j].set) {
+                                    self[label][j].set('visible', false);
+                                    self[label][j].set('directions', null);
+                                }
+                            }
+                        }
+                        self[label].length = 0;
+                    }
+                    // Remove the direction icons.
+                    if ('direction' === layers[i]) {
+                        for (j = 0; j < self._directionsMarkers.length; j += 1) {
+                            self._directionsMarkers[j].setMap(null);
                         }
                     }
-                    self[label].length = 0;
-                }
-                // Remove the direction icons.
-                if ('direction' === layers[i]) {
-                    for (j = 0; j < self._directionsMarkers.length; j += 1) {
-                        self._directionsMarkers[j].setMap(null);
+                    // Remove the labels.
+                    for (k = 0; k < n; k += 1) {
+                        if (labels[k].hasOwnProperty('div')) {
+                            labels[k].div.remove();
+                        }
                     }
                 }
+            } catch (ignore) {
             }
         },
         //#!#END
