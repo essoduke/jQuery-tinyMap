@@ -1,5 +1,9 @@
 jQuery tinyMap Changelog
 
+3.1.7
+修正 marker 使用字串位置時且使用 map idle 事件建立時，markerFitBounds 會無效的錯誤。
+修正使用  markerclusterer 時，clear 方法無法移除 marker 的錯誤。
+
 3.1.6
 修正執行 modify 時，若傳入的 marker 設有 id 且 addr 為地址字串，會導致該標記消失的錯誤。
 
