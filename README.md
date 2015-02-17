@@ -6,9 +6,6 @@ This plugin will help you to create simple or complex Google Maps on the page.
 For complete options, methods and examples (Traditional Chinese):  
 http://app.essoduke.org/tinyMap/ 
 
-Download builder:  
-http://app.essoduke.org/tinyMap/customize/
-
 ## Features
 
  * Easy to configure and use.
@@ -20,9 +17,8 @@ http://app.essoduke.org/tinyMap/customize/
 
 ## Install
 
-Include the Google Maps API v3 before jQuery tinyMap.
+Just include the jQuery tinyMap plugin.
 ```HTML
-<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
 
@@ -40,7 +36,7 @@ Setting up the container's width and height in CSS:
 
 ## Usage
 
-Full options: http://app.essoduke.org/tinyMap/#parameters
+Complete options: http://app.essoduke.org/tinyMap/#parameters
 
 ```javascript
 //Setting up the map
@@ -143,13 +139,14 @@ $(selector).tinyMap('getKML', {
     'polyline': true|false,  // Include polyline overlay
     'direction': true|false  // Include direction overlay
 });
-
 ```
 
 ## Using tinyMap instance
 
 ```javascript
 var map = $(selector);
+map.tinyMap(...);
+
 var instance = map.data('tinyMap'); 
 var markers = instance._markers; // All markers on the Map.
 var polylines = instance._polylines; // All polyline layers
