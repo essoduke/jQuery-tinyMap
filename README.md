@@ -1,7 +1,6 @@
-# jQuery-tinyMap
+# jQuery-tinyMap BETA VERSION
 
 This plugin will help you to create simple or complex Google Maps on the page.
-
 
 For complete options, methods and examples (Traditional Chinese):  
 http://app.essoduke.org/tinyMap/ 
