@@ -29,12 +29,12 @@
  * @version: 3.2.0
  *
  * [Changelog]
- * 使用 jQuery tinyMap 之前已不需手動引入 Google Maps API。
- * 使用 markerClusterer 參數之前已不需手動引入 markerclusterer.js。
+ * 使用 jQuery tinyMap 之前已不需手動引入 Google Maps API 以及 markerclusterer.js。
  * 新增 direction 原生 API 屬性的支援。
  * 新增 direction.waipoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
+ * 修正 destroy 沒有作用的問題。
  *
- * Release 2015.02.17.155839
+ * Release 2015.04.10.114222
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -45,13 +45,10 @@ window.gMapsCallback = function () {
 
     // API Configure
     var apiLoaded = false,
-        apiClustererLoaded = false,
-        syncLoaded = false,
+        apiClusterLoaded = false,
         tinyMapConfigure = {
             'sensor'   : false,
-            'key'      : '',
             'language' : 'zh-TW',
-            'libraries': '',
             'callback' : 'gMapsCallback',
             'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js'
         },
@@ -67,7 +64,7 @@ window.gMapsCallback = function () {
             'marker': [],
             'markerCluster': false,
             'markerFitBounds': false,
-            'notfound': '找不到查詢的地點',
+            'notFound': '找不到查詢的地點',
             'polyline': [],
             'zoom': 8
         },
@@ -102,7 +99,7 @@ window.gMapsCallback = function () {
                 'lng': ''
             };
         if ('string' === typeof loc || Array.isArray(loc)) {
-            array = 'string' === typeof loc ? loc.replace(/\s+/, '').split(',') : loc;
+            array = Array.isArray(loc) ? loc : loc.toString().replace(/\s+/, '').split(',');
             if (2 === array.length) {
                 if (re.test(array[0]) && re.test(array[1])) {
                     result.lat = array[0];
@@ -205,9 +202,10 @@ window.gMapsCallback = function () {
          * @type {number}
          */
         self.interval = parseInt(self.options.interval, 10) || 200;
-
+        /**
+         * Binding callback event for API async
+         */
         $(window).on('gMapsCallback', function () {
-            apiLoaded = true;
             self.init();
         });
         $(this.container).html(opt.loading);
@@ -232,7 +230,7 @@ window.gMapsCallback = function () {
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            //try {
+            try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -263,9 +261,9 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            //} catch (ignore) {
-            //    console.dir(ignore);
-            //}
+            } catch (ignore) {
+                console.info(ignore);
+            }
         },
         /**
          * bind events
@@ -625,9 +623,8 @@ window.gMapsCallback = function () {
                                 if (opt.marker[i].hasOwnProperty('icon')) {
                                     markers[j].setIcon(opt.marker[i].icon);
                                 }
-                            // When id property was not matched.
-                            // Insert if the forceInsert was true.
-                            // v3.1.2 fixed
+                            // Insert if the forceInsert was true when id property was not matched.
+                            // @v3.1.2 fixed
                             } else {
                                 if (opt.marker[i].hasOwnProperty('forceInsert') &&
                                     opt.marker[i].forceInsert === true &&
@@ -653,7 +650,7 @@ window.gMapsCallback = function () {
                             }
                         }
                     }
-                    // Redrawing the labels
+                    // Re-drawing the labels
                     for (j = 0, k = labels.length; j < k; j += 1) {
                         if (opt.marker[i].id === labels[j].id) {
                             if (opt.marker[i].hasOwnProperty('label')) {
@@ -888,7 +885,7 @@ window.gMapsCallback = function () {
          */
         direction: function (map, opt) {
             if (opt.hasOwnProperty('direction') && Array.isArray(opt.direction)) {
-                for (var d = 0; d < opt.direction.length; d += 1) {
+                for (var d = 0, c = opt.direction.length; d < c; d += 1) {
                     this.directionService(opt.direction[d]);
                 }
             }
@@ -910,12 +907,12 @@ window.gMapsCallback = function () {
                 directionsDisplay = new google.maps.DirectionsRenderer(),
                 request = {
                     'travelMode': google.maps.DirectionsTravelMode.DRIVING,
-                    'optimizeWaypoints': opt.hasOwnProperty('optimize') ? opt.optimize : false
+                    'optimizeWaypoints': opt.hasOwnProperty('optimize') ? opt.optimize : true
                 },
                 infoWindow = new google.maps.InfoWindow(),
                 renderOpts = {
                     'infoWindow': infoWindow,
-                    'map': self.map,
+                    'map': self.map
                 },
                 waypoints = [],
                 waypointsOpts = {},
@@ -929,6 +926,7 @@ window.gMapsCallback = function () {
             request.origin = parseLatLng(opt.from, true);
             request.destination = parseLatLng(opt.to, true);
             renderOpts = $.extend({}, renderOpts, opt);
+            console.dir(renderOpts);
 
             if (opt.hasOwnProperty('travel') &&
                 google.maps.TravelMode[opt.travel.toString().toUpperCase()]
@@ -1110,8 +1108,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
-            var watch = false,
-                geolocation = navigator.geolocation;
+            var geolocation = navigator.geolocation;
             if (!geolocation) {
                 return;
             }
@@ -1139,7 +1136,7 @@ window.gMapsCallback = function () {
          * @param {(string|Array|Object)} addr Location
          * @public
          */
-        panto: function (addr) {
+        panTo: function (addr) {
             var loc = {},
                 geocoder = {},
                 m = this.map;
@@ -1269,7 +1266,11 @@ window.gMapsCallback = function () {
         //#!#END
         //#!#START DESTROY
         destroy: function () {
-            $.data($(this.container).get(0), 'tinyMap', null);
+            var obj = $(this.container);
+            $.data(obj.get(0), 'tinyMap', null);
+            if (obj.length) {
+                return obj.empty();
+            }
         },
         //#!#END
         //#!#START GETKML
@@ -1296,7 +1297,7 @@ window.gMapsCallback = function () {
                         '<Style id="style1">',
                         '<IconStyle>',
                         '<Icon>',
-                        '<href>http://maps.google.com/mapfiles/kml/paddle/grn-circle_maps.png</href>',
+                        '<href>//maps.google.com/mapfiles/kml/paddle/grn-circle_maps.png</href>',
                         '</Icon>',
                         '</IconStyle>',
                         '</Style>',
@@ -1330,6 +1331,7 @@ window.gMapsCallback = function () {
                 strDirection = '',
                 output = '',
                 latlng = '',
+                obj = {},
                 i = 0,
                 j = 0,
                 k = 0,
@@ -1369,7 +1371,11 @@ window.gMapsCallback = function () {
                 if (true === opts.direction) {
                     directions = md._directions;
                     for (i = 0; i < directions.length; i += 1) {
-                        if (Array.isArray(directions[i].directions.routes) &&
+                        if (directions[i].hasOwnProperty('directions') &&
+                            directions[i].directions.hasOwnProperty('routes') &&
+                            Array.isArray(directions[i].directions.routes) &&
+                            0 < directions[i].directions.routes.length &&
+                            directions[i].directions.routes[0].hasOwnProperty('legs') &&
                             Array.isArray(directions[i].directions.routes[0].legs)
                         ) {
                             legs = directions[i].directions.routes[0].legs;
@@ -1405,7 +1411,7 @@ window.gMapsCallback = function () {
                                   );
 
                 if (true === opts.download) {
-                    window.open(mime + window.btoa(unescape(encodeURIComponent(output))));
+                    window.open(mime + window.btoa(window.decodeURIComponent(window.encodeURIComponent(output))));
                 } else {
                     return output;
                 }
@@ -1420,23 +1426,27 @@ window.gMapsCallback = function () {
 
             var self     = this,
                 script   = {},
-                geocoder = {};
+                geocoder = {},
+                msg      = '',
+                o        = {};
 
-            if (!apiLoaded) {
+            // Loading Google Maps API
+            if (!apiLoaded && 'undefined' === typeof window.google) {
                 script = document.createElement('script');
                 script.setAttribute('src', '//maps.google.com/maps/api/js?' + $.param(tinyMapConfigure));
                 (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
                 apiLoaded = true;
             }
-
-            if (!apiClustererLoaded) {
+            // Loading MarkerClusterer library
+            if (!apiClusterLoaded && 'undefined' === typeof MarkerClusterer) {
                 script = document.createElement('script');
                 script.setAttribute('src', tinyMapConfigure.clusterer);
                 (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
-                apiClustererLoaded = true;
+                apiClusterLoaded = true;
             }
 
             try {
+                // Make sure the API was loaded.
                 if ('object' === typeof window.google) {
 
                     self.bounds = new google.maps.LatLngBounds();
@@ -1460,7 +1470,7 @@ window.gMapsCallback = function () {
                             'display': 'none'
                         });
                         this.span.appendTo(this.div);
-                    }
+                    };
                     /**
                      * Inherit from Google Maps OverlayView
                      * @this {Label}
@@ -1542,7 +1552,6 @@ window.gMapsCallback = function () {
                         }
                     }
                     //#!#END
-
                     if ('string' === typeof self.options.center) {
                         geocoder = new google.maps.Geocoder();
                         geocoder.geocode({'address': self.options.center}, function (results, status) {
@@ -1559,6 +1568,8 @@ window.gMapsCallback = function () {
                                         self.bindEvents(self.map, self.options.event);
                                     }
                                 } else {
+                                    msg = (self.options.notFound || status).toString();
+                                    self.container.innerHTML(msg.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
                                     console.error('Geocoder Error Code: ' + status);
                                 }
                             } catch (ignore) {
@@ -1579,14 +1590,18 @@ window.gMapsCallback = function () {
         }
     };
     /**
-     * jQuery tinyMap instance
-     * @param {Object} options Plugin settings
+     * jQuery tinyMap API configure
+     * @param {Object} options Plugin API configure
      * @public
      */
     $.tinyMapConfigure = function (options) {
         tinyMapConfigure = $.extend({}, tinyMapConfigure, options);
     };
-
+    /**
+     * jQuery tinyMap instance
+     * @param {Object} options Plugin settings
+     * @public
+     */
     $.fn.tinyMap = function (options) {
         var args = arguments,
             id   = 'tinyMap',
