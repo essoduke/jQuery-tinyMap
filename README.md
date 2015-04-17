@@ -5,15 +5,13 @@ This plugin will help you to create simple or complex Google Maps on the page.
 For complete options, methods and examples (Traditional Chinese):  
 http://app.essoduke.org/tinyMap/ 
 
-## Features
-
- * Easy to configure and use.
- * Supports Marker, Text label, Polyline, Polygon, Circle, KML, Direction layers. 
- * Custom events of map or layers.
- * Dynamically change the map. 
- * MarkerClusterer support.
- * KML file output.
-
+## BETA release notes
+ 
+ * Google Maps API and markerclusterer has not need to include by manual anymore.
+ * Native Directions API supports.
+ * Places API supports.
+ * Minor error fixed.
+ 
 ## Install
 
 Just include the jQuery tinyMap plugin.
@@ -143,9 +141,11 @@ $(selector).tinyMap('getKML', {
 ## Using tinyMap instance
 
 ```javascript
+// Create the map first.
 var map = $(selector);
 map.tinyMap(...);
 
+// Get the instance from map.
 var instance = map.data('tinyMap'); 
 var markers = instance._markers; // All markers on the Map.
 var polylines = instance._polylines; // All polyline layers
