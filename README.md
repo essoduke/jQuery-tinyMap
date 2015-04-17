@@ -149,8 +149,13 @@ $(selector).tinyMap('getKML', {
 ## Using tinyMap instance
 
 ```javascript
+// Create the map first.
 var map = $(selector);
+
+// Get instance from map.
 var instance = map.data('tinyMap'); 
+
+// Get layers from instance.
 var markers = instance._markers; // All markers on the Map.
 var polylines = instance._polylines; // All polyline layers
 var polygons = instance._polygons; // All polygon layers
