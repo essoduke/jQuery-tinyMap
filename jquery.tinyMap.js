@@ -24,7 +24,7 @@
  * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 3
+ * @version 3.2.0 BETA 4
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -34,8 +34,10 @@
  * 修正 destroy 沒有作用的問題。
  * 新增 geolocation 參數以設置 navigator.geolocation。
  * 新增 Places Service API。
+ * 新增 marker.cluster 參數可設置該標記是否加入叢集。
+ * 修正 markerCluster 現在已可設置 maxZoom, gridSize... 等原生屬性。
  *
- * Last Modified 2015.04.16.145243
+ * Last Modified 2015.04.30.102048
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -142,6 +144,11 @@ window.gMapsCallback = function () {
          */
         self._markers = [];
         /**
+         * Map markers
+         * @type {Object}
+         */
+        self._markersCluster = [];
+        /**
          * Map markers clusterer
          * @type {Object}
          */
@@ -221,7 +228,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 3',
+        VERSION: '3.2.0 BETA 4',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -614,7 +621,7 @@ window.gMapsCallback = function () {
                             ) {
                                 // Fix the marker which has `id` and `addr`
                                 // will disappear when call the modify.
-                                // @v3.1.6 fixed
+                                // @since v3.1.6
                                 loc = parseLatLng(opt.marker[i].addr, true);
                                 if ('string' === typeof loc) {
                                     geocoder.geocode({'address': loc}, geocodeCallback);
@@ -638,7 +645,7 @@ window.gMapsCallback = function () {
                                 }
                             // Insert if the forceInsert was true when
                             // id property was not matched.
-                            // @v3.1.2 fixed
+                            // @since v3.1.2
                             } else {
                                 if (opt.marker[i].hasOwnProperty('forceInsert') &&
                                     opt.marker[i].forceInsert === true &&
@@ -740,6 +747,10 @@ window.gMapsCallback = function () {
                           false,
                 content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
                 icons   = self.markerIcon(opt),
+                clusterOption = {
+                    'maxZoom': null,
+                    'gridSize': 60
+                },
                 markerOptions = $.extend({}, {
                     'map': map,
                     'position': opt.parseAddr,
@@ -784,16 +795,20 @@ window.gMapsCallback = function () {
              * Apply marker cluster.
              * Require markerclusterer.js
              * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+             * @since 2015-04-30 10:18:33
              */
-            if (self.options.hasOwnProperty('markerCluster') &&
-                true === self.options.markerCluster
-            ) {
+            if (!opt.hasOwnProperty('cluster') || (opt.hasOwnProperty('cluster') && true === opt.cluster)) {
+                self._markersCluster.push(marker);
+            }
+            if (self.options.hasOwnProperty('markerCluster')) {
                 if ('function' === typeof MarkerClusterer) {
+                    clusterOption = $.extend({}, clusterOption, self.options.markerCluster);
                     if (self._markers.length === self.options.marker.length) {
-                        self._clusters.push(new MarkerClusterer(map, self._markers));
+                        self._clusters.push(new MarkerClusterer(map, self._markersCluster, clusterOption));
                     }
                 }
             }
+
             if (opt.hasOwnProperty('label')) {
                 label = new Label({
                     'text': opt.label,
@@ -831,6 +846,10 @@ window.gMapsCallback = function () {
                                 opt.title.toString().replace(/<([^>]+)>/g, '') :
                                 false,
                         content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
+                        clusterOption = {
+                            'maxZoom': null,
+                            'gridSize': 60
+                        },
                         markerOptions = {
                             'map': map,
                             'position': results[0].geometry.location,
@@ -878,13 +897,17 @@ window.gMapsCallback = function () {
                      * Apply marker cluster.
                      * Require markerclusterer.js
                      * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
+                     * @since 2015-04-30 10:18:33
                      */
+                    if (!opt.hasOwnProperty('cluster') || (opt.hasOwnProperty('cluster') && true === opt.cluster)) {
+                        self._markersCluster.push(marker);
+                    }
                     if (self.options.hasOwnProperty('markerCluster') &&
-                        true === self.options.markerCluster &&
                         'function' === typeof MarkerClusterer &&
                         self._markers.length === def.marker.length
                     ) {
-                        self._clusters.push(new MarkerClusterer(map, self._markers));
+                        clusterOption = $.extend({}, clusterOption, self.options.markerCluster);
+                        self._clusters.push(new MarkerClusterer(map, self._markersCluster, clusterOption));
                     }
 
                     if (opt.hasOwnProperty('label')) {
@@ -1120,24 +1143,26 @@ window.gMapsCallback = function () {
                     'location': map.getCenter(),
                     'radius'  : 100
                 }, reqOpt),
-                placesService = new google.maps.places.PlacesService(map),
+                placesService = {},
                 i = 0;
-
-            placesService.textSearch(request, function (results, status) {
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    self.places = results;
-                    if (request.hasOwnProperty('createMarker') && true === request.createMarker) {
-                        for (i = results.length - 1; i >= 0; i -= 1) {
-                            if (results[i].hasOwnProperty('geometry')) {
-                                self._markers.push(new google.maps.Marker({
-                                    'map': map,
-                                    'position': results[i].geometry.location
-                                }));
+            if (undefined !== google.maps.places && request.hasOwnProperty('query')) {
+                placesService = new google.maps.places.PlacesService(map),
+                placesService.textSearch(request, function (results, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        self.places = results;
+                        if (request.hasOwnProperty('createMarker') && true === request.createMarker) {
+                            for (i = results.length - 1; i >= 0; i -= 1) {
+                                if (results[i].hasOwnProperty('geometry')) {
+                                    self._markers.push(new google.maps.Marker({
+                                        'map': map,
+                                        'position': results[i].geometry.location
+                                    }));
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         },
         //#!#END
         /**
