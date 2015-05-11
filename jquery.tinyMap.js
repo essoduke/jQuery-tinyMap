@@ -24,20 +24,22 @@
  * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 4
+ * @version 3.2.0 BETA 5
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 已不需手動引入 Google Maps API 以及 markerclusterer.js。
+ * 新增 不需手動引入 Google Maps API 以及 markerclusterer.js。
  * 新增 direction 原生 API 屬性的支援。
  * 新增 direction.waipoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
- * 修正 destroy 沒有作用的問題。
  * 新增 geolocation 參數以設置 navigator.geolocation。
  * 新增 Places Service API。
  * 新增 marker.cluster 參數可設置該標記是否加入叢集。
- * 修正 markerCluster 現在已可設置 maxZoom, gridSize... 等原生屬性。
+ * 新增 kml 支援原生屬性。
+ * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
+ * 修正 destroy 沒有作用的問題。
+ * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.04.30.102048
+ * Last Modified 2015.05.11.154042
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -54,7 +56,7 @@ window.gMapsCallback = function () {
             'language' : 'zh-TW',
             'callback' : 'gMapsCallback',
             'api'      : '//maps.google.com/maps/api/js',
-            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js'
+            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer_compiled.js'
         },
         // Default plugin settings
         defaults = {
@@ -228,7 +230,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 4',
+        VERSION: '3.2.0 BETA 5',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -338,7 +340,8 @@ window.gMapsCallback = function () {
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
-            var kml = {},
+            var self = this,
+                kml = {},
                 kmlOpt = {
                     'url': '',
                     'map': map,
@@ -353,12 +356,18 @@ window.gMapsCallback = function () {
                     kml = new google.maps.KmlLayer(kmlOpt);
                     this._kmls.push(kml);
                 } else if (Array.isArray(opt.kml)) {
-                    for (i = opt.kml.length - 1; i >= 0; i += 1) {
+                    for (i = opt.kml.length - 1; i >= 0; i -= 1) {
                         if ('string' === typeof opt.kml[i]) {
                             kmlOpt.url = opt.kml[i];
                             kml = new google.maps.KmlLayer(kmlOpt);
-                            this._kmls.push(kml);
+                        } else if ('object' === typeof opt.kml[i]) {
+                            kmlOpt = $.extend({}, kmlOpt, opt.kml[i]);
+                            kml = new google.maps.KmlLayer(kmlOpt);
+                            if (kmlOpt.hasOwnProperty('event')) {
+                                self.bindEvents(kml, kmlOpt.event);
+                            }
                         }
+                        this._kmls.push(kml);
                     }
                 }
             }
@@ -391,7 +400,7 @@ window.gMapsCallback = function () {
                 routeCallback = function (result, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
                         for (i = result.routes[0].overview_path.length - 1; i >= 0; i -= 1) {
-                            path.push(len[i]);
+                            path.push(result.routes[0].overview_path[i]);
                         }
                         polyline.setPath(path);
                         if ('function' === typeof polylineX.getDistance) {
@@ -443,6 +452,7 @@ window.gMapsCallback = function () {
                         if (polylineX.hasOwnProperty('snap') &&
                             true === polylineX.snap
                         ) {
+                            console.dir(polylineX.snap);
                             service = new google.maps.DirectionsService();
                             service.route({
                                 'origin': coords.getAt(0),
@@ -597,7 +607,7 @@ window.gMapsCallback = function () {
 
             // For first initialize of instance.
             if ((!source || 0 === markers.length)) {
-                for (i = opt.marker.length - 1; i >= 0; i -= 1) {
+                for (i = 0; i < opt.marker.length; i += 1) {
                     m = opt.marker[i];
                     if (m.hasOwnProperty('addr')) {
                         m.parseAddr = parseLatLng(m.addr, true);
@@ -613,9 +623,9 @@ window.gMapsCallback = function () {
 
             // Modify markers
             if ('modify' === source) {
-                for (i = opt.marker.length - 1; i >= 0; i -= 1) {
+                for (i = 0; i < opt.marker.length; i += 1) {
                     if (opt.marker[i].hasOwnProperty('id')) {
-                        for (j = markers.length - 1; j >= 0; j -= 1) {
+                        for (j = 0; j < markers.length; j += 1) {
                             if (opt.marker[i].id === markers[j].id &&
                                 opt.marker[i].hasOwnProperty('addr')
                             ) {
@@ -671,7 +681,7 @@ window.gMapsCallback = function () {
                         }
                     }
                     // Re-drawing the labels
-                    for (j = labels.length - 1; j >= 0; j -= 1) {
+                    for (j = 0; j < labels.length; j += 1) {
                         if (opt.marker[i].id === labels[j].id) {
                             if (opt.marker[i].hasOwnProperty('label')) {
                                 labels[j].text = opt.marker[i].label;
@@ -887,7 +897,7 @@ window.gMapsCallback = function () {
                             true === self.options.markerFitBounds
                         ) {
                             // Make sure fitBounds call after the last marker created.
-                            // @fixed 3.1.7
+                            // @since v3.1.7
                             if (self._markers.length === def.marker.length) {
                                 map.fitBounds(self.bounds);
                             }
@@ -1037,13 +1047,13 @@ window.gMapsCallback = function () {
                                 self.directionServiceMarker(legs[0].start_location, {
                                     'icon': opt.icon.from,
                                     'text': startText
-                                }, infoWindow);
+                                }, infoWindow, opt);
                             }
                             if (opt.icon.hasOwnProperty('to') && 'string' === typeof opt.icon.to) {
                                 self.directionServiceMarker(legs[legs.length - 1].end_location, {
                                     'icon': opt.icon.to,
                                     'text': endText
-                                }, infoWindow);
+                                }, infoWindow, opt);
                             }
                         }
                         for (i = legs.length - 1; i >= 0; i -= 1) {
@@ -1054,7 +1064,7 @@ window.gMapsCallback = function () {
                                     wp.icon = waypointsIcon[i - 1];
                                 }
                                 wp.text = waypointsText[i - 1];
-                                self.directionServiceMarker(legs[i].start_location, wp, infoWindow);
+                                self.directionServiceMarker(legs[i].start_location, wp, infoWindow, opt);
                             }
                         }
                     } catch (ignore) {
@@ -1072,12 +1082,13 @@ window.gMapsCallback = function () {
          * @param {Object} opt MarkerOptions
          * @param {Object} info Global infoWindow object
          */
-        directionServiceMarker: function (loc, opt, info) {
+        directionServiceMarker: function (loc, opt, info, d) {
             var self = this,
                 evt = {},
                 setting = $.extend({}, {
                     'position': loc,
-                    'map': self.map
+                    'map': self.map,
+                    'id' : d.hasOwnProperty('id') ? d.id : ''
                 }, opt),
                 marker  = new google.maps.Marker(setting);
             if (setting.hasOwnProperty('text')) {
@@ -1250,14 +1261,63 @@ window.gMapsCallback = function () {
          * @public
          */
         clear: function (layer) {
-            var self   = this,
-                layers = 'marker,label,circle,polygon,polyline,direction,kml,cluster',
-                label  = '',
-                labels = self._labels,
-                i = 0,
-                j = 0,
-                k = 0;
-
+            var self     = this,
+                labels   = self._labels,
+                dMarkers = self._directionsMarkers,
+                i        = 0,
+                j        = 0,
+                obj      = {},
+                key      = '',
+                item     = {};
+            
+            try {
+                for (obj in layer) {
+                    if (Array.isArray(layer[obj])) {
+                        key = '_' + obj.toString().toLowerCase() + 's';
+                        if (undefined !== self[key]) {
+                            for (i = 0; i < self[key].length; i += 1) {
+                                item = self[key][i];
+                                if (0 === layer[obj].length ||
+                                    (-1 !== layer[obj].indexOf(i)) ||
+                                    (item.hasOwnProperty('id') && -1 !== layer[obj].indexOf(item.id))
+                                ) {
+                                    if ('function' === typeof item.clearMarkers) {
+                                        item.clearMarkers();
+                                    }
+                                    if ('function' === typeof item.set) {
+                                        item.set('visible', false);
+                                        item.set('directions', null);
+                                    }
+                                    if ('function' === typeof item.setMap) {
+                                        item.setMap(null);
+                                    }
+                                    // Clear label of Markers.
+                                    if ('_markers' === key) {
+                                        if (undefined !== labels[i] && labels.hasOwnProperty('div')) {
+                                            self._labels[i].div.remove();
+                                        }
+                                    }
+                                    // Remove the direction icons.
+                                    if ('_directions' === key) {
+                                        for (j = dMarkers.length - 1; j >= 0; j -= 1) {
+                                            if (dMarkers[j].hasOwnProperty('id') &&
+                                                dMarkers[j].id === item.id &&
+                                                'function' === typeof dMarkers[j].setMap
+                                            ) {
+                                                dMarkers[j].setMap(null);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (ignore) {
+            } finally {
+                return self;
+            }
+            /*
             layers = 'string' === typeof layer ?
                      layer.split(',') :
                      (Array.isArray(layer) ? layer : layers.split(','));
@@ -1298,6 +1358,7 @@ window.gMapsCallback = function () {
             } finally {
                 return self;
             }
+            */
         },
         //#!#END
         //#!#START MODIFY
