@@ -148,9 +148,10 @@ $(selector).tinyMap('getKML', {
 });
 ```
 ## API Configure
-You colud setting up the api before execute the tinyMap.
+You could setup the api before using the tinyMap.
 
 ```javascript
+// Set up before tinyMap executes.
 $.fn.tinyMapConfigure({
     // Google Maps API location
     'api': '//maps.google.com/maps/api/js',
@@ -164,6 +165,9 @@ $.fn.tinyMapConfigure({
     'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer_compiled.js'
 });
 
+// Then executes.
+$(selector).tinyMap(...);
+```
 ## Using tinyMap instance
 
 ```javascript
