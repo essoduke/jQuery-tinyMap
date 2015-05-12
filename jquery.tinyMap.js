@@ -24,7 +24,7 @@
  * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 5
+ * @version 3.2.0 BETA 6
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -39,7 +39,7 @@
  * 修正 destroy 沒有作用的問題。
  * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.05.11.154042
+ * Last Modified 2015.05.12.171239
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -230,7 +230,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 5',
+        VERSION: '3.2.0 BETA 6',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -452,7 +452,6 @@ window.gMapsCallback = function () {
                         if (polylineX.hasOwnProperty('snap') &&
                             true === polylineX.snap
                         ) {
-                            console.dir(polylineX.snap);
                             service = new google.maps.DirectionsService();
                             service.route({
                                 'origin': coords.getAt(0),
@@ -1271,6 +1270,18 @@ window.gMapsCallback = function () {
                 item     = {};
             
             try {
+                if (undefined === layer) {
+                    layer = {
+                        'marker': [],
+                        'label' : [],
+                        'polyline': [],
+                        'polygon' : [],
+                        'circle'  : [],
+                        'direction': [],
+                        'kml': [],
+                        'cluster': []
+                    };
+                }
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
