@@ -7,14 +7,17 @@ http://app.essoduke.org/tinyMap/
 
 ## BETA release notes
  
- * Google Maps API and markerclusterer has not need to include by manual anymore.
- * Native Directions API supports.
+ * Google Maps API and markerclusterer library won't need to include by yourself anymore.
+ * Customize each direction.waypoints icon.
+ * Native directions parameters supports.
+ * Native kml parameters supports.
+ * Native markerCluster parameters supports.
  * Places API supports.
+ * More flexible clear method.
  * Minor error fixed.
  
 ## Install
 
-You don't need manual include the Google Maps Api anymore.
 Just include the jQuery library and tinyMap plugin. 
 ```HTML
 <script src="jquery.js"></script>
