@@ -14,8 +14,10 @@ http://app.essoduke.org/tinyMap/
  
 ## Install
 
-Just include the jQuery tinyMap plugin.
+You don't need manual include the Google Maps Api anymore.
+Just include the jQuery library and tinyMap plugin. 
 ```HTML
+<script src="jquery.js"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
 
@@ -33,10 +35,10 @@ Setting up the container's width and height in CSS:
 
 ## Usage
 
-Complete options: http://app.essoduke.org/tinyMap/#parameters
+Complete options visit: http://app.essoduke.org/tinyMap/#parameters
 
 ```javascript
-//Setting up the map
+// Basic example
 $('#map').tinyMap({
     'center': {'lat': 'Lat', 'lng': 'Lng'},
     // or 'center': 'lat, lng'
@@ -65,6 +67,8 @@ $('#map').tinyMap({
 $(selector).tinyMap({
     'marker': [
         {
+            // Custom Identity string
+            'id'  : 'Marker ID',
             // Marker place location
             'addr': ['Lat', 'Lng'],
             // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
@@ -75,14 +79,14 @@ $(selector).tinyMap({
             // Binding Click event
             'event': function (event) {
                 console.log(this.text); // Marker text property.
-                console.log(event.latLng.lat()); // Mousr event
+                console.log(event.latLng.lat());
             }
-            /* OR more events
+            /* More events
             'event': {
                 'click': function (event) {...},
                 'mouseover': function (event) {...}
             }
-               OR runeonce
+               Run Once
             'event': {
                 'click': {
                     'func': function () {...}
@@ -105,9 +109,9 @@ $(selector).tinyMap({
 ```javascript
 // Methods
 // e.g. Move the map center to specified location
-$(selector).tinyMap('panto', 'Address string');
-$(selector).tinyMap('panto', ['Lat', 'Lng']);
-$(selector).tinyMap('panto', {lat: 'Lat', lng: 'Lng'});
+$(selector).tinyMap('panTo', 'Address string');
+$(selector).tinyMap('panTo', ['Lat', 'Lng']);
+$(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
 
 // Dynamic setting up
 $(selector).tinyMap('modify', {OPTIONS});
@@ -119,10 +123,13 @@ $(selector).tinyMap('modify', {
 });
 
 // Clear overlayers
-// Options: marker, polyline, polygon, circle, direction, kml
-$(selector).tinyMap('clear', 'marker,polyline,polygon...etc');
-// or use array
-$(selector).tinyMap('clear', ['marker', 'polyline', 'polygon'...]);
+// @param {Object} layer Layer Object.
+$(selector).tinyMap('clear', {
+    'marker': [0, 2] // Remove the 1st and 3rd markers.
+    'polyline': ['A', 'C'] // Remove the matched Id of polylines.
+    'direction': [] // Remove all Directions
+});
+
 // or clear all layers
 $(selector).tinyMap('clear'); 
 
