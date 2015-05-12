@@ -147,6 +147,22 @@ $(selector).tinyMap('getKML', {
     'direction': true|false  // Include direction overlay
 });
 ```
+## API Configure
+You colud setting up the api before execute the tinyMap.
+
+```javascript
+$.fn.tinyMapConfigure({
+    // Google Maps API location
+    'api': '//maps.google.com/maps/api/js',
+    // Device sensor control
+    'sensor': false,
+    // Map Lanuguage
+    'language': 'zh-TW',
+    // Google Maps API Libraries
+    'libraries': 'adsense, geometry...',
+    // MarkerClusterer library location
+    'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer_compiled.js'
+});
 
 ## Using tinyMap instance
 
