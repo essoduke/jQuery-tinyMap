@@ -1,10 +1,17 @@
 jQuery tinyMap Changelog
 
-3.2.0
-使用 jQuery tinyMap 之前已不需手動引入 Google Maps API。
-使用 markerClusterer 參數之前已不需手動引入 markerclusterer.js。
+3.2.0 BETA 8
+新增 不需手動引入 Google Maps API 以及 markerclusterer.js。
 新增 direction 原生 API 屬性的支援。
-新增 direction.waipoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
+新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
+新增 geolocation 參數以設置 navigator.geolocation。
+新增 Places Service API。
+新增 marker.cluster 參數可設置該標記是否加入叢集。
+新增 kml 支援原生屬性。
+新增 $.fn.tinyMapQuery 方法可轉換地址（經緯座標）為經緯座標（地址）
+新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
+修正 destroy 沒有作用的問題。
+修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  
 3.1.7
 修正 marker 使用字串位置時且使用 map idle 事件建立時，markerFitBounds 會無效的錯誤。
