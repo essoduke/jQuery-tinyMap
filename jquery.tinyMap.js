@@ -24,7 +24,7 @@
  * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 7
+ * @version 3.2.0 BETA 8
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -35,11 +35,12 @@
  * 新增 Places Service API。
  * 新增 marker.cluster 參數可設置該標記是否加入叢集。
  * 新增 kml 支援原生屬性。
+ * 新增 $.fn.tinyMapQuery 方法可轉換地址（經緯座標）為經緯座標（地址）
  * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
  * 修正 destroy 沒有作用的問題。
  * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.05.20.113656
+ * Last Modified 2015.05.20.173902
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -230,7 +231,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 6',
+        VERSION: '3.2.0 BETA 8',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1531,6 +1532,25 @@ window.gMapsCallback = function () {
             }
         },
         //#!#END
+        query: function Query (addrs) {
+            var geocoder = new google.maps.Geocoder(),
+                callback = function (results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        console.dir(results);
+                    } else {
+                        throw 'Geocoder Status: ' + status;
+                    }
+                },
+                result = [],
+                i = c = 0;
+
+            if ('string' === typeof addrs) {
+                geocoder.geocode({'address': 'loc:' + addrs}, callback);
+            } else if (Array.isArray(addrs)) {
+                for (i = 0, c = addrs.length; i < c; i += 1) {
+                }
+            }
+        },
         /**
          * tinyMap initialize
          */
@@ -1718,6 +1738,38 @@ window.gMapsCallback = function () {
      */
     $.fn.tinyMapConfigure = function (options) {
         tinyMapConfigure = $.extend(tinyMapConfigure, options);
+    };
+    /**
+     * Quick query latlng/address
+     * @param {Object} options Query params
+     * @param {Function} callback Function for callback
+     */
+    $.fn.tinyMapQuery = function (options, callback) {
+        var def = {
+                'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
+                'language': 'zh_TW'
+            },
+            opt = $.extend({}, def, options),
+            result = null;
+
+        $.getJSON(
+            '//maps.googleapis.com/maps/api/geocode/json',
+            opt,
+            function (data) {
+                if (data.status === google.maps.GeocoderStatus.OK) {
+                    if (data.results && undefined !== data.results[0]) {
+                        if (opt.hasOwnProperty('latlng')) {
+                            result = data.results[0].formatted_address;
+                        } else if (opt.hasOwnProperty('address')) {
+                            result = [
+                                data.results[0].geometry.location.lat,
+                                data.results[0].geometry.location.lng
+                            ].join(',');
+                        }
+                        callback(result);
+                    }
+                }
+            });
     };
     /**
      * jQuery tinyMap instance
