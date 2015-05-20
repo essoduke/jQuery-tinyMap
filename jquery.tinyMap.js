@@ -243,7 +243,7 @@ window.gMapsCallback = function () {
         overlay: function () {
             var map = this.map,
                 opt = this.options;
-            //try {
+            try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -278,9 +278,9 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            //} catch (ignore) {
-            //    console.info(ignore);
-            //}
+            } catch (ignore) {
+                console.info(ignore);
+            }
         },
         /**
          * Events binding
@@ -1283,7 +1283,6 @@ window.gMapsCallback = function () {
                         'cluster': []
                     };
                 }
-                console.dir(layer);
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
@@ -1326,7 +1325,6 @@ window.gMapsCallback = function () {
                 }
             } catch (ignore) {
             } finally {
-                console.dir(self);
                 return self;
             }
         },
@@ -1532,25 +1530,6 @@ window.gMapsCallback = function () {
             }
         },
         //#!#END
-        query: function Query (addrs) {
-            var geocoder = new google.maps.Geocoder(),
-                callback = function (results, status) {
-                    if (status === google.maps.GeocoderStatus.OK) {
-                        console.dir(results);
-                    } else {
-                        throw 'Geocoder Status: ' + status;
-                    }
-                },
-                result = [],
-                i = c = 0;
-
-            if ('string' === typeof addrs) {
-                geocoder.geocode({'address': 'loc:' + addrs}, callback);
-            } else if (Array.isArray(addrs)) {
-                for (i = 0, c = addrs.length; i < c; i += 1) {
-                }
-            }
-        },
         /**
          * tinyMap initialize
          */
