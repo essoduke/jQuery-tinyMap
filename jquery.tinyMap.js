@@ -24,13 +24,13 @@
  * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 6
+ * @version 3.2.0 BETA 7
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
  * 新增 不需手動引入 Google Maps API 以及 markerclusterer.js。
  * 新增 direction 原生 API 屬性的支援。
- * 新增 direction.waipoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
+ * 新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
  * 新增 geolocation 參數以設置 navigator.geolocation。
  * 新增 Places Service API。
  * 新增 marker.cluster 參數可設置該標記是否加入叢集。
@@ -39,7 +39,7 @@
  * 修正 destroy 沒有作用的問題。
  * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.05.12.171239
+ * Last Modified 2015.05.20.113656
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -1282,6 +1282,7 @@ window.gMapsCallback = function () {
                         'cluster': []
                     };
                 }
+                console.dir(layer);
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
@@ -1294,28 +1295,26 @@ window.gMapsCallback = function () {
                                 ) {
                                     if ('function' === typeof item.clearMarkers) {
                                         item.clearMarkers();
-                                    }
-                                    if ('function' === typeof item.set) {
+                                    } else if ('function' === typeof item.set) {
                                         item.set('visible', false);
                                         item.set('directions', null);
-                                    }
-                                    if ('function' === typeof item.setMap) {
+                                    } else if ('function' === typeof item.setMap) {
                                         item.setMap(null);
                                     }
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
+                                        self._markers.splice(i, 1);
                                         if (undefined !== labels[i] && labels.hasOwnProperty('div')) {
                                             self._labels[i].div.remove();
                                         }
                                     }
                                     // Remove the direction icons.
                                     if ('_directions' === key) {
+                                        self._directions.splice(i, 1);
                                         for (j = dMarkers.length - 1; j >= 0; j -= 1) {
-                                            if (dMarkers[j].hasOwnProperty('id') &&
-                                                dMarkers[j].id === item.id &&
-                                                'function' === typeof dMarkers[j].setMap
-                                            ) {
-                                                dMarkers[j].setMap(null);
+                                            if ('function' === typeof dMarkers[j].setMap) {
+                                                self._directionsMarkers[j].setMap(null);
+                                                self._directionsMarkers.splice(j, 1);
                                             }
                                         }
                                     }
@@ -1326,50 +1325,9 @@ window.gMapsCallback = function () {
                 }
             } catch (ignore) {
             } finally {
+                console.dir(self);
                 return self;
             }
-            /*
-            layers = 'string' === typeof layer ?
-                     layer.split(',') :
-                     (Array.isArray(layer) ? layer : layers.split(','));
-
-            try {
-                for (i = layers.length - 1; i >= 0; i -= 1) {
-                    label = '_' + $.trim(layers[i].toString().toLowerCase()) + 's';
-                    if (undefined !== self[label] && self[label].length) {
-                        for (j = self[label].length - 1; j >= 0; j -= 1) {
-                            if (self.map === self[label][j].getMap()) {
-                                if ('function' === typeof self[label][j].clearMarkers) {
-                                    self[label][j].clearMarkers();
-                                }
-                                if ('function' === typeof self[label][j].set) {
-                                    self[label][j].set('visible', false);
-                                    self[label][j].set('directions', null);
-                                }
-                            }
-                        }
-                        self[label].length = 0;
-                    }
-                    // Remove the direction icons.
-                    if ('direction' === layers[i]) {
-                        for (j = self._directionsMarkers.length - 1; j >= 0; j -= 1) {
-                            self._directionsMarkers[j].setMap(null);
-                        }
-                    }
-                    // Remove the labels.
-                    if ('label' === layers[i]) {
-                        for (k = labels.length - 1; k >= 0; k -= 1) {
-                            if (labels[k].hasOwnProperty('div')) {
-                                labels[k].div.remove();
-                            }
-                        }
-                    }
-                }
-            } catch (ignore) {
-            } finally {
-                return self;
-            }
-            */
         },
         //#!#END
         //#!#START MODIFY
