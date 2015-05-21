@@ -21,26 +21,28 @@
  * THE SOFTWARE.
  *
  * jQuery tinyMap 輕鬆建立 Google Maps 的 jQuery 擴充套件
- * 拯救免於 Google Maps API 的摧殘，輕鬆建立 Google Maps 的 jQuery 擴充套件。
+ * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 8
+ * @version 3.2.0 BETA 9
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 新增 不需手動引入 Google Maps API 以及 markerclusterer.js。
+ * 變更 已不需手動引入 Google Maps API 以及 markerclusterer.js。
  * 新增 direction 原生 API 屬性的支援。
  * 新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
+ * 新增 instance.getDirectionsInfo 方法可取得地圖上所有路徑規劃的資訊（距離、時間）。
  * 新增 geolocation 參數以設置 navigator.geolocation。
  * 新增 Places Service API。
  * 新增 marker.cluster 參數可設置該標記是否加入叢集。
  * 新增 kml 支援原生屬性。
- * 新增 $.fn.tinyMapQuery 方法可轉換地址（經緯座標）為經緯座標（地址）
+ * 新增 $.fn.tinyMapQuery 公用方法可轉換地址（經緯座標）為經緯座標（地址）。
+ * 新增 $.fn.tinyMapDistance 公用方法可計算多個地點之間的距離。
  * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
  * 修正 destroy 沒有作用的問題。
  * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.05.20.173902
+ * Last Modified 2015.05.21.121158
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -231,7 +233,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 8',
+        VERSION: '3.2.0 BETA 9',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -396,7 +398,7 @@ window.gMapsCallback = function () {
                 distance = {},
                 polylineX = {},
                 waypoints = [];
-                
+
                 // Route callback
                 routeCallback = function (result, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
@@ -986,7 +988,7 @@ window.gMapsCallback = function () {
                 'infoWindow': infoWindow,
                 'map': self.map
             }, opt);
-            
+
             if (opt.hasOwnProperty('travel') &&
                 google.maps.TravelMode[opt.travel.toString().toUpperCase()]
             ) {
@@ -996,7 +998,7 @@ window.gMapsCallback = function () {
             if (opt.hasOwnProperty('panel') && $(opt.panel).length) {
                 renderOpts.panel = $(opt.panel).get(0);
             }
-            
+
             if (opt.hasOwnProperty('waypoint') && Array.isArray(opt.waypoint)) {
                 for (i = opt.waypoint.length - 1; i >= 0; i -= 1) {
                     waypointsOpts = {};
@@ -1100,6 +1102,42 @@ window.gMapsCallback = function () {
             }
             self._directionsMarkers.push(marker);
             self.bindEvents(marker, evt);
+        },
+        /**
+         * Get directions info
+         * @return {Array} All directions info includes distance and duration.
+         */
+        getDirectionsInfo: function () {
+            var self   = this,
+                dr     = self._directions,
+                i      = 0,
+                j      = 0,
+                ci     = 0,
+                cj     = 0,
+                leg    = null,
+                result = [];
+
+            if (dr) {
+                for (i = 0, ci = dr.length; i < ci; i += 1) {
+                    if (
+                        dr[i].hasOwnProperty('directions') &&
+                        dr[i].directions.hasOwnProperty('routes') &&
+                        undefined !== dr[i].directions.routes[0].legs
+                    ) {
+                        leg = dr[i].directions.routes[0].legs;
+                        result[i] = [];
+                        for (j = 0, cj = leg.length; j < cj; j += 1) {
+                            result[i].push({
+                                'from': leg[j].start_address,
+                                'to'  : leg[j].end_address,
+                                'distance': leg[j].distance,
+                                'duration': leg[j].duration
+                            });
+                        }
+                    }
+                }
+            }
+            return result;
         },
         //#!#END
         //#!#START STREETVIEW
@@ -1227,7 +1265,7 @@ window.gMapsCallback = function () {
             var m = this.map,
                 loc = {},
                 geocoder = {};
-                
+
             if (null !== m && undefined !== m) {
                 loc = parseLatLng(addr, true);
                 if ('string' === typeof loc) {
@@ -1269,7 +1307,7 @@ window.gMapsCallback = function () {
                 obj      = {},
                 key      = '',
                 item     = {};
-            
+
             try {
                 if (undefined === layer) {
                     layer = {
@@ -1325,7 +1363,7 @@ window.gMapsCallback = function () {
                 }
             } catch (ignore) {
             } finally {
-                return self;
+                return $(this.container);
             }
         },
         //#!#END
@@ -1350,6 +1388,8 @@ window.gMapsCallback = function () {
                 ],
                 i = 0,
                 m = self.map;
+
+            google.maps.event.trigger(m, 'resize');
 
             if (undefined !== options) {
                 for (i = label.length - 1; i >= 0; i -= 1) {
@@ -1376,15 +1416,16 @@ window.gMapsCallback = function () {
                     }
                 }
             }
+            return $(this.container);
         },
         //#!#END
         //#!#START DESTROY
         destroy: function () {
             var obj = $(this.container);
             if (obj.length) {
-                $.data(this, 'tinyMap', null);
-                return obj.empty();
+                $.removeData(this, 'tinyMap');
             }
+            return obj.empty();
         },
         //#!#END
         //#!#START GETKML
@@ -1549,7 +1590,7 @@ window.gMapsCallback = function () {
                 param = $.param(param);
             } catch (ignore) {
             }
-
+            
             // Asynchronous load the Google Maps API
             if (!apiLoaded && 'undefined' === typeof window.google) {
                 script = document.createElement('script');
@@ -1566,7 +1607,7 @@ window.gMapsCallback = function () {
                 apiClusterLoaded = true;
                 script    = null;
             }
-            
+
             // Make sure the API was loaded.
             if ('object' === typeof window.google) {
                 self.bounds = new google.maps.LatLngBounds();
@@ -1688,6 +1729,7 @@ window.gMapsCallback = function () {
                                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
                                     google.maps.event.addListenerOnce(self.map, 'idle', function () {
                                         self.overlay();
+                                        google.maps.event.trigger(self.map, 'resize');
                                     });
                                     self.bindEvents(self.map, self.options.event);
                                 }
@@ -1704,6 +1746,7 @@ window.gMapsCallback = function () {
                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
                     google.maps.event.addListenerOnce(self.map, 'idle', function () {
                         self.overlay();
+                        google.maps.event.trigger(self.map, 'resize');
                     });
                     self.bindEvents(self.map, self.options.event);
                 }
@@ -1719,6 +1762,38 @@ window.gMapsCallback = function () {
         tinyMapConfigure = $.extend(tinyMapConfigure, options);
     };
     /**
+     * Calculate distances
+     * @param {Object} options Query params
+     * @param {Function} callback Function for callback
+     */
+    $.fn.tinyMapDistance = function (options, callback) {
+        var def = {
+                'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
+                'origins': [],
+                'destinations': [],
+                'language': 'zh-TW'
+            },
+            i = 0,
+            opt = $.extend({}, def, options);
+
+        if (Array.isArray(opt.origins)) {
+            opt.origins = opt.origins.join('|');
+        }
+        if (Array.isArray(opt.destinations)) {
+            opt.destinations = opt.destinations.join('|');
+        }
+
+        $.getJSON(
+            '//maps.googleapis.com/maps/api/distancematrix/json',
+            opt,
+            function (data) {
+                if (data.status === 'OK') {
+                    //console.dir(data);
+                    callback(data);
+                }
+            });
+    };
+    /**
      * Quick query latlng/address
      * @param {Object} options Query params
      * @param {Function} callback Function for callback
@@ -1726,7 +1801,7 @@ window.gMapsCallback = function () {
     $.fn.tinyMapQuery = function (options, callback) {
         var def = {
                 'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
-                'language': 'zh_TW'
+                'language': 'zh-TW'
             },
             opt = $.extend({}, def, options),
             result = null;
@@ -1735,7 +1810,7 @@ window.gMapsCallback = function () {
             '//maps.googleapis.com/maps/api/geocode/json',
             opt,
             function (data) {
-                if (data.status === google.maps.GeocoderStatus.OK) {
+                if (data.status === 'OK') {
                     if (data.results && undefined !== data.results[0]) {
                         if (opt.hasOwnProperty('latlng')) {
                             result = data.results[0].formatted_address;
