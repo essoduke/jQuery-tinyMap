@@ -177,7 +177,7 @@ $.fn.tinyMapDistance({
     console.dir(result);
 });
 
-// Getting 「台北市政府至台北小巨蛋、台北101」以及「故宮博物院至台北小巨蛋、台北101」的資訊
+// Getting duration/distance of multiple origins and destination.
 $.fn.tinyMapQuery({
     'origins'  : ['台北市政府', '故宮博物院'],
     'destinations': ['台北小巨蛋', '台北101']
