@@ -24,7 +24,7 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 9
+ * @version 3.2.0 BETA 10
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -233,7 +233,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 9',
+        VERSION: '3.2.0 BETA 10',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1114,7 +1114,7 @@ window.gMapsCallback = function () {
                 j      = 0,
                 ci     = 0,
                 cj     = 0,
-                leg    = null,
+                legs   = null,
                 result = [];
 
             if (dr) {
@@ -1124,16 +1124,17 @@ window.gMapsCallback = function () {
                         dr[i].directions.hasOwnProperty('routes') &&
                         undefined !== dr[i].directions.routes[0].legs
                     ) {
-                        leg = dr[i].directions.routes[0].legs;
+                        legs = dr[i].directions.routes[0].legs;
                         result[i] = [];
-                        for (j = 0, cj = leg.length; j < cj; j += 1) {
+                        for (j = 0, cj = legs.length; j < cj; j += 1) {
                             result[i].push({
-                                'from': leg[j].start_address,
-                                'to'  : leg[j].end_address,
-                                'distance': leg[j].distance,
-                                'duration': leg[j].duration
+                                'from': legs[j].start_address,
+                                'to'  : legs[j].end_address,
+                                'distance': legs[j].distance,
+                                'duration': legs[j].duration
                             });
                         }
+
                     }
                 }
             }
@@ -1302,53 +1303,39 @@ window.gMapsCallback = function () {
             var self     = this,
                 labels   = self._labels,
                 dMarkers = self._directionsMarkers,
-                i        = 0,
-                j        = 0,
                 obj      = {},
                 key      = '',
-                item     = {};
+                item     = {},
+                target   = [],
+                i        = 0,
+                j        = 0,
+                def      = $.extend({}, {
+                    'marker'   : [],
+                    'label'    : [],
+                    'polyline' : [],
+                    'polygon'  : [],
+                    'circle'   : [],
+                    'direction': [],
+                    'cluster'  : [],
+                    'kml'      : []
+                }, layer);
 
             try {
-                if (undefined === layer) {
-                    layer = {
-                        'marker': [],
-                        'label' : [],
-                        'polyline': [],
-                        'polygon' : [],
-                        'circle'  : [],
-                        'direction': [],
-                        'kml': [],
-                        'cluster': []
-                    };
-                }
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
                         if (undefined !== self[key]) {
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
-                                if (0 === layer[obj].length ||
-                                    (-1 !== layer[obj].indexOf(i)) ||
-                                    (item.hasOwnProperty('id') && -1 !== layer[obj].indexOf(item.id))
-                                ) {
-                                    if ('function' === typeof item.clearMarkers) {
-                                        item.clearMarkers();
-                                    } else if ('function' === typeof item.set) {
-                                        item.set('visible', false);
-                                        item.set('directions', null);
-                                    } else if ('function' === typeof item.setMap) {
-                                        item.setMap(null);
-                                    }
+                                if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
-                                        self._markers.splice(i, 1);
                                         if (undefined !== labels[i] && labels.hasOwnProperty('div')) {
                                             self._labels[i].div.remove();
                                         }
                                     }
                                     // Remove the direction icons.
                                     if ('_directions' === key) {
-                                        self._directions.splice(i, 1);
                                         for (j = dMarkers.length - 1; j >= 0; j -= 1) {
                                             if ('function' === typeof dMarkers[j].setMap) {
                                                 self._directionsMarkers[j].setMap(null);
@@ -1356,14 +1343,28 @@ window.gMapsCallback = function () {
                                             }
                                         }
                                     }
+                                    // Remove from Map
+                                    if ('function' === typeof item.set) {
+                                        item.set('visible', false);
+                                        item.set('directions', null);
+                                    }
+                                    if ('function' === typeof item.setMap) {
+                                        item.setMap(null);
+                                    }
+                                    // Remove from Array
+                                    target.push(i);
                                 }
+                            }
+                            for (i = 0; i < target.length; i += 1) {
+                                self[key].splice(i, 1);
                             }
                         }
                     }
                 }
             } catch (ignore) {
+                console.warn(ignore);
             } finally {
-                return $(this.container);
+                return $(self.container);
             }
         },
         //#!#END
@@ -1389,8 +1390,6 @@ window.gMapsCallback = function () {
                 i = 0,
                 m = self.map;
 
-            google.maps.event.trigger(m, 'resize');
-
             if (undefined !== options) {
                 for (i = label.length - 1; i >= 0; i -= 1) {
                     if (options.hasOwnProperty(label[i][0])) {
@@ -1414,6 +1413,7 @@ window.gMapsCallback = function () {
                     if (options.hasOwnProperty('event')) {
                         self.bindEvents(m, options.event);
                     }
+                    google.maps.event.trigger(m, 'resize');
                 }
             }
             return $(this.container);
@@ -1423,7 +1423,7 @@ window.gMapsCallback = function () {
         destroy: function () {
             var obj = $(this.container);
             if (obj.length) {
-                $.removeData(this, 'tinyMap');
+                $.removeData(this.container, 'tinyMap');
             }
             return obj.empty();
         },
