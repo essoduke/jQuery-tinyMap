@@ -1,6 +1,6 @@
 jQuery tinyMap Changelog
 
-3.2.0 BETA 9
+3.2.0 BETA 10
 變更 已不需手動引入 Google Maps API 以及 markerclusterer.js。
 新增 direction 原生 API 屬性的支援。
 新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
