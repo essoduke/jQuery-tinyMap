@@ -147,6 +147,45 @@ $(selector).tinyMap('getKML', {
     'direction': true|false  // Include direction overlay
 });
 ```
+## Public methods
+### tinyMapQuery
+Query the Address/LatLng from Address or LatLng.
+```javascript
+// LatLng to addres
+$.fn.tinyMapQuery({
+    'latlng'  : '25.034516521123315,121.56496524810791'
+}, function (result) {
+    console.dir(result);
+    // Result: 110台灣台北市信義區信義連通天橋(臺北101至Att4Fun)
+});
+
+// Address to LatLng
+$.fn.tinyMapQuery({
+    'address'  : '台北市政府'
+}, function (result) {
+    console.dir(result);
+    // Result: 25.041171,121.565227
+});
+```
+### tinyMapDistance
+Calculator the duration and distance of multiple location/destination.
+```javascript
+$.fn.tinyMapDistance({
+    'origins': '台北車站', // Origin
+    'destinations': '台北101' // Destination
+}, function (result) {
+    console.dir(result);
+});
+
+// Getting 「台北市政府至台北小巨蛋、台北101」以及「故宮博物院至台北小巨蛋、台北101」的資訊
+$.fn.tinyMapQuery({
+    'origins'  : ['台北市政府', '故宮博物院'],
+    'destinations': ['台北小巨蛋', '台北101']
+}, function (result) {
+    console.dir(result);
+});
+```
+
 ## API Configure
 You could setup the api before using the tinyMap.
 
