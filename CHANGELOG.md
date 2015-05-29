@@ -1,6 +1,6 @@
 #jQuery tinyMap Changelog
 
-###3.2.0 BETA 10
+###3.2.0 BETA 11
 * 變更 已不需手動引入 Google Maps API 以及 markerclusterer.js。
 * 新增 direction 原生 API 屬性的支援。
 * 新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
@@ -12,6 +12,7 @@
 * 新增 $.fn.tinyMapQuery 公用方法可轉換地址（經緯座標）為經緯座標（地址）。
 * 新增 $.fn.tinyMapDistance 公用方法可計算多個地點之間的距離。
 * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
+* 新增 created 事件，適用 polyline, polygon, circle, marker 等圖層，於建立時執行。
 * 修正 destroy 沒有作用的問題。
 * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  
