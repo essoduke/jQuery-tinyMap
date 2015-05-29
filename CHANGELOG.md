@@ -20,7 +20,7 @@
 * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  
 ###3.1.7
-* 修正 marker 使用字串位置時且使用 map idle 事件建立時，markerFitBounds 會無效的錯誤。
+* 修正 marker 使用字串位置並綁定 idle 事件時 markerFitBounds 會無效的錯誤。
 * 修正使用  markerclusterer 時，clear 方法無法移除 marker 的錯誤。
 
 ###3.1.6
