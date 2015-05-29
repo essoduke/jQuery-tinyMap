@@ -24,7 +24,7 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 11
+ * @version 3.2.0
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -234,7 +234,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 11',
+        VERSION: '3.2.0',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1830,7 +1830,6 @@ window.gMapsCallback = function () {
             opt,
             function (data) {
                 if (data.status === 'OK') {
-                    //console.dir(data);
                     callback(data);
                 }
             });
