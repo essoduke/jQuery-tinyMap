@@ -24,7 +24,7 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0 BETA 10
+ * @version 3.2.0 BETA 11
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
@@ -39,10 +39,11 @@
  * 新增 $.fn.tinyMapQuery 公用方法可轉換地址（經緯座標）為經緯座標（地址）。
  * 新增 $.fn.tinyMapDistance 公用方法可計算多個地點之間的距離。
  * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
+ * 新增 created 事件，適用 polyline, polygon, circle, marker 等圖層，於建立時執行。
  * 修正 destroy 沒有作用的問題。
  * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
  *
- * Last Modified 2015.05.21.121158
+ * Last Modified 2015.05.29.122413
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -233,7 +234,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0 BETA 10',
+        VERSION: '3.2.0 BETA 11',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -447,6 +448,15 @@ window.gMapsCallback = function () {
                                 }
                             }
                         }
+
+                        // Created event for circle is created.
+                        if (polyline && defOpt.hasOwnProperty('event') &&
+                            defOpt.event.hasOwnProperty('created') &&
+                            'function' === typeof defOpt.event.created
+                        ) {
+                            defOpt.event.created.call(polyline, self);
+                        }
+
                         // Events binding
                         if (polylineX.hasOwnProperty('event')) {
                             self.bindEvents(polyline, polylineX.event);
@@ -525,8 +535,15 @@ window.gMapsCallback = function () {
                             'fillOpacity': 0.35
                         }, opt.polygon[i]);
                         polygon = new google.maps.Polygon(defOpt);
-                        if (opt.polygon[i].hasOwnProperty('event')) {
-                            self.bindEvents(polygon, opt.polygon[i].event);
+                        // Created event for circle is created.
+                        if (polygon && defOpt.hasOwnProperty('event') &&
+                            defOpt.event.hasOwnProperty('created') &&
+                            'function' === typeof defOpt.event.created
+                        ) {
+                            defOpt.event.created.call(polygon, self);
+                        }
+                        if (defOpt.hasOwnProperty('event')) {
+                            self.bindEvents(polygon, defOpt.event);
                         }
                         self._polygons.push(polygon);
                         polygon.setMap(map);
@@ -570,6 +587,13 @@ window.gMapsCallback = function () {
                     if ('function' === typeof loc.lat) {
                         circles = new google.maps.Circle(defOpt);
                         self._circles.push(circles);
+                        // Created event for circle is created.
+                        if (circles && defOpt.hasOwnProperty('event') &&
+                            defOpt.event.hasOwnProperty('created') &&
+                            'function' === typeof defOpt.event.created
+                        ) {
+                            defOpt.event.created.call(circles, self);
+                        }
                         if (circle.hasOwnProperty('event')) {
                             self.bindEvents(circles, circle.event);
                         }
@@ -789,6 +813,14 @@ window.gMapsCallback = function () {
             marker = new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
+            // Created event for marker is created.
+            if (marker && opt.hasOwnProperty('event') &&
+                opt.event.hasOwnProperty('created') &&
+                'function' === typeof opt.event.created
+            ) {
+                opt.event.created.call(marker, self);
+            }
+
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
                 if ('function' === typeof marker.getPosition) {
@@ -866,6 +898,7 @@ window.gMapsCallback = function () {
                             'map': map,
                             'position': results[0].geometry.location,
                             'animation': null,
+                            'visible': true,
                             'id': id
                         },
                         icons = self.markerIcon(opt);
@@ -888,6 +921,15 @@ window.gMapsCallback = function () {
 
                     markerOptions = $.extend({}, markerOptions, opt);
                     marker = new google.maps.Marker(markerOptions);
+
+                    // Created event for marker is created.
+                    if (marker && opt.hasOwnProperty('event') &&
+                        opt.event.hasOwnProperty('created') &&
+                        'function' === typeof opt.event.created
+                    ) {
+                        opt.event.created.call(marker, self);
+                    }
+
                     self._markers.push(marker);
 
                     // Apply marker fitbounds
