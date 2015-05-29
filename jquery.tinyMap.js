@@ -24,26 +24,13 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0
+ * @version 3.2.0.1
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 變更 已不需手動引入 Google Maps API 以及 markerclusterer.js。
- * 新增 direction 原生 API 屬性的支援。
- * 新增 direction.waypoint.icon 屬性，讓每個中繼點都能設置不同的圖示。
- * 新增 instance.getDirectionsInfo 方法可取得地圖上所有路徑規劃的資訊（距離、時間）。
- * 新增 geolocation 參數以設置 navigator.geolocation。
- * 新增 Places Service API。
- * 新增 marker.cluster 參數可設置該標記是否加入叢集。
- * 新增 kml 支援原生屬性。
- * 新增 $.fn.tinyMapQuery 公用方法可轉換地址（經緯座標）為經緯座標（地址）。
- * 新增 $.fn.tinyMapDistance 公用方法可計算多個地點之間的距離。
- * 新增 clear 方法可指定欲清除的圖層 ID 或順序編號。
- * 新增 created 事件，適用 polyline, polygon, circle, marker 等圖層，於建立時執行。
- * 修正 destroy 沒有作用的問題。
- * 修正 markerCluster 無法設置 maxZoom, gridSize... 等原生屬性的問題。
+ * 修正 clear 無法清除圖層的錯誤。
  *
- * Last Modified 2015.05.29.122413
+ * Last Modified 2015.05.29.153026
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -234,7 +221,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0',
+        VERSION: '3.2.0.1',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1350,23 +1337,26 @@ window.gMapsCallback = function () {
                 item     = {},
                 target   = [],
                 i        = 0,
-                j        = 0,
-                def      = $.extend({}, {
+                j        = 0;
+
+            if (undefined === layer) {
+                layer = {
                     'marker'   : [],
                     'label'    : [],
-                    'polyline' : [],
                     'polygon'  : [],
+                    'polyline' : [],
                     'circle'   : [],
                     'direction': [],
-                    'cluster'  : [],
                     'kml'      : []
-                }, layer);
+                };
+            }
 
             try {
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
                         if (undefined !== self[key]) {
+                            target = [];
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
                                 if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
