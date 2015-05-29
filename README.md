@@ -1,11 +1,11 @@
-# jQuery-tinyMap BETA VERSION
+# jQuery-tinyMap Plugin
 
-This plugin will help you to create simple or complex Google Maps on the page.
+This plugin will help to create the Google Maps on page.
 
-For complete options, methods and examples (Traditional Chinese):  
+Online documentation and demonstration:  
 http://app.essoduke.org/tinyMap/ 
 
-## BETA release notes
+## v3.2.0 features
  
  * Google Maps API and markerclusterer library won't need to include by yourself anymore.
  * Customize each direction.waypoints icon.
@@ -18,7 +18,7 @@ http://app.essoduke.org/tinyMap/
  
 ## Install
 
-Just include the jQuery library and tinyMap plugin. 
+Include the jQuery library and tinyMap plugin. 
 ```HTML
 <script src="jquery.js"></script>
 <script src="jquery.tinyMap.js"></script>
@@ -29,16 +29,18 @@ Create the HTML container.
 <div id="map"></div>
 ```
 
-Setting up the container's width and height in CSS:
+Setting up the container's width and height with CSS:
 
 ```css
-#map{width: WIDTH; height: HEIGHT}
+#map {
+    width: 'MAP WIDTH';
+    height: 'MAP HEIGHT';
+}
 ```
-
 
 ## Usage
 
-Complete options visit: http://app.essoduke.org/tinyMap/#parameters
+Online documentation: http://app.essoduke.org/tinyMap/docs/ (Traditional Chinese only)
 
 ```javascript
 // Basic example
@@ -50,11 +52,12 @@ $('#map').tinyMap({
     'zoom': 14,
     // Map events binding
     'event': {
+        // 'Event name': Function
         'idle': function () {}
         // OR
         'idle': {
             'func': function () {},
-            'once': true / false //Run once
+            'once': true | false // Run once
         }
         ...
         ...
@@ -77,12 +80,12 @@ $(selector).tinyMap({
             // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
             // Or {lat: 'lat', lng: 'lng'}
             'title': 'Display on Mouseover', // (Optional)
-            'text': 'Display in infoWindow', // (optional)
-            'icon': 'http://domain/icon.png' // (optional)
+            'text': 'Display in infoWindow', // (Optional)
+            'icon': 'http://domain/icon.png' // (Optional)
             // Binding Click event
             'event': function (event) {
-                console.log(this.text); // Marker text property.
-                console.log(event.latLng.lat());
+                console.log(this.text); // Get marker's text property.
+                console.log(event.latLng.lat()); // Get markers' position.
             }
             /* More events
             'event': {
@@ -101,8 +104,6 @@ $(selector).tinyMap({
             }
             */
         }
-        ...
-        ...
     ]
 });
 ```
@@ -111,7 +112,7 @@ $(selector).tinyMap({
 
 ```javascript
 // Methods
-// e.g. Move the map center to specified location
+// e.g. Move map center to the location.
 $(selector).tinyMap('panTo', 'Address string');
 $(selector).tinyMap('panTo', ['Lat', 'Lng']);
 $(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
@@ -130,7 +131,8 @@ $(selector).tinyMap('modify', {
 $(selector).tinyMap('clear', {
     'marker': [0, 2] // Remove the 1st and 3rd markers.
     'polyline': ['A', 'C'] // Remove the matched Id of polylines.
-    'direction': [] // Remove all Directions
+    'circle': [0, 'A'] // Also could mixed.
+    'direction': [] // Empty array to remove all of them.
 });
 
 // or clear all layers
@@ -139,6 +141,7 @@ $(selector).tinyMap('clear');
 // Overlays KML output
 // Get the kml string.
 var kml = $(selector).tinyMap('getKML'); 
+
 // Or using options:
 $(selector).tinyMap('getKML', {
     'download': true|false,  // Direct download KML not return the string.
