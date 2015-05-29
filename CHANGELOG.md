@@ -1,5 +1,8 @@
 #jQuery tinyMap Changelog
 
+###3.2.0.1
+* 修正 clear 無法清除圖層的錯誤。
+
 ###3.2.0
 * 變更 已不需手動引入 Google Maps API 以及 markerclusterer.js。
 * 新增 direction 原生 API 屬性的支援。
