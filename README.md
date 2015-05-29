@@ -131,8 +131,8 @@ $(selector).tinyMap('modify', {
 $(selector).tinyMap('clear', {
     'marker': [0, 2] // Remove the 1st and 3rd markers.
     'polyline': ['A', 'C'] // Remove the matched Id of polylines.
-    'circle': [0, 'A'] // Also could mixed.
-    'direction': [] // Empty array to remove all of them.
+    'circle': [0, 'A'] // Also could be mixed.
+    'direction': [] // Empty array for remove all of them.
 });
 
 // or clear all layers
@@ -144,7 +144,7 @@ var kml = $(selector).tinyMap('getKML');
 
 // Or using options:
 $(selector).tinyMap('getKML', {
-    'download': true|false,  // Direct download KML not return the string.
+    'download': true|false,  // TRUE for direct download the KML file.
     'marker': true|false,    // Include marker overlay
     'polyline': true|false,  // Include polyline overlay
     'direction': true|false  // Include direction overlay
