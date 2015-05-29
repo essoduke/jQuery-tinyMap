@@ -213,19 +213,12 @@ $(selector).tinyMap(...);
 ## Using tinyMap instance
 
 ```javascript
-<<<<<<< HEAD
-// 1.Create the map first.
-var map = $(selector);
-// 2.Get instance from map.
-=======
 // Create the map first.
 var map = $(selector);
 map.tinyMap(...);
 
 // Get the instance from map.
->>>>>>> origin/3.2.0
 var instance = map.data('tinyMap'); 
-// 3.Get layers from instance.
 var markers = instance._markers; // All markers on the Map.
 var polylines = instance._polylines; // All polyline layers
 var polygons = instance._polygons; // All polygon layers
