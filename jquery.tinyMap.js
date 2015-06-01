@@ -24,13 +24,13 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0.1
+ * @version 3.2.0.2
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 修正 clear 無法清除圖層的錯誤。
+ * 修正 marker.text 設置後無法開啟 infoWindow 的錯誤。
  *
- * Last Modified 2015.05.29.153026
+ * Last Modified 2015.06.01.104644
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -221,7 +221,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0.1',
+        VERSION: '3.2.0.2',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -302,8 +302,6 @@ window.gMapsCallback = function () {
                     }
                 }
                 break;
-            default:
-                return;
             }
             if (target.hasOwnProperty('infoWindow')) {
                 google.maps.event.addListener(target, 'click', function () {
@@ -790,6 +788,7 @@ window.gMapsCallback = function () {
                     'content': content
                 });
             }
+            
             if (!$.isEmptyObject(icons)) {
                 markerOptions.icon = icons;
             }
