@@ -1,4 +1,6 @@
 #jQuery tinyMap Changelog
+###3.2.0.2
+* 修正 marker.text 設置後無法開啟 infoWindow 的錯誤。
 
 ###3.2.0.1
 * 修正 clear 無法清除圖層的錯誤。
