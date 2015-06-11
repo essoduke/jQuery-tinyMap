@@ -24,13 +24,13 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.0.2
+ * @version 3.2.1
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 修正 marker.text 設置後無法開啟 infoWindow 的錯誤。
+ * 修正 direction.optimize 若設為 false，waypoint（中繼點）的順序無法依照原始順序的錯誤。
  *
- * Last Modified 2015.06.01.104644
+ * Last Modified 2015.06.11.095934
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -81,12 +81,14 @@ window.gMapsCallback = function () {
      * @return {Object}
      */
     function parseLatLng (loc, formatting) {
-        var array = [],
-            re = /^[+-]?\d+(\.\d+)?$/,
-            result = {
+
+        var result = {
                 'lat': '',
                 'lng': ''
-            };
+            },
+            array = [],
+            re = /^[+-]?\d+(\.\d+)?$/;
+
         if ('string' === typeof loc || Array.isArray(loc)) {
             array = Array.isArray(loc) ? loc : loc.toString().replace(/\s+/, '').split(',');
             if (2 === array.length) {
@@ -221,7 +223,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.0.2',
+        VERSION: '3.2.1',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -231,8 +233,10 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         overlay: function () {
+
             var map = this.map,
                 opt = this.options;
+
             try {
                 //#!#START KML
                 // kml overlay
@@ -279,8 +283,10 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         bindEvents: function (target, event) {
+
             var self = this,
                 e = {};
+
             switch (typeof event) {
             case 'function':
                 google.maps.event.addListener(target, 'click', event);
@@ -329,14 +335,15 @@ window.gMapsCallback = function () {
          * @param {Object} opt KML options
          */
         kml: function (map, opt) {
+
             var self = this,
-                kml = {},
                 kmlOpt = {
                     'url': '',
                     'map': map,
                     'preserveViewport': false,
                     'suppressInfoWindows': false
                 },
+                kml = {},
                 i = 0;
 
             if (opt.hasOwnProperty('kml')) {
@@ -372,18 +379,18 @@ window.gMapsCallback = function () {
         drawPolyline: function (map, opt) {
 
             var self = this,
-                c = {},
-                i = 0,
-                p = {},
-                c1 = 0,
-                path = [],
-                defOpt = {},
-                coords = [],
-                service = {},
+                polylineX = {},
+                waypoints = [],
                 polyline = {},
                 distance = {},
-                polylineX = {},
-                waypoints = [];
+                service = {},
+                defOpt = {},
+                coords = [],
+                path = [],
+                c1 = 0,
+                c = {},
+                p = {},
+                i = 0;
 
                 // Route callback
                 routeCallback = function (result, status) {
@@ -421,7 +428,7 @@ window.gMapsCallback = function () {
                         }, polylineX);
 
                         polyline = new google.maps.Polyline(defOpt);
-                        this._polylines.push(polyline);
+                        self._polylines.push(polyline);
 
                         if (2 < coords.getLength()) {
                             for (i = coords.length - 1; i >= 0; i -= 1) {
@@ -471,7 +478,7 @@ window.gMapsCallback = function () {
                                                          coords.getAt(coords.length - 1)
                                                      );
                                     if ('function' === typeof polylineX.getDistance) {
-                                        polylineX.getDistance.call(this, distance);
+                                        polylineX.getDistance.call(self, distance);
                                     }
                                 }
                             }
@@ -490,15 +497,16 @@ window.gMapsCallback = function () {
          * @param {Object} opt Polygon options
          */
         drawPolygon: function (map, opt) {
+
             var self = this,
                 polygon = {},
+                defOpt = {},
+                coords = [],
+                len = 0,
                 i = 0,
                 j = 0,
                 p = {},
-                c = {},
-                len = 0,
-                defOpt = {},
-                coords = [];
+                c = {};
 
             if (opt.hasOwnProperty('polygon') && Array.isArray(opt.polygon)) {
                 for (i = opt.polygon.length - 1; i >= 0; i -= 1) {
@@ -544,12 +552,13 @@ window.gMapsCallback = function () {
          * @param {Object} opt Circle options
          */
         drawCircle: function (map, opt) {
+
             var self = this,
-                c = 0,
-                loc = {},
-                defOpt = {},
+                circles = {},
                 circle = {},
-                circles = {};
+                defOpt = {},
+                loc = {},
+                c = 0;
 
             if (opt.hasOwnProperty('circle') && Array.isArray(opt.circle)) {
                 for (c = opt.circle.length - 1; c >= 0; c -= 1) {
@@ -712,7 +721,9 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         markerIcon: function (opt) {
+
             var icons = $.extend({}, opt.icon);
+
             if (opt.hasOwnProperty('icon')) {
                 if ('string' === typeof opt.icon) {
                     return opt.icon;
@@ -759,6 +770,7 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         markerDirect: function (map, opt) {
+
             var self    = this,
                 marker  = {},
                 label   = {},
@@ -838,7 +850,6 @@ window.gMapsCallback = function () {
                     }
                 }
             }
-
             if (opt.hasOwnProperty('label')) {
                 label = new Label({
                     'text': opt.label,
@@ -860,8 +871,10 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         markerByGeocoder: function (map, opt, def) {
+
             var geocoder = new google.maps.Geocoder(),
                 self = this;
+
             geocoder.geocode({'address': opt.parseAddr}, function (results, status) {
                 // If exceeded, call it later by setTimeout;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -975,8 +988,9 @@ window.gMapsCallback = function () {
          * @param {Object} opt Direction options
          */
         direction: function (map, opt) {
+            var d = 0;
             if (opt.hasOwnProperty('direction') && Array.isArray(opt.direction)) {
-                for (var d = opt.direction.length - 1; d >= 0; d -= 1) {
+                for (d = 0; d < opt.direction.length; d -= 1) {
                     this.directionService(opt.direction[d]);
                 }
             }
@@ -996,18 +1010,18 @@ window.gMapsCallback = function () {
             var self = this,
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
-                request = {
-                    'travelMode': google.maps.DirectionsTravelMode.DRIVING,
-                    'optimizeWaypoints': opt.hasOwnProperty('optimize') ? opt.optimize : true
-                },
-                infoWindow = new google.maps.InfoWindow(),
-                renderOpts = {},
-                waypoints  = [],
                 waypointsOpts = {},
                 waypointsText = [],
                 waypointsIcon = [],
+                infoWindow = new google.maps.InfoWindow(),
+                waypoints  = [],
+                renderOpts = {},
                 startText = '',
                 endText = '',
+                request = {
+                    'travelMode': google.maps.DirectionsTravelMode.DRIVING,
+                    'optimizeWaypoints': opt.hasOwnProperty('optimize') ? opt.optimize : true
+                };
                 i = 0;
 
             request.origin = parseLatLng(opt.from, true);
@@ -1022,13 +1036,11 @@ window.gMapsCallback = function () {
             ) {
                 request.travelMode = google.maps.TravelMode[opt.travel.toString().toUpperCase()];
             }
-
             if (opt.hasOwnProperty('panel') && $(opt.panel).length) {
                 renderOpts.panel = $(opt.panel).get(0);
             }
-
             if (opt.hasOwnProperty('waypoint') && Array.isArray(opt.waypoint)) {
-                for (i = opt.waypoint.length - 1; i >= 0; i -= 1) {
+                for (i = 0; i < opt.waypoint.length; i += 1) {
                     waypointsOpts = {};
                     if ('string' === typeof opt.waypoint[i] || Array.isArray(opt.waypoint[i])) {
                         waypointsOpts = {
@@ -1049,6 +1061,7 @@ window.gMapsCallback = function () {
                     }
                     waypoints.push(waypointsOpts);
                 }
+                console.dir(waypoints);
                 request.waypoints = waypoints;
             }
             // direction service
@@ -1113,6 +1126,7 @@ window.gMapsCallback = function () {
          * @param {Object} info Global infoWindow object
          */
         directionServiceMarker: function (loc, opt, info, d) {
+
             var self = this,
                 evt = {},
                 setting = $.extend({}, {
@@ -1121,6 +1135,7 @@ window.gMapsCallback = function () {
                     'id' : d.hasOwnProperty('id') ? d.id : ''
                 }, opt),
                 marker  = new google.maps.Marker(setting);
+
             if (setting.hasOwnProperty('text')) {
                 evt = function () {
                     info.setPosition(loc);
@@ -1136,21 +1151,22 @@ window.gMapsCallback = function () {
          * @return {Array} All directions info includes distance and duration.
          */
         getDirectionsInfo: function () {
+
             var self   = this,
+                result = [],
+                legs   = null,
                 dr     = self._directions,
-                i      = 0,
-                j      = 0,
                 ci     = 0,
                 cj     = 0,
-                legs   = null,
-                result = [];
-
+                i      = 0,
+                j      = 0;
+                
             if (dr) {
                 for (i = 0, ci = dr.length; i < ci; i += 1) {
                     if (
                         dr[i].hasOwnProperty('directions') &&
                         dr[i].directions.hasOwnProperty('routes') &&
-                        undefined !== dr[i].directions.routes[0].legs
+                        'undefined' !== typeof dr[i].directions.routes[0].legs
                     ) {
                         legs = dr[i].directions.routes[0].legs;
                         result[i] = [];
@@ -1175,6 +1191,7 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         streetView: function (map, opt) {
+
             var self = this,
                 pano = {},
                 opts = opt.hasOwnProperty('streetViewObj') ? opt.streetViewObj : {},
@@ -1215,15 +1232,17 @@ window.gMapsCallback = function () {
          * @this {tinyMap}
          */
         places: function (map, opt) {
+
             var self = this,
+                placesService = {},
                 reqOpt = opt.hasOwnProperty('places') ? opt.places : {},
                 request = $.extend({}, {
                     'location': map.getCenter(),
                     'radius'  : 100
                 }, reqOpt),
-                placesService = {},
                 i = 0;
-            if (undefined !== google.maps.places && request.hasOwnProperty('query')) {
+
+            if ('undefined' !== typeof google.maps.places && request.hasOwnProperty('query')) {
                 placesService = new google.maps.places.PlacesService(map),
                 placesService.textSearch(request, function (results, status) {
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
@@ -1249,7 +1268,9 @@ window.gMapsCallback = function () {
          * @param {Object} opt Plugin options
          */
         geoLocation: function (map, opt) {
+
             try {
+
                 var geolocation = navigator.geolocation,
                     geoOpt = {};
 
@@ -1258,17 +1279,18 @@ window.gMapsCallback = function () {
                 }
                 if (opt.hasOwnProperty('geolocation')) {
                     geoOpt = $.extend({}, {
-                        'maximumAge': 600000,
-                        'timeout': 3000,
+                        'maximumAge'        : 600000,
+                        'timeout'           : 3000,
                         'enableHighAccuracy': false
                     }, opt.geolocation);
                 }
                 if (true === opt.autoLocation) {
                     geolocation.getCurrentPosition(
                         function (loc) {
-                            if (loc && loc.hasOwnProperty('coords') &&
-                                loc.coords.hasOwnProperty('latitude') &&
-                                loc.coords.hasOwnProperty('longitude')
+                            if (('undefined' !== typeof loc) &&
+                                ('coords' in loc) &&
+                                ('latitude' in loc.coords) &&
+                                ('longitude' in loc.coords)
                             ) {
                                 map.panTo(new google.maps.LatLng(
                                     loc.coords.latitude, loc.coords.longitude
@@ -1291,11 +1313,12 @@ window.gMapsCallback = function () {
          * @public
          */
         panTo: function (addr) {
+
             var m = this.map,
                 loc = {},
                 geocoder = {};
 
-            if (null !== m && undefined !== m) {
+            if (null !== m && 'undefined' !== typeof m) {
                 loc = parseLatLng(addr, true);
                 if ('string' === typeof loc) {
                     geocoder = new google.maps.Geocoder();
@@ -1328,17 +1351,18 @@ window.gMapsCallback = function () {
          * @public
          */
         clear: function (layer) {
+
             var self     = this,
-                labels   = self._labels,
                 dMarkers = self._directionsMarkers,
+                labels   = self._labels,
+                target   = [],
+                item     = {},
                 obj      = {},
                 key      = '',
-                item     = {},
-                target   = [],
                 i        = 0,
                 j        = 0;
 
-            if (undefined === layer) {
+            if ('undefined' === typeof layer) {
                 layer = {
                     'marker'   : [],
                     'label'    : [],
@@ -1354,14 +1378,14 @@ window.gMapsCallback = function () {
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
-                        if (undefined !== self[key]) {
+                        if ('undefined' !== typeof self[key]) {
                             target = [];
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
                                 if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
-                                        if (undefined !== labels[i] && labels.hasOwnProperty('div')) {
+                                        if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
                                             self._labels[i].div.remove();
                                         }
                                     }
@@ -1406,6 +1430,7 @@ window.gMapsCallback = function () {
          * @public
          */
         modify: function (options) {
+
             var self  = this,
                 func  = [],
                 label = [
@@ -1421,7 +1446,7 @@ window.gMapsCallback = function () {
                 i = 0,
                 m = self.map;
 
-            if (undefined !== options) {
+            if ('undefined' !== typeof options) {
                 for (i = label.length - 1; i >= 0; i -= 1) {
                     if (options.hasOwnProperty(label[i][0])) {
                         func.push(label[i][1]);
@@ -1572,7 +1597,7 @@ window.gMapsCallback = function () {
                                         if (Array.isArray(legs[j].steps[k].path)) {
                                             for (v = legs[j].steps[k].path.length - 1; v >= 0; v -= 1) {
                                                 path = legs[j].steps[k].path[v];
-                                                if (undefined !== path && 'function' === typeof path.lat) {
+                                                if ('undefined' !== typeof path && 'function' === typeof path.lat) {
                                                     latlng += path.lng() + ',' + path.lat() + ',0.000000\n';
                                                 }
                                             }
@@ -1798,14 +1823,15 @@ window.gMapsCallback = function () {
      * @param {Function} callback Function for callback
      */
     $.fn.tinyMapDistance = function (options, callback) {
+
         var def = {
                 'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
                 'origins': [],
                 'destinations': [],
                 'language': 'zh-TW'
             },
-            i = 0,
-            opt = $.extend({}, def, options);
+            opt = $.extend({}, def, options),
+            i = 0;
 
         if (Array.isArray(opt.origins)) {
             opt.origins = opt.origins.join('|');
@@ -1813,7 +1839,6 @@ window.gMapsCallback = function () {
         if (Array.isArray(opt.destinations)) {
             opt.destinations = opt.destinations.join('|');
         }
-
         $.getJSON(
             '//maps.googleapis.com/maps/api/distancematrix/json',
             opt,
@@ -1841,7 +1866,7 @@ window.gMapsCallback = function () {
             opt,
             function (data) {
                 if (data.status === 'OK') {
-                    if (data.results && undefined !== data.results[0]) {
+                    if (data.results && 'undefined' !== typeof data.results[0]) {
                         if (opt.hasOwnProperty('latlng')) {
                             result = data.results[0].formatted_address;
                         } else if (opt.hasOwnProperty('address')) {
@@ -1861,10 +1886,12 @@ window.gMapsCallback = function () {
      * @public
      */
     $.fn.tinyMap = function (options) {
+
         var instance = {},
             result = [],
             args = arguments,
             id   = 'tinyMap';
+
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, id);
@@ -1872,7 +1899,7 @@ window.gMapsCallback = function () {
                     result = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
             });
-            return undefined !== result ? result : this;
+            return 'undefined' !== typeof result ? result : this;
         } else {
             return this.each(function () {
                 if (!$.data(this, id)) {
