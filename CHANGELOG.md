@@ -1,6 +1,6 @@
 #jQuery tinyMap Changelog
 ###3.2.1
-修正 direction.optimize 若設為 false，waypoint（中繼點）的順序無法依照原始順序的錯誤。
+* 修正 direction.optimize 若設為 false，waypoint（中繼點）的順序無法依照原始順序的錯誤。
 
 ###3.2.0.2
 * 修正 marker.text 設置後無法開啟 infoWindow 的錯誤。
