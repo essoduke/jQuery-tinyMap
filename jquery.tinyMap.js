@@ -24,13 +24,14 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.1
+ * @version 3.2.2
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 修正 direction.optimize 若設為 false，waypoint（中繼點）的順序無法依照原始順序的錯誤。
+ * 新增 autoLocationk 參數可以傳入 function callback。
+ * 新增 get 方法可獲取（指定的）marker, polyline, circle... 等圖層。
  *
- * Last Modified 2015.06.11.095934
+ * Last Modified 2015.06.15.173114
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -223,7 +224,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.1',
+        VERSION: '3.2.2',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1271,7 +1272,8 @@ window.gMapsCallback = function () {
 
             try {
 
-                var geolocation = navigator.geolocation,
+                var self = this,
+                    geolocation = navigator.geolocation,
                     geoOpt = {};
 
                 if (!geolocation) {
@@ -1284,7 +1286,7 @@ window.gMapsCallback = function () {
                         'enableHighAccuracy': false
                     }, opt.geolocation);
                 }
-                if (true === opt.autoLocation) {
+                if (true === opt.autoLocation || 'function' === typeof opt.autoLocation) {
                     geolocation.getCurrentPosition(
                         function (loc) {
                             if (('undefined' !== typeof loc) &&
@@ -1293,8 +1295,12 @@ window.gMapsCallback = function () {
                                 ('longitude' in loc.coords)
                             ) {
                                 map.panTo(new google.maps.LatLng(
-                                    loc.coords.latitude, loc.coords.longitude
+                                    loc.coords.latitude,
+                                    loc.coords.longitude
                                 ));
+                                if ('function' === typeof opt.autoLocation) {
+                                    opt.autoLocation.call(self, loc);
+                                }
                             }
                         },
                         function (error) {
@@ -1423,6 +1429,65 @@ window.gMapsCallback = function () {
             }
         },
         //#!#END
+        //#!#START GET
+        /**
+         * Method: Google Maps get the specificed layer
+         * @param {string} type Layer type
+         * @public
+         */
+        get: function (layer, callback) {
+
+            var self     = this,
+                dMarkers = self._directionsMarkers,
+                labels   = self._labels,
+                result   = [],
+                target   = [],
+                item     = {},
+                obj      = {},
+                key      = '',
+                i        = 0,
+                j        = 0;
+
+            if ('undefined' === typeof layer) {
+                layer = {
+                    'marker'   : [],
+                    'label'    : [],
+                    'polygon'  : [],
+                    'polyline' : [],
+                    'circle'   : [],
+                    'direction': [],
+                    'kml'      : []
+                };
+            }
+
+            try {
+                for (obj in layer) {
+                    if (Array.isArray(layer[obj])) {
+                        key = '_' + obj.toString().toLowerCase() + 's';
+                        if ('undefined' !== typeof self[key]) {
+                            target[obj] = [];
+                            for (i = 0; i < self[key].length; i += 1) {
+                                item = self[key][i];
+                                if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
+                                    target[obj].push(item);
+                                }
+                            }
+                            for (i = 0; i < target.length; i += 1) {
+                                self[key].splice(i, 1);
+                            }
+                        }
+                    }
+                }
+                if ('function' === typeof callback) {
+                    callback.call(this, target);
+                }
+            } catch (ignore) {
+                console.warn(ignore);
+            } finally {
+                return target;
+            }
+        },
+        //#!#END
         //#!#START MODIFY
         /**
          * Method:  Google Maps dynamic add layers
@@ -1455,6 +1520,7 @@ window.gMapsCallback = function () {
                 if (null !== m) {
                     if (func.length) {
                         for (i = func.length - 1; i >= 0; i -= 1) {
+                            console.dir(func[i]);
                             if ('function' === typeof self[func[i]]) {
                                 if ('streetView' === func[i]) {
                                     options.streetViewObj = options.streetView;
