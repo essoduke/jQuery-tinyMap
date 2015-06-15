@@ -125,6 +125,7 @@ $(selector).tinyMap('modify', {
     //Resetting  zoom level
     'zoom': 16
 });
+
 // Get overlayers
 // @param {Object} layer Layer Object.
 var layers = $(selector).tinyMap('get', {
