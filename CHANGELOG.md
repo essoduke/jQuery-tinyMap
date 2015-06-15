@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.2
+* 新增 autoLocationk 參數可以傳入 function callback。
+* 新增 get 方法可獲取（指定的）marker, polyline, circle... 等圖層。
+* 
 ###3.2.1
 * 修正 direction.optimize 若設為 false，waypoint（中繼點）的順序無法依照原始順序的錯誤。
 
