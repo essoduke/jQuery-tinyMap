@@ -5,7 +5,7 @@ This plugin will help to create the Google Maps on page.
 Online documentation and demonstration:  
 http://app.essoduke.org/tinyMap/ 
 
-## v3.2.0 features
+## v3.2 features
  
  * Google Maps API and markerclusterer library won't need to include by yourself anymore.
  * Customize each direction.waypoints icon.
@@ -124,6 +124,23 @@ $(selector).tinyMap('modify', {
     'draggable': false
     //Resetting  zoom level
     'zoom': 16
+});
+// Get overlayers
+// @param {Object} layer Layer Object.
+var layers = $(selector).tinyMap('get', {
+    'marker': [0, 2] // Get the 1st and 3rd markers.
+    'polyline': ['A', 'C'] // Get the matched Id of polylines.
+    'circle': [0, 'A'] // Also could be mixed.
+    'direction': [] // Empty array for get all of them.
+});
+// Or Callback
+$(selector).tinyMap('get', {
+    'marker': [0, 2] // Get the 1st and 3rd markers.
+    'polyline': ['A', 'C'] // Get the matched Id of polylines.
+    'circle': [0, 'A'] // Also could be mixed.
+    'direction': [] // Empty array for get all of them.
+}, function (items) {
+    console.dir(items);
 });
 
 // Clear overlayers
