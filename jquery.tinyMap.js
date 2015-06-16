@@ -24,14 +24,15 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.2
+ * @version 3.2.3
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 新增 autoLocationk 參數可以傳入 function callback。
- * 新增 get 方法可獲取（指定的）marker, polyline, circle... 等圖層。
+ * 新增 get 方法第二個參數可直接傳入 'marker' 或 'marker,direction' 等字串，以簡化取得的方式。
+ * 修正 clear 方法無法完整移除圖層的問題。
+ * 修正 get 方法回傳格式的問題。
  *
- * Last Modified 2015.06.15.173114
+ * Last Modified 2015.06.16.154948
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -224,7 +225,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.2',
+        VERSION: '3.2.3',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -408,7 +409,7 @@ window.gMapsCallback = function () {
                 };
 
             if (opt.hasOwnProperty('polyline') && Array.isArray(opt.polyline)) {
-                for (c1 = opt.polyline.length - 1; c1 >= 0; c1 -= 1) {
+                for (c1 = 0; c1 < opt.polyline.length; c1 += 1) {
                     polylineX = opt.polyline[c1];
                     if (polylineX.hasOwnProperty('coords') &&
                         Array.isArray(polylineX.coords)
@@ -510,10 +511,10 @@ window.gMapsCallback = function () {
                 c = {};
 
             if (opt.hasOwnProperty('polygon') && Array.isArray(opt.polygon)) {
-                for (i = opt.polygon.length - 1; i >= 0; i -= 1) {
+                for (i = 0; i < opt.polygon.length; i += 1) {
                     coords = [];
                     if (opt.polygon[i].hasOwnProperty('coords')) {
-                        for (j = opt.polygon[i].coords.length - 1; j >= 0; j -= 1) {
+                        for (j = 0; j < opt.polygon[i].coords.length; j += 1) {
                             p = opt.polygon[i].coords[j];
                             c = parseLatLng(p, true);
                             if ('function' === typeof c.lat) {
@@ -562,7 +563,7 @@ window.gMapsCallback = function () {
                 c = 0;
 
             if (opt.hasOwnProperty('circle') && Array.isArray(opt.circle)) {
-                for (c = opt.circle.length - 1; c >= 0; c -= 1) {
+                for (c = 0; c < opt.circle.length; c += 1) {
                     circle = opt.circle[c];
                     defOpt = $.extend({}, {
                         'map': map,
@@ -1062,7 +1063,6 @@ window.gMapsCallback = function () {
                     }
                     waypoints.push(waypointsOpts);
                 }
-                console.dir(waypoints);
                 request.waypoints = waypoints;
             }
             // direction service
@@ -1384,11 +1384,11 @@ window.gMapsCallback = function () {
                 for (obj in layer) {
                     if (Array.isArray(layer[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
-                        if ('undefined' !== typeof self[key]) {
+                        if (Array.isArray(self[key])) {
                             target = [];
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
-                                if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
+                                if (0 === layer[obj].length || ~layer[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
                                         if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
@@ -1413,15 +1413,17 @@ window.gMapsCallback = function () {
                                         item.setMap(null);
                                     }
                                     // Remove from Array
-                                    target.push(i);
+                                    self[key][i] = undefined;
                                 }
                             }
-                            for (i = 0; i < target.length; i += 1) {
-                                self[key].splice(i, 1);
-                            }
+                            // Filter undefined elements
+                            self[key] = self[key].filter(function (n) {
+                                return undefined !== n;
+                            });
                         }
                     }
                 }
+
             } catch (ignore) {
                 console.warn(ignore);
             } finally {
@@ -1440,8 +1442,9 @@ window.gMapsCallback = function () {
             var self     = this,
                 dMarkers = self._directionsMarkers,
                 labels   = self._labels,
+                layers   = [],
                 result   = [],
-                target   = [],
+                target   = {},
                 item     = {},
                 obj      = {},
                 key      = '',
@@ -1461,19 +1464,29 @@ window.gMapsCallback = function () {
             }
 
             try {
-                for (obj in layer) {
-                    if (Array.isArray(layer[obj])) {
-                        key = '_' + obj.toString().toLowerCase() + 's';
-                        if ('undefined' !== typeof self[key]) {
-                            target[obj] = [];
-                            for (i = 0; i < self[key].length; i += 1) {
-                                item = self[key][i];
-                                if (0 === layer[obj].length || (-1 !== layer[obj].indexOf(i)) || (item.hasOwnProperty('id') && 0 < item.id.length && (-1 !== layer[obj].indexOf(item.id)))) {
-                                    target[obj].push(item);
+                if ('string' === typeof layer) {
+                    if (~layer.indexOf(',')) {
+                        layers = layer.replace(/\s/gi, '').split(',');
+                        for (i = 0; i < layers.length; i += 1) {
+                            key = '_' + layers[i].toString().toLowerCase() + 's';
+                            target[layers[i]] = self[key];
+                        }
+                    } else {
+                        key = '_' + layer.toString().toLowerCase() + 's';
+                        target = self[key];
+                    }
+                } else {
+                    for (obj in layer) {
+                        if (Array.isArray(layer[obj])) {
+                            key = '_' + obj.toString().toLowerCase() + 's';
+                            if (Array.isArray(self[key])) {
+                                target[obj] = [];
+                                for (i = 0; i < self[key].length; i += 1) {
+                                    item = self[key][i];
+                                    if (0 === layer[obj].length || ~layer[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
+                                        target[obj].push(item);
+                                    }
                                 }
-                            }
-                            for (i = 0; i < target.length; i += 1) {
-                                self[key].splice(i, 1);
                             }
                         }
                     }
@@ -1520,7 +1533,6 @@ window.gMapsCallback = function () {
                 if (null !== m) {
                     if (func.length) {
                         for (i = func.length - 1; i >= 0; i -= 1) {
-                            console.dir(func[i]);
                             if ('function' === typeof self[func[i]]) {
                                 if ('streetView' === func[i]) {
                                     options.streetViewObj = options.streetView;
