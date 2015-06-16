@@ -109,14 +109,16 @@ $(selector).tinyMap({
 ```
 
 ## Methods
-
+###panTo
 ```javascript
 // Methods
 // e.g. Move map center to the location.
 $(selector).tinyMap('panTo', 'Address string');
 $(selector).tinyMap('panTo', ['Lat', 'Lng']);
 $(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
-
+```
+###modify
+```javascript
 // Dynamic setting up
 $(selector).tinyMap('modify', {OPTIONS});
 // e.g. Disable draggable
@@ -125,25 +127,28 @@ $(selector).tinyMap('modify', {
     //Resetting  zoom level
     'zoom': 16
 });
+```
+###get
+```javascript
+// Get specified layer
+var layer = $(selector).tinyMap('get', 'marker');
+// Or multiple layers
+var layers = $(selector).tinyMap('get', 'marker,direction');
 
-// Get overlayers
-// @param {Object} layer Layer Object.
+// Get specified items of layer
 var layers = $(selector).tinyMap('get', {
     'marker': [0, 2] // Get the 1st and 3rd markers.
     'polyline': ['A', 'C'] // Get the matched Id of polylines.
     'circle': [0, 'A'] // Also could be mixed.
-    'direction': [] // Empty array for get all of them.
-});
-// Or Callback
-$(selector).tinyMap('get', {
-    'marker': [0, 2] // Get the 1st and 3rd markers.
-    'polyline': ['A', 'C'] // Get the matched Id of polylines.
-    'circle': [0, 'A'] // Also could be mixed.
-    'direction': [] // Empty array for get all of them.
-}, function (items) {
-    console.dir(items);
 });
 
+// Callback
+$(selector).tinyMap('get', 'marker', function (items) {
+    console.dir(items);
+});
+```
+###clear
+```javascript
 // Clear overlayers
 // @param {Object} layer Layer Object.
 $(selector).tinyMap('clear', {
@@ -155,7 +160,9 @@ $(selector).tinyMap('clear', {
 
 // or clear all layers
 $(selector).tinyMap('clear'); 
-
+```
+###getKML
+```javascript
 // Overlays KML output
 // Get the kml string.
 var kml = $(selector).tinyMap('getKML'); 
