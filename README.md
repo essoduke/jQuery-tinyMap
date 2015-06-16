@@ -9,16 +9,16 @@ http://app.essoduke.org/tinyMap/
  
  * Google Maps API and markerclusterer library won't need to include by yourself anymore.
  * Customize each direction.waypoints icon.
- * Native directions parameters supports.
- * Native kml parameters supports.
- * Native markerCluster parameters supports.
+ * Native directions options supports.
+ * Native kml options supports.
+ * Native markerCluster options supports.
  * Places API supports.
  * More flexible clear method.
  * Minor error fixed.
  
 ## Install
 
-Include the jQuery library and tinyMap plugin. 
+Include the jQuery library and tinyMap. 
 ```HTML
 <script src="jquery.js"></script>
 <script src="jquery.tinyMap.js"></script>
@@ -40,7 +40,7 @@ Setting up the container's width and height with CSS:
 
 ## Usage
 
-Online documentation: http://app.essoduke.org/tinyMap/docs/ (Traditional Chinese only)
+Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
 // Basic example
@@ -127,8 +127,16 @@ $(selector).tinyMap('modify', {
     //Resetting  zoom level
     'zoom': 16
 });
+// e.g. Insert markers
+$(selector).tinyMap('modify', {
+    'marker': [
+        {'addr': '...', 'text': '...'},
+        ...
+    ]
+});
 ```
 ###get
+Get layers on the map.
 ```javascript
 // Get specified layer
 var layer = $(selector).tinyMap('get', 'marker');
@@ -148,6 +156,7 @@ $(selector).tinyMap('get', 'marker', function (items) {
 });
 ```
 ###clear
+Clear specitied items of layers.
 ```javascript
 // Clear overlayers
 // @param {Object} layer Layer Object.
