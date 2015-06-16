@@ -1,4 +1,9 @@
 #jQuery tinyMap Changelog
+###3.2.3
+* 新增 get 方法第二個參數可直接傳入 'marker' 或 'marker,direction' 等字串，以簡化取得的方式。
+* 修正 clear 方法無法完整移除圖層的問題。
+* 修正 get 方法回傳格式的問題。
+
 ###3.2.2
 * 新增 autoLocationk 參數可以傳入 function callback。
 * 新增 get 方法可獲取（指定的）marker, polyline, circle... 等圖層。
