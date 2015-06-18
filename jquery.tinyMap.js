@@ -24,15 +24,13 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.3
+ * @version 3.2.4
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 新增 get 方法第二個參數可直接傳入 'marker' 或 'marker,direction' 等字串，以簡化取得的方式。
- * 修正 clear 方法無法完整移除圖層的問題。
- * 修正 get 方法回傳格式的問題。
+ * 修正可能會造成無限迴圈的錯誤。
  *
- * Last Modified 2015.06.16.154948
+ * Last Modified 2015.06.18.174659
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -225,7 +223,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.3',
+        VERSION: '3.2.4',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -319,7 +317,7 @@ window.gMapsCallback = function () {
                     if (self.options.hasOwnProperty('infoWindowAutoClose') &&
                         true === self.options.infoWindowAutoClose
                     ) {
-                        for (i = self._markers.length - 1; i >= 0; i -= 1) {
+                        for (i = 0; i < self._markers.length; i += 1) {
                             m = self._markers[i];
                             if (m.hasOwnProperty('infoWindow') && 'function' === typeof m.infoWindow.close) {
                                 m.infoWindow.close();
@@ -354,7 +352,7 @@ window.gMapsCallback = function () {
                     kml = new google.maps.KmlLayer(kmlOpt);
                     this._kmls.push(kml);
                 } else if (Array.isArray(opt.kml)) {
-                    for (i = opt.kml.length - 1; i >= 0; i -= 1) {
+                    for (i = 0; i < opt.kml.length; i += 1) {
                         if ('string' === typeof opt.kml[i]) {
                             kmlOpt.url = opt.kml[i];
                             kml = new google.maps.KmlLayer(kmlOpt);
@@ -397,7 +395,7 @@ window.gMapsCallback = function () {
                 // Route callback
                 routeCallback = function (result, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
-                        for (i = result.routes[0].overview_path.length - 1; i >= 0; i -= 1) {
+                        for (i = 0; i < result.routes[0].overview_path.length; i += 1) {
                             path.push(result.routes[0].overview_path[i]);
                         }
                         polyline.setPath(path);
@@ -415,7 +413,7 @@ window.gMapsCallback = function () {
                         Array.isArray(polylineX.coords)
                     ) {
                         coords = new google.maps.MVCArray();
-                        for (i = polylineX.coords.length - 1; i >= 0; i -= 1) {
+                        for (i = 0; i < polylineX.coords.length; i += 1) {
                             p = polylineX.coords[i];
                             c = parseLatLng(p, true);
                             if ('function' === typeof c.lat) {
@@ -433,7 +431,7 @@ window.gMapsCallback = function () {
                         self._polylines.push(polyline);
 
                         if (2 < coords.getLength()) {
-                            for (i = coords.length - 1; i >= 0; i -= 1) {
+                            for (i = 0; i < coords.length; i += 1) {
                                 if (0 < i && (coords.length - 1 > i)) {
                                     waypoints.push({
                                         'location': coords.getAt(i),
@@ -992,10 +990,13 @@ window.gMapsCallback = function () {
         direction: function (map, opt) {
             var d = 0;
             if (opt.hasOwnProperty('direction') && Array.isArray(opt.direction)) {
-                for (d = 0; d < opt.direction.length; d -= 1) {
-                    this.directionService(opt.direction[d]);
+                for (d = 0; d < opt.direction.length; d += 1) {
+                    if ('undefined' !== typeof opt.direction[d]) {
+                        this.directionService(opt.direction[d]);
+                    }
                 }
             }
+
         },
         /**
          * Direction service
@@ -1006,9 +1007,9 @@ window.gMapsCallback = function () {
 
             // Make sure the `from` and `to` properties has setting.
             if (!(opt.hasOwnProperty('from') && opt.hasOwnProperty('to'))) {
-                return;
+                return false;
             }
-
+            
             var self = this,
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
@@ -1100,7 +1101,7 @@ window.gMapsCallback = function () {
                                 }, infoWindow, opt);
                             }
                         }
-                        for (i = legs.length - 1; i >= 0; i -= 1) {
+                        for (i = 0; i < legs.length; i += 1) {
                             if (opt.hasOwnProperty('icon')) {
                                 if (opt.icon.hasOwnProperty('waypoint') && 'string' === typeof opt.icon.waypoint) {
                                     wp.icon = opt.icon.waypoint;
@@ -1249,7 +1250,7 @@ window.gMapsCallback = function () {
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
                         self.places = results;
                         if (request.hasOwnProperty('createMarker') && true === request.createMarker) {
-                            for (i = results.length - 1; i >= 0; i -= 1) {
+                            for (i = 0; i < results.length; i += 1) {
                                 if (results[i].hasOwnProperty('geometry')) {
                                     self._markers.push(new google.maps.Marker({
                                         'map': map,
@@ -1286,6 +1287,7 @@ window.gMapsCallback = function () {
                         'enableHighAccuracy': false
                     }, opt.geolocation);
                 }
+                
                 if (true === opt.autoLocation || 'function' === typeof opt.autoLocation) {
                     geolocation.getCurrentPosition(
                         function (loc) {
@@ -1397,7 +1399,7 @@ window.gMapsCallback = function () {
                                     }
                                     // Remove the direction icons.
                                     if ('_directions' === key) {
-                                        for (j = dMarkers.length - 1; j >= 0; j -= 1) {
+                                        for (j = 0; j < dMarkers.length; j += 1) {
                                             if ('function' === typeof dMarkers[j].setMap) {
                                                 self._directionsMarkers[j].setMap(null);
                                                 self._directionsMarkers.splice(j, 1);
@@ -1525,14 +1527,14 @@ window.gMapsCallback = function () {
                 m = self.map;
 
             if ('undefined' !== typeof options) {
-                for (i = label.length - 1; i >= 0; i -= 1) {
+                for (i = 0; i < label.length; i += 1) {
                     if (options.hasOwnProperty(label[i][0])) {
                         func.push(label[i][1]);
                     }
                 }
                 if (null !== m) {
                     if (func.length) {
-                        for (i = func.length - 1; i >= 0; i -= 1) {
+                        for (i = 0; i < func.length; i += 1) {
                             if ('function' === typeof self[func[i]]) {
                                 if ('streetView' === func[i]) {
                                     options.streetViewObj = options.streetView;
@@ -1630,7 +1632,7 @@ window.gMapsCallback = function () {
                 // Build markers
                 if (true === opts.marker) {
                     markers = md._markers;
-                    for (i = length - 1; i >= 0; i -= 1) {
+                    for (i = 0; i < length; i += 1) {
                         latlng = markers[i].position.lng() + ',' + markers[i].position.lat();
                         strMarker += templates.placemark.join('')
                                               .replace(
@@ -1642,10 +1644,10 @@ window.gMapsCallback = function () {
                 // Build Polygons, Polylines and circles
                 if (true === opts.polyline) {
                     polylines = md._polylines;
-                    for (i = polylines.length - 1; i >= 0; i -= 1) {
+                    for (i = 0; i < polylines.length; i += 1) {
                         obj = polylines[i].getPath().getArray();
                         latlng = '';
-                        for (j = obj.length - 1; j >= 0; j -= 1) {
+                        for (j = 0; j < obj.length; j += 1) {
                             latlng += obj[j].lng() + ',' + obj[j].lat() + ',0.000000\n';
                         }
                         strPolyline += templates.placemark.join('')
@@ -1659,7 +1661,7 @@ window.gMapsCallback = function () {
                 // Build Directions
                 if (true === opts.direction) {
                     directions = md._directions;
-                    for (i = directions.length - 1; i >= 0; i -= 1) {
+                    for (i = 0; i < directions.length; i += 1) {
                         if (directions[i].hasOwnProperty('directions') &&
                             directions[i].directions.hasOwnProperty('routes') &&
                             Array.isArray(directions[i].directions.routes) &&
@@ -1668,12 +1670,12 @@ window.gMapsCallback = function () {
                             Array.isArray(directions[i].directions.routes[0].legs)
                         ) {
                             legs = directions[i].directions.routes[0].legs;
-                            for (j = legs.length - 1; j >= 0; j -= 1) {
+                            for (j = 0; j < legs.length; j += 1) {
                                 if (Array.isArray(legs[j].steps)) {
-                                    for (k = legs[j].steps.length - 1; k >= 0; k -= 1) {
+                                    for (k = 0; j < legs[j].steps.length; k += 1) {
                                         latlng = '';
                                         if (Array.isArray(legs[j].steps[k].path)) {
-                                            for (v = legs[j].steps[k].path.length - 1; v >= 0; v -= 1) {
+                                            for (v = 0; v < legs[j].steps[k].path.length; v += 1) {
                                                 path = legs[j].steps[k].path[v];
                                                 if ('undefined' !== typeof path && 'function' === typeof path.lat) {
                                                     latlng += path.lng() + ',' + path.lat() + ',0.000000\n';
