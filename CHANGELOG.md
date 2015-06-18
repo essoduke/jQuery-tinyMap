@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.4
+* 修正可能會造成無限迴圈的錯誤。
+
 ###3.2.3
 * 新增 get 方法第二個參數可直接傳入 'marker' 或 'marker,direction' 等字串，以簡化取得的方式。
 * 修正 clear 方法無法完整移除圖層的問題。
