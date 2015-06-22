@@ -8,7 +8,7 @@
 * 修正 get 方法回傳格式的問題。
 
 ###3.2.2
-* 新增 autoLocationk 參數可以傳入 function callback。
+* 新增 autoLocation 參數可以傳入 Function callback。
 * 新增 get 方法可獲取（指定的）marker, polyline, circle... 等圖層。
 
 ###3.2.1
