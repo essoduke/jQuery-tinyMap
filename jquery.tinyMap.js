@@ -446,7 +446,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(polyline, self);
+                            defOpt.event.created.call(self, polyline);
                         }
 
                         // Events binding
@@ -537,7 +537,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(polygon, self);
+                            defOpt.event.created.call(self, polygon);
                         }
                         if (defOpt.hasOwnProperty('event')) {
                             self.bindEvents(polygon, defOpt.event);
@@ -590,7 +590,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(circles, self);
+                            defOpt.event.created.call(self, circles);
                         }
                         if (circle.hasOwnProperty('event')) {
                             self.bindEvents(circles, circle.event);
@@ -820,7 +820,7 @@ window.gMapsCallback = function () {
                 opt.event.hasOwnProperty('created') &&
                 'function' === typeof opt.event.created
             ) {
-                opt.event.created.call(marker, self);
+                opt.event.created.call(self, marker);
             }
 
             // Apply marker fitbounds
@@ -931,7 +931,7 @@ window.gMapsCallback = function () {
                         opt.event.hasOwnProperty('created') &&
                         'function' === typeof opt.event.created
                     ) {
-                        opt.event.created.call(marker, self);
+                        opt.event.created.call(self, marker);
                     }
 
                     // Apply marker fitbounds
