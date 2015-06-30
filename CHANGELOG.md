@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.5
+* 修正 marker, polyline, polygon, circle 在 created 事件內無法取得已建立圖層的錯誤。
+
 ###3.2.4
 * 修正可能會造成無限迴圈的錯誤。
 
