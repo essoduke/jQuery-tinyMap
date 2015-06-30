@@ -24,13 +24,13 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.4
+ * @version 3.2.5
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 修正可能會造成無限迴圈的錯誤。
+ * 修正 marker, polyline, polygon, circle 在 created 事件內無法取得已建立圖層的錯誤。
  *
- * Last Modified 2015.06.18.174659
+ * Last Modified 2015.06.30.105610
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -49,7 +49,7 @@ window.gMapsCallback = function () {
             'api'      : '//maps.google.com/maps/api/js',
             'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer_compiled.js'
         },
-        // Default plugin settings
+    // Default plugin settings
         defaults = {
             'autoLocation': false,
             'center': [24, 121],
@@ -223,7 +223,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.4',
+        VERSION: '3.2.5',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -527,7 +527,11 @@ window.gMapsCallback = function () {
                             'fillColor': opt.polygon[i].fillcolor || '#CC0000',
                             'fillOpacity': 0.35
                         }, opt.polygon[i]);
+
                         polygon = new google.maps.Polygon(defOpt);
+                        self._polygons.push(polygon);
+                        polygon.setMap(map);
+
                         // Created event for circle is created.
                         if (polygon && defOpt.hasOwnProperty('event') &&
                             defOpt.event.hasOwnProperty('created') &&
@@ -538,8 +542,6 @@ window.gMapsCallback = function () {
                         if (defOpt.hasOwnProperty('event')) {
                             self.bindEvents(polygon, defOpt.event);
                         }
-                        self._polygons.push(polygon);
-                        polygon.setMap(map);
                     }
                 }
             }
@@ -579,8 +581,10 @@ window.gMapsCallback = function () {
                         defOpt.center = loc;
                     }
                     if ('function' === typeof loc.lat) {
+
                         circles = new google.maps.Circle(defOpt);
                         self._circles.push(circles);
+
                         // Created event for circle is created.
                         if (circles && defOpt.hasOwnProperty('event') &&
                             defOpt.event.hasOwnProperty('created') &&
@@ -920,6 +924,7 @@ window.gMapsCallback = function () {
 
                     markerOptions = $.extend({}, markerOptions, opt);
                     marker = new google.maps.Marker(markerOptions);
+                    self._markers.push(marker);
 
                     // Created event for marker is created.
                     if (marker && opt.hasOwnProperty('event') &&
@@ -929,8 +934,6 @@ window.gMapsCallback = function () {
                         opt.event.created.call(marker, self);
                     }
 
-                    self._markers.push(marker);
-
                     // Apply marker fitbounds
                     if (marker.hasOwnProperty('position')) {
                         if ('function' === typeof marker.getPosition) {
@@ -939,7 +942,7 @@ window.gMapsCallback = function () {
                         if (self.options.hasOwnProperty('markerFitBounds') &&
                             true === self.options.markerFitBounds
                         ) {
-                            // Make sure fitBounds call after the last marker created.
+                            // Make sure fitBounds called after the last marker created.
                             // @since v3.1.7
                             if (self._markers.length === def.marker.length) {
                                 map.fitBounds(self.bounds);
@@ -1195,12 +1198,12 @@ window.gMapsCallback = function () {
         streetView: function (map, opt) {
 
             var self = this,
-                pano = {},
                 opts = opt.hasOwnProperty('streetViewObj') ? opt.streetViewObj : {},
+                pano = {},
                 loc  = {};
 
-            if ('function' === typeof map.getStreetView && opt.hasOwnProperty('streetViewObj')) {
-                pano = map.getStreetView();
+            if ('function' === typeof map.getStreetView) {
+                
                 // Default position of streetView
                 if (opts.hasOwnProperty('position')) {
                     loc = parseLatLng(opts.position, true);
@@ -1216,14 +1219,16 @@ window.gMapsCallback = function () {
                         'zoom'   : 1
                     }, opts.pov);
                 }
-                if (opts.hasOwnProperty('visible')) {
-                    pano.setVisible(opts.visible);
-                }
+                pano = map.getStreetView();
                 // Apply options
                 pano.setOptions(opts);
+                
                 // Events Binding
                 if (opts.hasOwnProperty('event')) {
                     self.bindEvents(pano, opts.event);
+                }
+                if (opts.hasOwnProperty('visible')) {
+                    pano.setVisible(opts.visible);
                 }
             }
         },
@@ -1751,6 +1756,7 @@ window.gMapsCallback = function () {
                 /**
                  * Label in Maps
                  * @param {Object} options Label options
+                 * @global
                  * @constructor
                  */
                 Label = function (options) {
@@ -1910,8 +1916,7 @@ window.gMapsCallback = function () {
                 'destinations': [],
                 'language': 'zh-TW'
             },
-            opt = $.extend({}, def, options),
-            i = 0;
+            opt = $.extend({}, def, options);
 
         if (Array.isArray(opt.origins)) {
             opt.origins = opt.origins.join('|');
@@ -1924,7 +1929,7 @@ window.gMapsCallback = function () {
             opt,
             function (data) {
                 if (data.status === 'OK') {
-                    callback(data);
+                    callback.cal(this, data);
                 }
             });
     };
@@ -1934,6 +1939,7 @@ window.gMapsCallback = function () {
      * @param {Function} callback Function for callback
      */
     $.fn.tinyMapQuery = function (options, callback) {
+
         var def = {
                 'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
                 'language': 'zh-TW'
@@ -1955,7 +1961,7 @@ window.gMapsCallback = function () {
                                 data.results[0].geometry.location.lng
                             ].join(',');
                         }
-                        callback(result);
+                        callback.call(this, result);
                     }
                 }
             });
