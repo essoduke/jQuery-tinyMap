@@ -24,13 +24,14 @@
  * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
  *
  * @author Essoduke Chang
- * @version 3.2.5
+ * @version 3.2.6
  * {@link http://app.essoduke.org/tinyMap/}
  *
  * [Changelog]
- * 修正 marker, polyline, polygon, circle 在 created 事件內無法取得已建立圖層的錯誤。
+ * 修正 clear 方法無法清除以字串參數傳入的圖層的錯誤。
+ * 新增 clear callback 於清除完成後執行。
  *
- * Last Modified 2015.06.30.105610
+ * Last Modified 2015.07.06.155310
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -223,7 +224,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.5',
+        VERSION: '3.2.6',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -1363,12 +1364,13 @@ window.gMapsCallback = function () {
          * @param {string} type Layer type
          * @public
          */
-        clear: function (layer) {
+        clear: function (layer, callback) {
 
             var self     = this,
                 dMarkers = self._directionsMarkers,
                 labels   = self._labels,
                 target   = [],
+                layers   = {},
                 item     = {},
                 obj      = {},
                 key      = '',
@@ -1376,7 +1378,7 @@ window.gMapsCallback = function () {
                 j        = 0;
 
             if ('undefined' === typeof layer) {
-                layer = {
+                layers = {
                     'marker'   : [],
                     'label'    : [],
                     'polygon'  : [],
@@ -1388,14 +1390,28 @@ window.gMapsCallback = function () {
             }
 
             try {
-                for (obj in layer) {
-                    if (Array.isArray(layer[obj])) {
+                if ('string' === typeof layer) {
+                    if (~layer.indexOf(',')) {
+                        target = layer.replace(/\s/gi, '').split(',');
+                        for (i = 0; i < target.length; i += 1) {
+                            key = target[i].toString().toLowerCase();
+                            layers[key] = [];
+                        }
+                    } else {
+                        layers[layer.toString().toLowerCase()] = [];
+                    }
+                }
+
+                layers = $.extend({}, layers, layer);
+                
+                for (obj in layers) {
+                    if (Array.isArray(layers[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
                         if (Array.isArray(self[key])) {
                             target = [];
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
-                                if (0 === layer[obj].length || ~layer[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
+                                if (0 === layers[obj].length || ~layers[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layers[obj].indexOf(item.id)))) {
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
                                         if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
@@ -1407,9 +1423,11 @@ window.gMapsCallback = function () {
                                         for (j = 0; j < dMarkers.length; j += 1) {
                                             if ('function' === typeof dMarkers[j].setMap) {
                                                 self._directionsMarkers[j].setMap(null);
-                                                self._directionsMarkers.splice(j, 1);
                                             }
                                         }
+                                        self._directionsMarkers.filter(function (n) {
+                                            return undefined !== n;
+                                        });
                                     }
                                     // Remove from Map
                                     if ('function' === typeof item.set) {
@@ -1430,7 +1448,9 @@ window.gMapsCallback = function () {
                         }
                     }
                 }
-
+                if ('function' === typeof callback) {
+                    callback.call(this);
+                }
             } catch (ignore) {
                 console.warn(ignore);
             } finally {
