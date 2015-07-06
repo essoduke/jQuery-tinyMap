@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.6
+* 修正 clear 方法無法清除以字串參數傳入的圖層的錯誤。
+* 新增 clear callback 於清除完成後執行。
+* 
 ###3.2.5
 * 修正 marker, polyline, polygon, circle 在 created 事件內無法取得已建立圖層的錯誤。
 
