@@ -160,6 +160,9 @@ Clear specitied items of layers.
 ```javascript
 // Clear overlayers
 // @param {Object} layer Layer Object.
+$(selector).tinyMap('clear', 'marker,polyline...');
+
+// Specified items in layer
 $(selector).tinyMap('clear', {
     'marker': [0, 2] // Remove the 1st and 3rd markers.
     'polyline': ['A', 'C'] // Remove the matched Id of polylines.
@@ -167,7 +170,7 @@ $(selector).tinyMap('clear', {
     'direction': [] // Empty array for remove all of them.
 });
 
-// or clear all layers
+// Clear all layers
 $(selector).tinyMap('clear'); 
 ```
 ###getKML
