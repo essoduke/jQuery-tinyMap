@@ -43,12 +43,16 @@ Setting up the container's width and height with CSS:
 Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
-// Basic example
+// Basic
 $('#map').tinyMap({
-    'center': {'lat': 'Lat', 'lng': 'Lng'},
+    'center': {
+        'lat': 'Lat', 
+        'lng': 'Lng'
+    },
     // or 'center': 'lat, lng'
     // or 'center': [lat, lng]
     // or 'center': 'ADDRESS'
+    // or 'center': 'N48°45.5952  E20°59.976' // WGS84 format
     'zoom': 14,
     // Map events binding
     'event': {
@@ -149,6 +153,9 @@ var layers = $(selector).tinyMap('get', {
     'polyline': ['A', 'C'] // Get the matched Id of polylines.
     'circle': [0, 'A'] // Also could be mixed.
 });
+
+// Get map instance
+var map = $(selector).tinyMap('get', 'map');
 
 // Callback
 $(selector).tinyMap('get', 'marker', function (items) {
