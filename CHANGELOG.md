@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.7
+* 修正 panTo 方法不能進行 Chain 操作的問題。
+* 新增 get 方法可傳入 'map' 取得地圖物件。
+
 ###3.2.6
 * 修正 clear 方法無法清除以字串參數傳入的圖層的錯誤。
 * 新增 clear callback 於清除完成後執行。
