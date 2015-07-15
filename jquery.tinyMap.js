@@ -1,37 +1,15 @@
 /*jshint unused:false */
 /**
- * MIT License
- * Copyright(c) 2015 essoduke.org
+ * jQuery tinyMap v3.2.7
+ * http://app.essoduke.org/tinyMap/
+ * Copyright 2015 essoduke.org, Licensed MIT.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ * Changelog
+ * -------------------------------
+ * 修正 panTo 方法不能進行 Chain 操作的問題。
+ * 新增 get 方法可傳入 'map' 取得地圖物件。
  *
- * THE SOFTWARE IS PROVIDED 『AS IS』, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * jQuery tinyMap 輕鬆建立 Google Maps 的 jQuery 擴充套件
- * 拯救眾生免於 Google Maps API 的摧殘，輕鬆就能建立 Google 地圖的 jQuery Plugin。
- *
- * @author Essoduke Chang
- * @version 3.2.6
- * {@link http://app.essoduke.org/tinyMap/}
- *
- * [Changelog]
- * 修正 clear 方法無法清除以字串參數傳入的圖層的錯誤。
- * 新增 clear callback 於清除完成後執行。
- *
- * Last Modified 2015.07.06.155310
+ * Last Modified 2015.07.13.150835
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -61,19 +39,18 @@ window.gMapsCallback = function () {
             'zoom': 8
         },
         styles = {},
-        Label = {};
-
+        Label  = {};
     //#!#START STYLES
-    styles = {
-        // Grey Scale
-        'greyscale': [{
-            'featureType': 'all',
-            'stylers': [
-                {'saturation': -100},
-                {'gamma': 0.5}
-            ]
-        }]
-    };
+        styles = {
+            // Grey Scale
+            'greyscale': [{
+                'featureType': 'all',
+                'stylers': [
+                    {'saturation': -100},
+                    {'gamma': 0.5}
+                ]
+            }]
+        };
     //#!#END
     /**
      * Parsing the location
@@ -224,7 +201,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.6',
+        VERSION: '3.2.7',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -286,7 +263,7 @@ window.gMapsCallback = function () {
         bindEvents: function (target, event) {
 
             var self = this,
-                e = {};
+                e    = {};
 
             switch (typeof event) {
             case 'function':
@@ -391,8 +368,7 @@ window.gMapsCallback = function () {
                 c1 = 0,
                 c = {},
                 p = {},
-                i = 0;
-
+                i = 0,
                 // Route callback
                 routeCallback = function (result, status) {
                     if (status === google.maps.DirectionsStatus.OK) {
@@ -637,7 +613,7 @@ window.gMapsCallback = function () {
                     if (m.hasOwnProperty('addr')) {
                         m.parseAddr = parseLatLng(m.addr, true);
                         if ('string' === typeof m.parseAddr) {
-                            self.markerByGeocoder(map, m, opt);
+                            self.markerGeocoder(map, m, opt);
                         } else {
                             self.markerDirect(map, m, opt);
                         }
@@ -687,7 +663,7 @@ window.gMapsCallback = function () {
                                     opt.marker[i].hasOwnProperty('addr')) {
                                     opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                                     if ('string' === typeof opt.marker[i].parseAddr) {
-                                        self.markerByGeocoder(map, opt.marker[i], opt);
+                                        self.markerGeocoder(map, opt.marker[i], opt);
                                     } else {
                                         self.markerDirect(map, opt.marker[i]);
                                     }
@@ -699,7 +675,7 @@ window.gMapsCallback = function () {
                         if (opt.marker[i].hasOwnProperty('addr')) {
                             opt.marker[i].parseAddr = parseLatLng(opt.marker[i].addr, true);
                             if ('string' === typeof opt.marker[i].parseAddr) {
-                                self.markerByGeocoder(map, opt.marker[i]);
+                                self.markerGeocoder(map, opt.marker[i]);
                             } else {
                                 self.markerDirect(map, opt.marker[i]);
                             }
@@ -875,7 +851,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Options
          * @this {tinyMap}
          */
-        markerByGeocoder: function (map, opt, def) {
+        markerGeocoder: function (map, opt, def) {
 
             var geocoder = new google.maps.Geocoder(),
                 self = this;
@@ -884,7 +860,7 @@ window.gMapsCallback = function () {
                 // If exceeded, call it later by setTimeout;
                 if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                     window.setTimeout(function () {
-                        self.markerByGeocoder(map, opt);
+                        self.markerGeocoder(map, opt);
                     }, self.interval);
                 } else if (status === google.maps.GeocoderStatus.OK) {
                     var marker = {},
@@ -1204,7 +1180,6 @@ window.gMapsCallback = function () {
                 loc  = {};
 
             if ('function' === typeof map.getStreetView) {
-                
                 // Default position of streetView
                 if (opts.hasOwnProperty('position')) {
                     loc = parseLatLng(opts.position, true);
@@ -1355,7 +1330,7 @@ window.gMapsCallback = function () {
                     }
                 }
             }
-            return this;
+            return $(this.container);
         },
         //#!#END
         //#!#START CLEAR
@@ -1475,6 +1450,7 @@ window.gMapsCallback = function () {
                 item     = {},
                 obj      = {},
                 key      = '',
+                lb       = '',
                 i        = 0,
                 j        = 0;
 
@@ -1495,12 +1471,21 @@ window.gMapsCallback = function () {
                     if (~layer.indexOf(',')) {
                         layers = layer.replace(/\s/gi, '').split(',');
                         for (i = 0; i < layers.length; i += 1) {
-                            key = '_' + layers[i].toString().toLowerCase() + 's';
-                            target[layers[i]] = self[key];
+                            lb = layers[i].toString().toLowerCase();
+                            if ('map' === lb) {
+                                target[lb] = self.map;
+                            } else {
+                                key = '_' + lb + 's';
+                                target[lb] = self[key];
+                            }
                         }
                     } else {
-                        key = '_' + layer.toString().toLowerCase() + 's';
-                        target = self[key];
+                        if ('map' === layer.toString().toLowerCase()) {
+                            target = self.map;
+                        } else {
+                            key = '_' + layer.toString().toLowerCase() + 's';
+                            target = self[key];
+                        }
                     }
                 } else {
                     for (obj in layer) {
@@ -1517,6 +1502,7 @@ window.gMapsCallback = function () {
                             }
                         }
                     }
+                    target['map'] = self.map;
                 }
                 if ('function' === typeof callback) {
                     callback.call(this, target);
