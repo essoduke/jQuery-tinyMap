@@ -1,0 +1,26 @@
+{
+  "name": "jquery-tinymap",
+  "version": "3.2.7",
+  "homepage": "https://github.com/essoduke/jQuery-TWzipcode",
+  "authors": [
+    "Essoduke Chang<essoduke@gmail.com> (http://essoduke.org)"
+  ],
+  "description": "jquery plugin for google map",
+  "main": "jquery.tinyMap.js",
+  "keywords": [
+    "jquery",
+    "google",
+    "map"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+   "dependencies": {
+    "jquery": "~2.0.0"
+  }
+}
