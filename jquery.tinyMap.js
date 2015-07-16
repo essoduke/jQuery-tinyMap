@@ -1,15 +1,15 @@
 /*jshint unused:false */
 /**
- * jQuery tinyMap v3.2.7
+ * jQuery tinyMap v3.2.8
  * http://app.essoduke.org/tinyMap/
  * Copyright 2015 essoduke.org, Licensed MIT.
  *
  * Changelog
  * -------------------------------
- * 修正 panTo 方法不能進行 Chain 操作的問題。
- * 新增 get 方法可傳入 'map' 取得地圖物件。
+ * 修正 get,clear 方法無法以索引值正確取得圖層的錯誤。
+ * 修正 created 方法回傳的物件順序以符合原生 API 的規則，現在 created.this 已指向 layer 本身。
  *
- * Last Modified 2015.07.13.150835
+ * Last Modified 2015.07.16.185338
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -201,7 +201,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.7',
+        VERSION: '3.2.8',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -423,7 +423,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(self, polyline);
+                            defOpt.event.created.call(polyline, self);
                         }
 
                         // Events binding
@@ -514,7 +514,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(self, polygon);
+                            defOpt.event.created.call(polygon, self);
                         }
                         if (defOpt.hasOwnProperty('event')) {
                             self.bindEvents(polygon, defOpt.event);
@@ -567,7 +567,7 @@ window.gMapsCallback = function () {
                             defOpt.event.hasOwnProperty('created') &&
                             'function' === typeof defOpt.event.created
                         ) {
-                            defOpt.event.created.call(self, circles);
+                            defOpt.event.created.call(circles, self);
                         }
                         if (circle.hasOwnProperty('event')) {
                             self.bindEvents(circles, circle.event);
@@ -797,7 +797,7 @@ window.gMapsCallback = function () {
                 opt.event.hasOwnProperty('created') &&
                 'function' === typeof opt.event.created
             ) {
-                opt.event.created.call(self, marker);
+                opt.event.created.call(marker, self);
             }
 
             // Apply marker fitbounds
@@ -908,7 +908,7 @@ window.gMapsCallback = function () {
                         opt.event.hasOwnProperty('created') &&
                         'function' === typeof opt.event.created
                     ) {
-                        opt.event.created.call(self, marker);
+                        opt.event.created.call(marker, self);
                     }
 
                     // Apply marker fitbounds
@@ -1386,7 +1386,7 @@ window.gMapsCallback = function () {
                             target = [];
                             for (i = 0; i < self[key].length; i += 1) {
                                 item = self[key][i];
-                                if (0 === layers[obj].length || ~layers[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layers[obj].indexOf(item.id)))) {
+                                if (0 === layers[obj].length || -1 !== $.inArray(i, layer[obj]) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layers[obj].indexOf(item.id)))) {
                                     // Clear label of Markers.
                                     if ('_markers' === key) {
                                         if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
@@ -1495,7 +1495,7 @@ window.gMapsCallback = function () {
                                 target[obj] = [];
                                 for (i = 0; i < self[key].length; i += 1) {
                                     item = self[key][i];
-                                    if (0 === layer[obj].length || ~layer[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
+                                    if (0 === layer[obj].length || -1 !== $.inArray(i, layer[obj]) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
                                         target[obj].push(item);
                                     }
                                 }
