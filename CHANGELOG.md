@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.8
+* 修正 get,clear 方法無法以索引值正確取得圖層的錯誤。
+* 修正 created 方法回傳的物件順序以符合原生 API 的規則，現在 created.this 已指向 layer 本身。
+
 ###3.2.7
 * 修正 panTo 方法不能進行 Chain 操作的問題。
 * 新增 get 方法可傳入 'map' 取得地圖物件。
