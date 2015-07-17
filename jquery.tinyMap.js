@@ -7,6 +7,7 @@
  * Changelog
  * -------------------------------
  * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
+ * 新增 adsense 可在地圖上顯示 Adsense 廣告。
  * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
  *
  * Last Modified 2015.07.17.125626
@@ -201,7 +202,7 @@ window.gMapsCallback = function () {
      */
     TinyMap.prototype = {
 
-        VERSION: '3.2.8',
+        VERSION: '3.2.9',
 
         // Google Maps LatLngBounds
         bounds: {},
@@ -241,6 +242,10 @@ window.gMapsCallback = function () {
                 opt = this.options;
 
             try {
+                //#!#START ADSENSE
+                // kml overlay
+                this.adsense(map, opt);
+                //#!#END
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -331,6 +336,40 @@ window.gMapsCallback = function () {
                 });
             }
         },
+        //#!#START ADSENSE
+        /**
+         * Adsense overlay
+         * @param {Object} map Map instance
+         * @param {Object} opt options
+         */
+        adsense: function (map, opt) {
+
+            var defOpt = {}, adUnit = {};
+
+            if (opt.hasOwnProperty('adsense')) {
+                defOpt = $.extend({}, {
+                    'map': map,
+                    'format': 'BANNER',
+                    'position': 'TOP',
+                    'publisherId': '',
+                    'channelNumber': ''
+                }, opt.adsense);
+
+                defOpt.format = 'undefined' !== google.maps.adsense.AdFormat[defOpt.format] ?
+                                google.maps.adsense.AdFormat[defOpt.format] :
+                                google.maps.adsense.AdFormat['BANNER'];
+                defOpt.position = 'undefined' !== google.maps.ControlPosition[defOpt.position] ?
+                                  google.maps.ControlPosition[defOpt.position] :
+                                  google.maps.ControlPosition['TOP_CENTER'];
+
+                adUnit = new google.maps.adsense.AdUnit(
+                    document.createElement('div'),
+                    defOpt
+                );
+            }
+            
+        },
+        //#!#END
         //#!#START KML
         /**
          * KML overlay
