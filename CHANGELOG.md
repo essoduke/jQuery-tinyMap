@@ -1,6 +1,7 @@
 #jQuery tinyMap Changelog
 ###3.2.9
  * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
+ * 新增 adsense 可在地圖上顯示 Adsense 廣告。
  * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
 
 ###3.2.8
