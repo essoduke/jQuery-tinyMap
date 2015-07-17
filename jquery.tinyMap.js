@@ -1,15 +1,15 @@
 /*jshint unused:false */
 /**
- * jQuery tinyMap v3.2.8
+ * jQuery tinyMap v3.2.9
  * http://app.essoduke.org/tinyMap/
  * Copyright 2015 essoduke.org, Licensed MIT.
  *
  * Changelog
  * -------------------------------
- * 修正 get,clear 方法無法以索引值正確取得圖層的錯誤。
- * 修正 created 方法回傳的物件順序以符合原生 API 的規則，現在 created.this 已指向 layer 本身。
+ * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
+ * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
  *
- * Last Modified 2015.07.16.185338
+ * Last Modified 2015.07.17.125626
  */
 // Call while google maps api loaded
 window.gMapsCallback = function () {
@@ -205,6 +205,31 @@ window.gMapsCallback = function () {
 
         // Google Maps LatLngBounds
         bounds: {},
+
+        /**
+         * Format to google.maps.Size
+         * @param {Array} v Size array [x, y]
+         * @return {(Object|Array)}
+         */
+        formatSize: function (v) {
+            var result = {};
+            if (Array.isArray(v) && 2 === v.length) {
+                return new google.maps.Size(v[0], v[1]);
+            }
+            return v;
+        },
+        /**
+         * Format to google.maps.Point
+         * @param {Array} v Point array [x, y]
+         * @return {(Object|Array)}
+         */
+        formatPoint: function (v) {
+            var result = {};
+            if (Array.isArray(v) && 2 === v.length) {
+                return new google.maps.Point(v[0], v[1]);
+            }
+            return v;
+        },
 
         /**
          * Overlay process
@@ -716,30 +741,21 @@ window.gMapsCallback = function () {
                     if (Array.isArray(opt.icon.size) &&
                         2 === opt.icon.size.length
                     ) {
-                        icons.size = new google.maps.Size(
-                            opt.icon.size[0],
-                            opt.icon.size[1]
-                        );
+                        icons.size = this.formatSize(opt.icon);
                     }
                 }
                 if (opt.icon.hasOwnProperty('scaledSize')) {
                     if (Array.isArray(opt.icon.scaledSize) &&
                         2 === opt.icon.scaledSize.length
                     ) {
-                        icons.scaledSize = new google.maps.Size(
-                            opt.icon.scaledSize[0],
-                            opt.icon.scaledSize[1]
-                        );
+                        icons.scaledSize = this.formatSize(opt.icon.scaledSize);
                     }
                 }
                 if (opt.icon.hasOwnProperty('anchor')) {
                     if (Array.isArray(opt.icon.anchor) &&
                         2 === opt.icon.anchor.length
                     ) {
-                        icons.anchor = new google.maps.Point(
-                            opt.icon.anchor[0],
-                            opt.icon.anchor[1]
-                        );
+                        icons.anchor = this.formatPoint(opt.icon.anchor);
                     }
                 }
             }
@@ -761,6 +777,7 @@ window.gMapsCallback = function () {
                           false,
                 content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
                 icons   = self.markerIcon(opt),
+                iwOpt   = {},
                 clusterOption = {
                     'maxZoom': null,
                     'gridSize': 60
@@ -776,10 +793,16 @@ window.gMapsCallback = function () {
                 markerOptions.title = title;
             }
             if (content) {
+                iwOpt.content = content;
+                if (opt.hasOwnProperty('infoWindowOptions')) {
+                    iwOpt = $.extend({}, iwOpt, opt.infoWindowOptions);
+                    if (iwOpt.hasOwnProperty('pixelOffset') && Array.isArray(iwOpt.pixelOffset)) {
+                        iwOpt.pixelOffset = self.formatSize(iwOpt.pixelOffset);
+                    }
+                }
+
                 markerOptions.text = content;
-                markerOptions.infoWindow = new google.maps.InfoWindow({
-                    'content': content
-                });
+                markerOptions.infoWindow = new google.maps.InfoWindow(iwOpt);
             }
             
             if (!$.isEmptyObject(icons)) {
@@ -1333,6 +1356,54 @@ window.gMapsCallback = function () {
             return $(this.container);
         },
         //#!#END
+        //#!#START CLOSE
+        /**
+         * Method: Close all infoWindow on map
+         * @param {string} type Layer type
+         * @public
+         */
+        close: function (layer, callback) {
+            var self   = this,
+                layers = self.get(layer),
+                item   = {},
+                loop   = {},
+                obj    = '',
+                i      = 0;
+
+            if (layers.hasOwnProperty('map')) {
+                delete layers.map;
+            }
+
+            if (Array.isArray(layers)) {
+                loop[layer] = layers;
+            } else {
+                loop = layers;
+            }
+
+            try {
+                for (obj in loop) {
+                    if (Array.isArray(loop[obj])) {
+                        for (i = 0; i < loop[obj].length; i += 1) {
+                            item = loop[obj][i];
+                            if (item.hasOwnProperty('infoWindow') &&
+                                'function' === typeof item.infoWindow.close
+                            ) {
+                                item.infoWindow.close();
+                            }
+                        }
+                    }
+                }
+                
+                if ('function' === typeof callback) {
+                    callback.call(this);
+                }
+            } catch (ignore) {
+                console.warn(ignore);
+            } finally {
+                return $(self.container);
+            }
+        },
+        //#!#END
         //#!#START CLEAR
         /**
          * Method: Google Maps clear the specificed layer
@@ -1344,83 +1415,59 @@ window.gMapsCallback = function () {
             var self     = this,
                 dMarkers = self._directionsMarkers,
                 labels   = self._labels,
-                target   = [],
-                layers   = {},
+                layers   = self.get(layer),
+                loop     = {},
                 item     = {},
-                obj      = {},
-                key      = '',
-                i        = 0,
-                j        = 0;
+                obj      = '',
+                i        = 0;
 
-            if ('undefined' === typeof layer) {
-                layers = {
-                    'marker'   : [],
-                    'label'    : [],
-                    'polygon'  : [],
-                    'polyline' : [],
-                    'circle'   : [],
-                    'direction': [],
-                    'kml'      : []
-                };
+            if (layers.hasOwnProperty('map')) {
+                delete layers.map;
             }
 
+            if (Array.isArray(layers)) {
+                loop[layer] = layers;
+            } else {
+                loop = layers;
+            }
+            
             try {
-                if ('string' === typeof layer) {
-                    if (~layer.indexOf(',')) {
-                        target = layer.replace(/\s/gi, '').split(',');
-                        for (i = 0; i < target.length; i += 1) {
-                            key = target[i].toString().toLowerCase();
-                            layers[key] = [];
-                        }
-                    } else {
-                        layers[layer.toString().toLowerCase()] = [];
-                    }
-                }
-
-                layers = $.extend({}, layers, layer);
-                
-                for (obj in layers) {
-                    if (Array.isArray(layers[obj])) {
-                        key = '_' + obj.toString().toLowerCase() + 's';
-                        if (Array.isArray(self[key])) {
-                            target = [];
-                            for (i = 0; i < self[key].length; i += 1) {
-                                item = self[key][i];
-                                if (0 === layers[obj].length || -1 !== $.inArray(i, layer[obj]) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layers[obj].indexOf(item.id)))) {
-                                    // Clear label of Markers.
-                                    if ('_markers' === key) {
-                                        if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
-                                            self._labels[i].div.remove();
-                                        }
-                                    }
-                                    // Remove the direction icons.
-                                    if ('_directions' === key) {
-                                        for (j = 0; j < dMarkers.length; j += 1) {
-                                            if ('function' === typeof dMarkers[j].setMap) {
-                                                self._directionsMarkers[j].setMap(null);
-                                            }
-                                        }
-                                        self._directionsMarkers.filter(function (n) {
-                                            return undefined !== n;
-                                        });
-                                    }
-                                    // Remove from Map
-                                    if ('function' === typeof item.set) {
-                                        item.set('visible', false);
-                                        item.set('directions', null);
-                                    }
-                                    if ('function' === typeof item.setMap) {
-                                        item.setMap(null);
-                                    }
-                                    // Remove from Array
-                                    self[key][i] = undefined;
+                for (obj in loop) {
+                    key = '_' + obj.toString().toLowerCase() + 's';
+                    if (Array.isArray(loop[obj])) {
+                        for (i = 0; i < loop[obj].length; i += 1) {
+                            item = loop[obj][i];
+                            if ('marker' === obj) {
+                                if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
+                                    self._labels[i].div.remove();
                                 }
                             }
-                            // Filter undefined elements
-                            self[key] = self[key].filter(function (n) {
-                                return undefined !== n;
-                            });
+                            // Remove the direction icons.
+                            if ('direction' === obj) {
+                                for (j = 0; j < dMarkers.length; j += 1) {
+                                    if ('function' === typeof dMarkers[j].setMap) {
+                                        self._directionsMarkers[j].setMap(null);
+                                    }
+                                }
+                                self._directionsMarkers.filter(function (n) {
+                                    return undefined !== n;
+                                });
+                            }
+                            // Remove from Map
+                            if ('function' === typeof item.set) {
+                                item.set('visible', false);
+                                item.set('directions', null);
+                            }
+                            if ('function' === typeof item.setMap) {
+                                item.setMap(null);
+                            }
+                            // Remove from Array
+                            self[key][i] = undefined;
                         }
+                        // Filter undefined elements
+                        self[key] = self[key].filter(function (n) {
+                            return undefined !== n;
+                        });
                     }
                 }
                 if ('function' === typeof callback) {
@@ -1495,7 +1542,7 @@ window.gMapsCallback = function () {
                                 target[obj] = [];
                                 for (i = 0; i < self[key].length; i += 1) {
                                     item = self[key][i];
-                                    if (0 === layer[obj].length || -1 !== $.inArray(i, layer[obj]) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
+                                    if (0 === layer[obj].length || -1 !== layer[obj].indexOf(i) || (item.hasOwnProperty('id') && 0 < item.id.length && (~layer[obj].indexOf(item.id)))) {
                                         target[obj].push(item);
                                     }
                                 }
