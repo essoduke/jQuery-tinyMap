@@ -149,7 +149,7 @@ var layers = $(selector).tinyMap('get', 'marker,direction');
 
 // Get specified items of layer
 var layers = $(selector).tinyMap('get', {
-    'marker': [0, 2] // Get the 1st and 3rd markers.
+    'marker': [0, 2] // Get the 1st and 3rd markers. (Index must be integer)
     'polyline': ['A', 'C'] // Get the matched Id of polylines.
     'circle': [0, 'A'] // Also could be mixed.
 });
@@ -171,7 +171,7 @@ $(selector).tinyMap('clear', 'marker,polyline...');
 
 // Specified items in layer
 $(selector).tinyMap('clear', {
-    'marker': [0, 2] // Remove the 1st and 3rd markers.
+    'marker': [0, 2] // Remove the 1st and 3rd markers. (Index must be integer)
     'polyline': ['A', 'C'] // Remove the matched Id of polylines.
     'circle': [0, 'A'] // Also could be mixed.
     'direction': [] // Empty array for remove all of them.
@@ -180,6 +180,26 @@ $(selector).tinyMap('clear', {
 // Clear all layers
 $(selector).tinyMap('clear'); 
 ```
+
+###close
+Close all opened infoWindow of layers.
+```javascript
+// Close all infoWindows of layers
+// @param {Object} layer Layer Object.
+$(selector).tinyMap('close', 'marker,polyline...');
+
+// Specified items in layer
+$(selector).tinyMap('close', {
+    'marker': [0, 2] // Remove the 1st and 3rd markers. (Index must be integer)
+    'polyline': ['A', 'C'] // Remove the matched Id of polylines.
+    'circle': [0, 'A'] // Also could be mixed.
+    'direction': [] // Empty array for remove all of them.
+});
+
+// Close all infoWindows of layers
+$(selector).tinyMap('close'); 
+```
+
 ###getKML
 ```javascript
 // Overlays KML output
