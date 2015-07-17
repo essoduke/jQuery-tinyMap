@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.9
+ * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
+ * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
+
 ###3.2.8
 * 修正 get,clear 方法無法以索引值正確取得圖層的錯誤。
 * 修正 created 方法回傳的物件順序以符合原生 API 的規則，現在 created.this 已指向 layer 本身。
