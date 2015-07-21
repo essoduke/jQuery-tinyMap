@@ -1,6 +1,6 @@
 # jQuery-tinyMap Plugin
 
-This plugin will help to create the Google Maps on page.
+This plugin will help to create the Google Maps easier on page.
 
 Online documentation and demonstration:  
 http://app.essoduke.org/tinyMap/ 
@@ -41,10 +41,10 @@ Setting up the container's width and height with CSS:
 ## Usage
 
 Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
-
 ```javascript
 // Basic
-$('#map').tinyMap({
+$(selector).tinyMap({
+    // Map center
     'center': {
         'lat': 'Lat', 
         'lng': 'Lng'
@@ -53,50 +53,41 @@ $('#map').tinyMap({
     // or 'center': [lat, lng]
     // or 'center': 'ADDRESS'
     // or 'center': 'N48°45.5952  E20°59.976' // WGS84 format
-    'zoom': 14,
-    // Map events binding
-    'event': {
-        // 'Event name': Function
-        'idle': function () {}
-        // OR
-        'idle': {
-            'func': function () {},
-            'once': true | false // Run once
-        }
-        ...
-        ...
-    }
-    ...
-    ...
+    'zoom': 14
 });
 ```
 
 ### Create the Markers
-
 ```javascript
 $(selector).tinyMap({
     'marker': [
         {
-            // Custom Identity string
+            // Custom Identity string (Optional)
             'id'  : 'Marker ID',
             // Marker place location
             'addr': ['Lat', 'Lng'],
-            // Or address string e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
-            // Or {lat: 'lat', lng: 'lng'}
+            // Or address string. e.g. `1600 Pennsylvania Ave NW, Washington, DC 20500`
+            // Or Object {lat: 'lat', lng: 'lng'}
+            // Or latlng string 'lat, lng'
             'title': 'Display on Mouseover', // (Optional)
             'text': 'Display in infoWindow', // (Optional)
             'icon': 'http://domain/icon.png' // (Optional)
+            // You could define own properties by yourself.
+            'hello': 'yes'
             // Binding Click event
-            'event': function (event) {
+            'event': function () {
                 console.log(this.text); // Get marker's text property.
                 console.log(event.latLng.lat()); // Get markers' position.
+                // Access own property
+                console.log(this.hello);
             }
             /* More events
             'event': {
                 'click': function (event) {...},
                 'mouseover': function (event) {...}
             }
-               Run Once
+            */
+            /* or Run Once
             'event': {
                 'click': {
                     'func': function () {...}
@@ -124,7 +115,6 @@ $(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
 ###modify
 ```javascript
 // Dynamic setting up
-$(selector).tinyMap('modify', {OPTIONS});
 // e.g. Disable draggable
 $(selector).tinyMap('modify', {
     'draggable': false
@@ -134,7 +124,16 @@ $(selector).tinyMap('modify', {
 // e.g. Insert markers
 $(selector).tinyMap('modify', {
     'marker': [
-        {'addr': '...', 'text': '...'},
+        {'addr': '...'},
+        {'addr': '...'},
+        ...
+    ]
+});
+// e.g. Move the specified marker to new location.
+$(selector).tinyMap('modify', {
+    'marker': [
+        {'id': 'Marker ID', 'addr': ['lat', 'lng']},
+        {'id': 'Marker ID', 'addr': ['lat', 'lng']},
         ...
     ]
 });
@@ -283,11 +282,14 @@ map.tinyMap(...);
 
 // Get the instance from map.
 var instance = map.data('tinyMap'); 
-var markers = instance._markers; // All markers on the Map.
-var polylines = instance._polylines; // All polyline layers
-var polygons = instance._polygons; // All polygon layers
-var circles = instance._circles; // All circle layers
-// You could display all available objects by `console.dir(instance)`
+// Access map class
+var map = instance.map;
+// Get markers directly
+var markers = instance._markers;
+// Or access via `get` method.
+var markers = instance.get('marker');
+// You cloud browse all availables methods by
+console.log(instance);
 ```
 
 ## License
