@@ -1,6 +1,6 @@
 /*jshint unused:false */
 /**
- * jQuery tinyMap v3.2.9
+ * jQuery tinyMap plugin
  * http://app.essoduke.org/tinyMap/
  * Copyright 2015 essoduke.org, Licensed MIT.
  *
@@ -10,13 +10,21 @@
  * 新增 adsense 可在地圖上顯示 Adsense 廣告。
  * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
  *
- * Last Modified 2015.07.17.125626
+ * @since 2015-07-17 12:56:26
+ * @author essoduke.org
+ * @version 3.2.9
+ * @license MIT License
  */
-// Call while google maps api loaded
+/**
+ * Call while google maps api loaded
+ * @callback
+ */
 window.gMapsCallback = function () {
     $(window).trigger('gMapsCallback');
 };
-// Plugins statement
+/**
+ * Plugin statements
+ */
 ;(function ($, window, document, undefined) {
 
     // API Configure
@@ -55,9 +63,9 @@ window.gMapsCallback = function () {
     //#!#END
     /**
      * Parsing the location
-     * @param {(string|Array|Object)} loc Location
+     * @param {(string|string[]|number[]|Object)} loc Location
      * @param {boolean} formatting Format to Google Maps LatLng object
-     * @return {Object}
+     * @private
      */
     function parseLatLng (loc, formatting) {
 
@@ -100,13 +108,12 @@ window.gMapsCallback = function () {
      * tinyMap Constructor
      * @param {Object} container HTML element
      * @param {(Object|string)} options User settings
-     * @constructor
+     * @constructs jQuery.tinyMap
      */
     function TinyMap (container, options) {
 
         var self = this,
             opt = $.extend({}, defaults, options);
-
         /**
          * Map instance
          * @type {Object}
@@ -118,53 +125,53 @@ window.gMapsCallback = function () {
          */
         self._markers = [];
         /**
-         * Map markers
-         * @type {Object}
+         * Markers
+         * @type {Object[]}
          */
         self._markersCluster = [];
         /**
-         * Map markers clusterer
-         * @type {Object}
+         * Marker clusters
+         * @type {Object[]}
          */
         self._clusters = [];
         /**
-         * Map Labels
-         * @type {Object}
+         * Labels
+         * @type {Object[]}
          */
         self._labels = [];
         /**
-         * Polylines layer
-         * @type {Object}
+         * Polyline layers
+         * @type {Object[]}
          */
         self._polylines = [];
         /**
-         * Polygons layer
-         * @type {Object}
+         * Polygon layers
+         * @type {Object[]}
          */
         self._polygons = [];
         /**
          * Circles layer
-         * @type {Object}
+         * @type {Object[]}
          */
         self._circles = [];
         /**
-         * KML layer
-         * @type {Object}
+         * KML layers
+         * @type {Object[]}
          */
         self._kmls = [];
         /**
-         * Directions layer
-         * @type {Object}
+         * Direction Display layers
+         * @type {Objects[]}
          */
         self._directions = [];
         /**
-         * Directions icon layer
-         * @type {Object}
+         * Direction icons
+         * @type {Object[]}
          */
         self._directionsMarkers = [];
         /**
-         * DOM of selector
-         * @type {Object}
+         * Places objects
+         * @type {Object[]}
          */
         self._places = [];
         /**
@@ -173,7 +180,7 @@ window.gMapsCallback = function () {
          */
         self.container = container;
         /**
-         * Merge the options
+         * User setting
          * @type {Object}
          */
         self.options = opt;
@@ -193,15 +200,21 @@ window.gMapsCallback = function () {
         $(window).on('gMapsCallback', function () {
             self.init();
         });
+        // Append loading string
         $(this.container).html(opt.loading);
         // Call initialize
         self.init();
     }
     /**
-     * tinyMap prototype
+     * TinyMap prototype
      */
     TinyMap.prototype = {
 
+        /**
+         * Current version
+         * @type {string}
+         * @constant
+         */
         VERSION: '3.2.9',
 
         // Google Maps LatLngBounds
@@ -209,32 +222,30 @@ window.gMapsCallback = function () {
 
         /**
          * Format to google.maps.Size
-         * @param {Array} v Size array [x, y]
+         * @param {number[]} size Size array [x, y]
          * @return {(Object|Array)}
          */
-        formatSize: function (v) {
-            var result = {};
-            if (Array.isArray(v) && 2 === v.length) {
-                return new google.maps.Size(v[0], v[1]);
+        formatSize: function (size) {
+            if (Array.isArray(size) && 2 === size.length) {
+                return new google.maps.Size(size[0], size[1]);
             }
-            return v;
+            return size;
         },
         /**
          * Format to google.maps.Point
-         * @param {Array} v Point array [x, y]
+         * @param {number[]} point Point array [x, y]
          * @return {(Object|Array)}
          */
-        formatPoint: function (v) {
-            var result = {};
-            if (Array.isArray(v) && 2 === v.length) {
-                return new google.maps.Point(v[0], v[1]);
+        formatPoint: function (point) {
+            if (Array.isArray(point) && 2 === point.length) {
+                return new google.maps.Point(point[0], point[1]);
             }
-            return v;
+            return point;
         },
 
         /**
-         * Overlay process
-         * @this {tinyMap}
+         * Overlay processes
+         * @private
          */
         overlay: function () {
 
@@ -243,7 +254,7 @@ window.gMapsCallback = function () {
 
             try {
                 //#!#START ADSENSE
-                // kml overlay
+                // Adsense overlay
                 this.adsense(map, opt);
                 //#!#END
                 //#!#START KML
@@ -288,7 +299,6 @@ window.gMapsCallback = function () {
          * Events binding
          * @param {Object} marker Marker objects
          * @param {(function|Object)} event Events
-         * @this {tinyMap}
          */
         bindEvents: function (target, event) {
 
@@ -763,7 +773,6 @@ window.gMapsCallback = function () {
         /**
          * Build the icon options of marker
          * @param {Object} opt Marker option
-         * @this {tinyMap}
          */
         markerIcon: function (opt) {
 
@@ -803,7 +812,6 @@ window.gMapsCallback = function () {
         /**
          * Set a marker directly by latitude and longitude
          * @param {Object} opt Options
-         * @this {tinyMap}
          */
         markerDirect: function (map, opt) {
 
@@ -831,6 +839,10 @@ window.gMapsCallback = function () {
             if (title) {
                 markerOptions.title = title;
             }
+            /**
+             * infoWindowOptions
+             * @since v3.2.9
+             */
             if (content) {
                 iwOpt.content = content;
                 if (opt.hasOwnProperty('infoWindowOptions')) {
@@ -839,11 +851,9 @@ window.gMapsCallback = function () {
                         iwOpt.pixelOffset = self.formatSize(iwOpt.pixelOffset);
                     }
                 }
-
                 markerOptions.text = content;
                 markerOptions.infoWindow = new google.maps.InfoWindow(iwOpt);
             }
-            
             if (!$.isEmptyObject(icons)) {
                 markerOptions.icon = icons;
             }
@@ -910,8 +920,9 @@ window.gMapsCallback = function () {
         },
         /**
          * Set a marker by Geocoder service
+         * @param {Object} map Map instance
          * @param {Object} opt Options
-         * @this {tinyMap}
+         * @param {Object} def Default options
          */
         markerGeocoder: function (map, opt, def) {
 
@@ -1043,7 +1054,6 @@ window.gMapsCallback = function () {
         /**
          * Direction service
          * @param {Object} opt Options
-         * @this {tinyMap}
          */
         directionService: function (opt) {
 
@@ -1108,7 +1118,7 @@ window.gMapsCallback = function () {
                 }
                 request.waypoints = waypoints;
             }
-            // direction service
+            // Direction service callback
             directionsService.route(request, function (response, status) {
                 var legs = [],
                     wp = {},
@@ -1168,6 +1178,7 @@ window.gMapsCallback = function () {
          * @param {Object} loc LatLng Location
          * @param {Object} opt MarkerOptions
          * @param {Object} info Global infoWindow object
+         * @param {Object} d Direction marker options
          */
         directionServiceMarker: function (loc, opt, info, d) {
 
@@ -1232,7 +1243,8 @@ window.gMapsCallback = function () {
         //#!#START STREETVIEW
         /**
          * Switch StreetView
-         * @this {tinyMap}
+         * @param {Object} map Map instance
+         * @param {Object} opt Options
          */
         streetView: function (map, opt) {
 
@@ -1274,7 +1286,8 @@ window.gMapsCallback = function () {
         //#!#START PLACES
         /**
          * Places API
-         * @this {tinyMap}
+         * @param {Object} map Map instance
+         * @param {Object} opt Options
          */
         places: function (map, opt) {
 
@@ -1360,8 +1373,7 @@ window.gMapsCallback = function () {
         //#!#START PANTO
         /**
          * Method: Google Maps PanTo
-         * @param {(string|Array|Object)} addr Location
-         * @public
+         * @param {(string|string[]|number[]|Object)} addr Location
          */
         panTo: function (addr) {
 
@@ -1399,7 +1411,6 @@ window.gMapsCallback = function () {
         /**
          * Method: Close all infoWindow on map
          * @param {string} type Layer type
-         * @public
          */
         close: function (layer, callback) {
             var self   = this,
@@ -1447,7 +1458,6 @@ window.gMapsCallback = function () {
         /**
          * Method: Google Maps clear the specificed layer
          * @param {string} type Layer type
-         * @public
          */
         clear: function (layer, callback) {
 
@@ -1523,7 +1533,6 @@ window.gMapsCallback = function () {
         /**
          * Method: Google Maps get the specificed layer
          * @param {string} type Layer type
-         * @public
          */
         get: function (layer, callback) {
 
@@ -1604,7 +1613,6 @@ window.gMapsCallback = function () {
         /**
          * Method:  Google Maps dynamic add layers
          * @param {Object} options Refernce by tinyMap options
-         * @public
          */
         modify: function (options) {
 
@@ -1848,7 +1856,7 @@ window.gMapsCallback = function () {
                 /**
                  * Label in Maps
                  * @param {Object} options Label options
-                 * @global
+                 * @protected
                  * @constructor
                  */
                 Label = function (options) {
@@ -1990,7 +1998,7 @@ window.gMapsCallback = function () {
     /**
      * jQuery tinyMap API configure
      * @param {Object} options Plugin configure
-     * @public
+     * @global
      */
     $.fn.tinyMapConfigure = function (options) {
         tinyMapConfigure = $.extend(tinyMapConfigure, options);
@@ -1999,6 +2007,7 @@ window.gMapsCallback = function () {
      * Calculate distances
      * @param {Object} options Query params
      * @param {Function} callback Function for callback
+     * @global
      */
     $.fn.tinyMapDistance = function (options, callback) {
 
@@ -2029,6 +2038,7 @@ window.gMapsCallback = function () {
      * Quick query latlng/address
      * @param {Object} options Query params
      * @param {Function} callback Function for callback
+     * @global
      */
     $.fn.tinyMapQuery = function (options, callback) {
 
@@ -2064,12 +2074,10 @@ window.gMapsCallback = function () {
      * @public
      */
     $.fn.tinyMap = function (options) {
-
         var instance = {},
             result = [],
             args = arguments,
             id   = 'tinyMap';
-
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, id);
