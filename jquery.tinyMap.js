@@ -6,13 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
- * 新增 adsense 可在地圖上顯示 Adsense 廣告。
- * 新增 close 方法可關閉所有或指定圖層的 infoWindow。
+ * 新增 get 方法的參數 cluster, bound 以取得 cluster 以及 bound 物件。
+ * 更換 MarkerClusterer 函式庫為 MarkerClustererPlus 版本。
  *
- * @since 2015-07-17 12:56:26
+ * @since 2015-07-23 12:46:26
  * @author essoduke.org
- * @version 3.2.9
+ * @version 3.2.10
  * @license MIT License
  */
 /**
@@ -35,7 +34,7 @@ window.gMapsCallback = function () {
             'language' : 'zh-TW',
             'callback' : 'gMapsCallback',
             'api'      : '//maps.google.com/maps/api/js',
-            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer_compiled.js'
+            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js'
         },
     // Default plugin settings
         defaults = {
@@ -135,6 +134,11 @@ window.gMapsCallback = function () {
          */
         self._clusters = [];
         /**
+         * Bounds object
+         * @type {Object[]}
+         */
+        self._bounds = {};
+        /**
          * Labels
          * @type {Object[]}
          */
@@ -215,10 +219,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        VERSION: '3.2.9',
-
-        // Google Maps LatLngBounds
-        bounds: {},
+        VERSION: '3.2.10',
 
         /**
          * Format to google.maps.Size
@@ -875,14 +876,14 @@ window.gMapsCallback = function () {
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
                 if ('function' === typeof marker.getPosition) {
-                    self.bounds.extend(marker.position);
+                    self._bounds.extend(marker.position);
                 }
                 if (self.options.hasOwnProperty('markerFitBounds') &&
                     true === self.options.markerFitBounds
                 ) {
                     // Make sure fitBounds call after the last marker created.
                     if (self._markers.length === self.options.marker.length) {
-                        map.fitBounds(self.bounds);
+                        map.fitBounds(self._bounds);
                     }
                 }
             }
@@ -987,7 +988,7 @@ window.gMapsCallback = function () {
                     // Apply marker fitbounds
                     if (marker.hasOwnProperty('position')) {
                         if ('function' === typeof marker.getPosition) {
-                            self.bounds.extend(marker.position);
+                            self._bounds.extend(marker.position);
                         }
                         if (self.options.hasOwnProperty('markerFitBounds') &&
                             true === self.options.markerFitBounds
@@ -995,7 +996,7 @@ window.gMapsCallback = function () {
                             // Make sure fitBounds called after the last marker created.
                             // @since v3.1.7
                             if (self._markers.length === def.marker.length) {
-                                map.fitBounds(self.bounds);
+                                map.fitBounds(self._bounds);
                             }
                         }
                     }
@@ -1557,7 +1558,9 @@ window.gMapsCallback = function () {
                     'polyline' : [],
                     'circle'   : [],
                     'direction': [],
-                    'kml'      : []
+                    'kml'      : [],
+                    'cluster'  : [], // @since 3.2.10
+                    'bound'    : []  // @since 3.2.10
                 };
             }
 
@@ -1851,7 +1854,7 @@ window.gMapsCallback = function () {
 
             // Make sure the API was loaded.
             if ('object' === typeof window.google) {
-                self.bounds = new google.maps.LatLngBounds();
+                self._bounds = new google.maps.LatLngBounds();
                 //#!#START LABEL
                 /**
                  * Label in Maps
