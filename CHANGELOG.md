@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.10
+* 新增 get 方法的參數 cluster, bound 以取得 cluster 以及 bound 物件。
+* 更換 MarkerClusterer 函式庫為 MarkerClustererPlus 版本。
+
 ###3.2.9
  * 新增 marker.infoWindowOptions 可自訂 infoWindow 的原生屬性。
  * 新增 adsense 可在地圖上顯示 Adsense 廣告。
