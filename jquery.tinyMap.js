@@ -6,12 +6,14 @@
  *
  * Changelog
  * -------------------------------
- * 新增 get 方法的參數 cluster, bound 以取得 cluster 以及 bound 物件。
- * 更換 MarkerClusterer 函式庫為 MarkerClustererPlus 版本。
+ * 新增 get.cluster, get.bound 方法的參數以取得 cluster 以及 bound 物件。
+ * 新增 markerWithLabel(bool) 參數，可設置是否載入 MarkerWithLabel 的參數。
+ * 現在可以經由 CSS selector `#markerLayer img` 設置標記圖示的樣式。
+ * 最佳化 MarkerClusterer 的建立程序。
  *
- * @since 2015-07-23 12:46:26
+ * @since 2015-07-24 12:22:53
  * @author essoduke.org
- * @version 3.2.10
+ * @version 3.2.11
  * @license MIT License
  */
 /**
@@ -29,12 +31,14 @@ window.gMapsCallback = function () {
     // API Configure
     var apiLoaded = false,
         apiClusterLoaded = false,
+        apiMarkerWithLabelLoaded = false,
         tinyMapConfigure = {
             'sensor'   : false,
             'language' : 'zh-TW',
             'callback' : 'gMapsCallback',
-            'api'      : '//maps.google.com/maps/api/js',
-            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js'
+            'api'      : '//maps.googleapis.com/maps/api/js',
+            'clusterer': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js',
+            'withLabel': '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerwithlabel/src/markerwithlabel_packed.js'
         },
     // Default plugin settings
         defaults = {
@@ -46,8 +50,7 @@ window.gMapsCallback = function () {
             'notFound': '找不到查詢的地點',
             'zoom': 8
         },
-        styles = {},
-        Label  = {};
+        styles = {};
     //#!#START STYLES
         styles = {
             // Grey Scale
@@ -102,7 +105,30 @@ window.gMapsCallback = function () {
         }
         return result;
     }
-
+    //#!#START LABEL
+    /**
+     * Label in Maps
+     * @param {Object} options Label options
+     * @protected
+     * @constructor
+     */
+    function Label (options) {
+        var self = this,
+            css = options.hasOwnProperty('css') ? options.css.toString() : '';
+        self.setValues(options);
+        self.span = $('<span/>').css({
+            'position': 'relative',
+            'left': '-50%',
+            'top': '0',
+            'white-space': 'nowrap'
+        }).addClass(css);
+        self.div = $('<div/>').css({
+            'position': 'absolute',
+            'display': 'none'
+        });
+        self.span.appendTo(self.div);
+    }
+    //#!#END
     /**
      * tinyMap Constructor
      * @param {Object} container HTML element
@@ -132,7 +158,7 @@ window.gMapsCallback = function () {
          * Marker clusters
          * @type {Object[]}
          */
-        self._clusters = [];
+        self._clusters = {};
         /**
          * Bounds object
          * @type {Object[]}
@@ -219,7 +245,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        VERSION: '3.2.10',
+        'VERSION': '3.2.11',
 
         /**
          * Format to google.maps.Size
@@ -293,7 +319,7 @@ window.gMapsCallback = function () {
                 // GeoLocation
                 this.geoLocation(map, opt);
             } catch (ignore) {
-                console.info(ignore);
+                console.warn(ignore);
             }
         },
         /**
@@ -679,7 +705,28 @@ window.gMapsCallback = function () {
                     } else {
                         throw 'Geocoder Status: ' + status;
                     }
-                };
+                },
+                clusterOptions = {
+                    'maxZoom': null,
+                    'gridSize': 60
+                },
+                markerCluster = {};
+
+            /**
+             * Apply marker cluster.
+             * Require markerclustererplus.js
+             * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/docs/reference.html}
+             * @since 2015-04-30 10:18:33
+             */
+            if (opt.hasOwnProperty('markerCluster')) {
+                if ('function' === typeof MarkerClusterer) {
+                    clusterOptions = $.extend({}, clusterOptions, opt.markerCluster);
+                    self._clusters = new MarkerClusterer(map, [], clusterOptions);
+                    if (clusterOptions.hasOwnProperty('event')) {
+                        self.bindEvents(self._clusters, clusterOptions.event);
+                    }
+                }
+            }
 
             // For first initialize of instance.
             if ((!source || 0 === markers.length)) {
@@ -826,7 +873,7 @@ window.gMapsCallback = function () {
                 content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
                 icons   = self.markerIcon(opt),
                 iwOpt   = {},
-                clusterOption = {
+                clusterOptions = {
                     'maxZoom': null,
                     'gridSize': 60
                 },
@@ -862,7 +909,9 @@ window.gMapsCallback = function () {
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
 
-            marker = new google.maps.Marker(markerOptions);
+            marker = 'function' === typeof MarkerWithLabel ?
+                     new MarkerWithLabel(markerOptions) :
+                     new google.maps.Marker(markerOptions);
             self._markers.push(marker);
 
             // Created event for marker is created.
@@ -894,14 +943,8 @@ window.gMapsCallback = function () {
              * @since 2015-04-30 10:18:33
              */
             if (!opt.hasOwnProperty('cluster') || (opt.hasOwnProperty('cluster') && true === opt.cluster)) {
-                self._markersCluster.push(marker);
-            }
-            if (self.options.hasOwnProperty('markerCluster')) {
-                if ('function' === typeof MarkerClusterer) {
-                    clusterOption = $.extend({}, clusterOption, self.options.markerCluster);
-                    if (self._markers.length === self.options.marker.length) {
-                        self._clusters.push(new MarkerClusterer(map, self._markersCluster, clusterOption));
-                    }
+                if ('function' === typeof self._clusters.addMarker) {
+                    self._clusters.addMarker(marker);
                 }
             }
             if (opt.hasOwnProperty('label')) {
@@ -909,7 +952,7 @@ window.gMapsCallback = function () {
                     'text': opt.label,
                     'map' : map,
                     'css' : opt.hasOwnProperty('css') ? opt.css.toString() : '',
-                    'id'  :  id
+                    'id'  : id
                 });
                 label.bindTo('position', marker, 'position');
                 label.bindTo('text', marker, 'position');
@@ -944,10 +987,11 @@ window.gMapsCallback = function () {
                                 opt.title.toString().replace(/<([^>]+)>/g, '') :
                                 false,
                         content = opt.hasOwnProperty('text') ? opt.text.toString() : false,
-                        clusterOption = {
+                        clusterOptions = {
                             'maxZoom': null,
                             'gridSize': 60
                         },
+                        clusterNoDraw = false,
                         markerOptions = {
                             'map': map,
                             'position': results[0].geometry.location,
@@ -972,9 +1016,11 @@ window.gMapsCallback = function () {
                     if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
                         markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                     }
-
+                    
                     markerOptions = $.extend({}, markerOptions, opt);
-                    marker = new google.maps.Marker(markerOptions);
+                    marker = 'function' === typeof MarkerWithLabel ?
+                             new MarkerWithLabel(markerOptions) :
+                             new google.maps.Marker(markerOptions);
                     self._markers.push(marker);
 
                     // Created event for marker is created.
@@ -1007,16 +1053,11 @@ window.gMapsCallback = function () {
                      * @since 2015-04-30 10:18:33
                      */
                     if (!opt.hasOwnProperty('cluster') || (opt.hasOwnProperty('cluster') && true === opt.cluster)) {
-                        self._markersCluster.push(marker);
+                        if ('function' === typeof self._clusters.addMarker) {
+                            self._clusters.addMarker(marker);
+                        }
                     }
-                    if (self.options.hasOwnProperty('markerCluster') &&
-                        'function' === typeof MarkerClusterer &&
-                        self._markers.length === def.marker.length
-                    ) {
-                        clusterOption = $.extend({}, clusterOption, self.options.markerCluster);
-                        self._clusters.push(new MarkerClusterer(map, self._markersCluster, clusterOption));
-                    }
-
+                    
                     if (opt.hasOwnProperty('label')) {
                         label = new Label({
                             'text': opt.label,
@@ -1831,62 +1872,51 @@ window.gMapsCallback = function () {
             try {
                 delete param.api;
                 delete param.clusterer;
+                delete param.withLabel;
                 param = $.param(param);
             } catch (ignore) {
             }
-            
+
             // Asynchronous load the Google Maps API
             if (!apiLoaded && 'undefined' === typeof window.google) {
                 script = document.createElement('script');
                 script.setAttribute('src', [api, param].join('?'));
                 (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
                 apiLoaded = true;
-                script    = null;
-            }
-            // Asynchronous load MarkerClusterer library
-            if (!apiClusterLoaded && 'undefined' === typeof MarkerClusterer) {
-                script = document.createElement('script');
-                script.setAttribute('src', tinyMapConfigure.clusterer);
-                (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
-                apiClusterLoaded = true;
-                script    = null;
+                script = null;
             }
 
-            // Make sure the API was loaded.
+            // Make sure Google maps API is loaded.
             if ('object' === typeof window.google) {
+
+                // Load MarkerClusterer library
+                if (!apiClusterLoaded &&
+                    self.options.hasOwnProperty('markerCluster') &&
+                    false !== self.options.markerCluster &&
+                    'undefined' === typeof MarkerClusterer
+                ) {
+                    script = document.createElement('script');
+                    script.setAttribute('src', tinyMapConfigure.clusterer);
+                    (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
+                    apiClusterLoaded = true;
+                    script = null;
+                }
+                // Load MarkerWithLabel library
+                if (!apiMarkerWithLabelLoaded &&
+                    self.options.hasOwnProperty('markerWithLabel') &&
+                    true === self.options.markerWithLabel &&
+                    'undefined' === typeof MarkerWithLabel
+                ) {
+                    script = document.createElement('script');
+                    script.setAttribute('src', tinyMapConfigure.withLabel);
+                    (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
+                    apiMarkerWithLabelLoaded = true;
+                    script = null;
+                }
+
                 self._bounds = new google.maps.LatLngBounds();
                 //#!#START LABEL
-                /**
-                 * Label in Maps
-                 * @param {Object} options Label options
-                 * @protected
-                 * @constructor
-                 */
-                Label = function (options) {
-                    var self = this,
-                        css = options.hasOwnProperty('css') ? options.css.toString() : '';
-                    self.setValues(options);
-                    self.span = $('<span/>').css({
-                        'position': 'relative',
-                        'left': '-50%',
-                        'top': '0',
-                        'white-space': 'nowrap'
-                    }).addClass(css);
-                    self.div = $('<div/>').css({
-                        'position': 'absolute',
-                        'display': 'none'
-                    });
-                    self.span.appendTo(self.div);
-                };
-                /**
-                 * Inherit from Google Maps OverlayView
-                 * @this {Label}
-                 */
                 Label.prototype = new google.maps.OverlayView();
-                /**
-                 * binding the customize events to map
-                 * @this {Label}
-                 */
                 Label.prototype.onAdd = function () {
                     var self = this;
                     self.div.appendTo($(self.getPanes().overlayLayer));
@@ -1894,10 +1924,6 @@ window.gMapsCallback = function () {
                         google.maps.event.addListener(self, 'visible_changed', self.onRemove)
                     ];
                 };
-                /**
-                 * Label draw to map
-                 * @this {Label}
-                 */
                 Label.prototype.draw = function () {
                     var projection = this.getProjection(),
                         position   = {};
@@ -1915,10 +1941,6 @@ window.gMapsCallback = function () {
                         console.error(ignore);
                     }
                 };
-                /**
-                 * Label remove from the map
-                 * @this {Label}
-                 */
                 Label.prototype.onRemove = function () {
                     $(this.div).remove();
                 };
@@ -1945,7 +1967,7 @@ window.gMapsCallback = function () {
                     delete self.googleMapOptions.streetView;
                 }
 
-                // Parsing Center location
+                // Center location parse
                 self.googleMapOptions.center = parseLatLng(self.options.center, true);
 
                 //#!#START STYLES
