@@ -1,4 +1,9 @@
 #jQuery tinyMap Changelog
+###3.2.11
+* 新增 get.cluster, get.bound 方法的參數以取得 cluster 以及 bound 物件。
+* 新增 markerWithLabel(bool) 參數，可設置是否載入 MarkerWithLabel 的參數。
+* 最佳化 MarkerClusterer 的建立程序。
+
 ###3.2.10
 * 新增 get 方法的參數 cluster, bound 以取得 cluster 以及 bound 物件。
 * 更換 MarkerClusterer 函式庫為 MarkerClustererPlus 版本。
