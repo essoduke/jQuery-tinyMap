@@ -1,26 +1,32 @@
 {
-  "name": "jquery-tinymap",
-  "version": "3.2.11",
-  "homepage": "https://github.com/essoduke/jQuery-tinyMap",
-  "authors": [
-    "Essoduke Chang<essoduke@gmail.com> (http://essoduke.org)"
-  ],
-  "description": "jquery plugin for google map",
-  "main": "jquery.tinyMap.js",
-  "keywords": [
-    "jquery",
-    "google",
-    "map"
-  ],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
-   "dependencies": {
-    "jquery": "~2.0.0"
-  }
+	"name": "jquery-tinymap",
+	"homepage": "http://app.essoduke.org/tinyMap/",
+    "version": "3.2.11",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/essoduke/jQuery-tinyMap.git"
+	},
+	"authors": [
+		"Essoduke Chang <essoduke@gmail.com>"
+	],
+	"description": "Easy to create the Google Maps on your page.",
+	"main": "jquery.tinyMap.min.js",
+	"keywords": [
+        "jquery",
+        "plugins",
+		"google maps",
+		"map",
+	],
+	"license": "MIT",
+	"ignore": [
+		"**/.*",
+		"node_modules",
+		"bower_components",
+		"test",
+		"demo",
+		"lib"
+	],
+	"dependencies": {
+		"jquery": ">= 1.11.0"
+	}
 }
