@@ -27,6 +27,6 @@
 		"lib"
 	],
 	"dependencies": {
-		"jquery": ">= 1.11.0"
+		"jquery": ">= 2.0.0"
 	}
 }
