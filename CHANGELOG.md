@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.2.12
+* 修正 modify 無法新增 places 圖層的錯誤。
+* 新增 places.callback(Function) 參數，回傳取得的地方資訊 JSON。
+
 ###3.2.11
 * 新增 markerWithLabel(bool) 參數，可設置是否載入 MarkerWithLabel 的參數。
 * 最佳化 MarkerClusterer 的建立程序。
