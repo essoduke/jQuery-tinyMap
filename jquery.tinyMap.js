@@ -6,14 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 新增 get.cluster, get.bound 方法的參數以取得 cluster 以及 bound 物件。
- * 新增 markerWithLabel(bool) 參數，可設置是否載入 MarkerWithLabel 的參數。
- * 現在可以經由 CSS selector `#markerLayer img` 設置標記圖示的樣式。
- * 最佳化 MarkerClusterer 的建立程序。
+ * 修正 modify 無法新增 places 圖層的錯誤。
+ * 新增 places.callback(Function) 參數，回傳取得的地方資訊 JSON。
  *
- * @since 2015-07-24 12:22:53
+ * @since 2015-07-29 15:57:21
  * @author essoduke.org
- * @version 3.2.11
+ * @version 3.2.12
  * @license MIT License
  */
 /**
@@ -245,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.11',
+        'VERSION': '3.2.12',
 
         /**
          * Format to google.maps.Size
@@ -1343,7 +1341,7 @@ window.gMapsCallback = function () {
                 i = 0;
 
             if ('undefined' !== typeof google.maps.places && request.hasOwnProperty('query')) {
-                placesService = new google.maps.places.PlacesService(map),
+                placesService = new google.maps.places.PlacesService(map);
                 placesService.textSearch(request, function (results, status) {
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
                         self.places = results;
@@ -1356,6 +1354,9 @@ window.gMapsCallback = function () {
                                     }));
                                 }
                             }
+                        }
+                        if (request.hasOwnProperty('callback') && 'function' === typeof request.callback) {
+                            request.callback.call(results);
                         }
                     }
                 });
@@ -1670,7 +1671,8 @@ window.gMapsCallback = function () {
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
                     ['streetView', 'streetView'],
-                    ['markerFitBounds', 'markerFitBounds']
+                    ['markerFitBounds', 'markerFitBounds'],
+                    ['places', 'places']
                 ],
                 i = 0,
                 m = self.map;
