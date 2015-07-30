@@ -6,11 +6,11 @@
  *
  * Changelog
  * -------------------------------
- * 修正無法清除 places 物件的問題。
+ * 因應 Google Maps API v3.21 新增的 MarkerLabel，原 label, css 更名為 newLabel, newLabelCSS。
  *
- * @since 2015-07-30 10:39:21
+ * @since 2015-07-30 12:48:21
  * @author essoduke.org
- * @version 3.2.13
+ * @version 3.2.14
  * @license MIT License
  */
 /**
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.13',
+        'VERSION': '3.2.14',
 
         /**
          * Format to google.maps.Size
@@ -899,13 +899,13 @@ window.gMapsCallback = function () {
                 markerOptions.text = content;
                 markerOptions.infoWindow = new google.maps.InfoWindow(iwOpt);
             }
+            
             if (!$.isEmptyObject(icons)) {
                 markerOptions.icon = icons;
             }
             if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
-
             marker = 'function' === typeof MarkerWithLabel ?
                      new MarkerWithLabel(markerOptions) :
                      new google.maps.Marker(markerOptions);
@@ -944,11 +944,11 @@ window.gMapsCallback = function () {
                     self._clusters.addMarker(marker);
                 }
             }
-            if (opt.hasOwnProperty('label')) {
+            if (opt.hasOwnProperty('newLabel')) {
                 label = new Label({
-                    'text': opt.label,
+                    'text': opt.newLabel,
                     'map' : map,
-                    'css' : opt.hasOwnProperty('css') ? opt.css.toString() : '',
+                    'css' : opt.hasOwnProperty('newLabelCSS') ? opt.newLabelCSS.toString() : '',
                     'id'  : id
                 });
                 label.bindTo('position', marker, 'position');
@@ -1055,11 +1055,11 @@ window.gMapsCallback = function () {
                         }
                     }
                     
-                    if (opt.hasOwnProperty('label')) {
+                    if (opt.hasOwnProperty('newLabel')) {
                         label = new Label({
-                            'text': opt.label,
+                            'text': opt.newLabel,
                             'map' : self.map,
-                            'css' : opt.hasOwnProperty('css') ? opt.css.toString() : '',
+                            'css' : opt.hasOwnProperty('newLabelCSS') ? opt.newLabelCSS.toString() : '',
                             'id'  : id
                         });
                         label.bindTo('position', marker, 'position');
@@ -1339,9 +1339,9 @@ window.gMapsCallback = function () {
                 }, reqOpt),
                 i = 0;
 
-            if ('undefined' !== typeof google.maps.places && request.hasOwnProperty('query')) {
+            if ('undefined' !== typeof google.maps.places) {
                 placesService = new google.maps.places.PlacesService(map);
-                placesService.textSearch(request, function (results, status) {
+                placesService.nearbySearch(request, function (results, status) {
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
                         self._places.push(results);
                         if (request.hasOwnProperty('createMarker') && true === request.createMarker) {
@@ -1926,17 +1926,18 @@ window.gMapsCallback = function () {
                     ];
                 };
                 Label.prototype.draw = function () {
-                    var projection = this.getProjection(),
+                    var self = this,
+                        projection = self.getProjection(),
                         position   = {};
                     try {
-                        position = projection.fromLatLngToDivPixel(this.get('position'));
-                        this.div.css({
+                        position = projection.fromLatLngToDivPixel(self.get('position'));
+                        self.div.css({
                             'left'    : position.x + 'px',
                             'top'     : position.y + 'px',
                             'display' : 'block'
                         });
-                        if (this.text) {
-                            this.span.html(this.text.toString());
+                        if (self.text) {
+                            self.span.html(this.text.toString());
                         }
                     } catch (ignore) {
                         console.error(ignore);
