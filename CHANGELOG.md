@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.13
+* 修正無法清除 places 物件的問題。
+
 ###3.2.12
 * 修正 modify 無法新增 places 圖層的錯誤。
 * 新增 places.callback(Function) 參數，回傳取得的地方資訊 JSON。
