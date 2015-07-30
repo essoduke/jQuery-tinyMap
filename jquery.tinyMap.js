@@ -1547,7 +1547,6 @@ window.gMapsCallback = function () {
                             // Remove from Map
                             if ('function' === typeof item.set) {
                                 item.set('visible', false);
-                                item.set('directions', null);
                             }
                             if ('function' === typeof item.setMap) {
                                 item.setMap(null);
