@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.14
+* 因應 Google Maps API v3.21 新增的 MarkerLabel，原 label, css 更名為 newLabel, newLabelCSS。
+
 ###3.2.13
 * 修正無法清除 places 物件的問題。
 
