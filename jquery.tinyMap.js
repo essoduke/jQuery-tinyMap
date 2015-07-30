@@ -6,12 +6,11 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify 無法新增 places 圖層的錯誤。
- * 新增 places.callback(Function) 參數，回傳取得的地方資訊 JSON。
+ * 修正無法清除 places 物件的問題。
  *
- * @since 2015-07-29 15:57:21
+ * @since 2015-07-30 10:39:21
  * @author essoduke.org
- * @version 3.2.12
+ * @version 3.2.13
  * @license MIT License
  */
 /**
@@ -243,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.12',
+        'VERSION': '3.2.13',
 
         /**
          * Format to google.maps.Size
@@ -1344,7 +1343,7 @@ window.gMapsCallback = function () {
                 placesService = new google.maps.places.PlacesService(map);
                 placesService.textSearch(request, function (results, status) {
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
-                        self.places = results;
+                        self._places.push(results);
                         if (request.hasOwnProperty('createMarker') && true === request.createMarker) {
                             for (i = 0; i < results.length; i += 1) {
                                 if (results[i].hasOwnProperty('geometry')) {
