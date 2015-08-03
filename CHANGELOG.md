@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.15
+* 修正 places.location 無法使用陣列、物件及字串格式的問題。
+
 ###3.2.14
 * 因應 Google Maps API v3.21 新增的 MarkerLabel，原 label, css 更名為 newLabel, newLabelCSS。
 
