@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 因應 Google Maps API v3.21 新增的 MarkerLabel，原 label, css 更名為 newLabel, newLabelCSS。
+ * 修正 places.location 無法使用陣列、物件及字串格式的問題。
  *
- * @since 2015-07-30 12:48:21
  * @author essoduke.org
- * @version 3.2.14
+ * @version 3.2.15
  * @license MIT License
+ * Last modified: 2015-08-03 11:32:08+08:00
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.14',
+        'VERSION': '3.2.15',
 
         /**
          * Format to google.maps.Size
@@ -1338,6 +1338,8 @@ window.gMapsCallback = function () {
                     'radius'  : 100
                 }, reqOpt),
                 i = 0;
+
+            request.location = parseLatLng(request.location, true);
 
             if ('undefined' !== typeof google.maps.places) {
                 placesService = new google.maps.places.PlacesService(map);
