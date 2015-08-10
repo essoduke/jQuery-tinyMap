@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.16
+* 修正若啟用 markerCluster 時，標記的 Label 並不會納入叢集計算的問題。
+
 ###3.2.15
 * 修正 places.location 無法使用陣列、物件及字串格式的問題。
 
