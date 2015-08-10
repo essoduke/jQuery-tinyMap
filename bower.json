@@ -1,7 +1,7 @@
 {
 	"name": "jquery-tinymap",
 	"homepage": "http://app.essoduke.org/tinyMap/",
-    "version": "3.2.15",
+    "version": "3.2.16",
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/essoduke/jQuery-tinyMap.git"
@@ -15,7 +15,7 @@
         "jquery",
         "plugins",
 		"google maps",
-		"map",
+		"map"
 	],
 	"license": "MIT",
 	"ignore": [
