@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 places.location 無法使用陣列、物件及字串格式的問題。
+ * 修正若啟用 markerCluster 時，標記的 Label 並不會納入叢集計算的問題。
  *
  * @author essoduke.org
- * @version 3.2.15
+ * @version 3.2.16
  * @license MIT License
- * Last modified: 2015-08-03 11:32:08+08:00
+ * Last modified: 2015-08-10 11:46:54+08:00
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.15',
+        'VERSION': '3.2.16',
 
         /**
          * Format to google.maps.Size
@@ -952,10 +952,16 @@ window.gMapsCallback = function () {
                     'id'  : id
                 });
                 label.bindTo('position', marker, 'position');
-                label.bindTo('text', marker, 'position');
                 label.bindTo('visible', marker);
                 self._labels.push(label);
             }
+            // Hide labels when clustering.
+            // @since 3.2.16 2015-08-10
+            google.maps.event.addListener(marker, 'map_changed', function () {
+                if ('function' === typeof label.setMap) {
+                    label.setMap(this.getMap());
+                }
+            });
             // Binding events
             self.bindEvents(marker, opt.event);
         },
@@ -1067,6 +1073,13 @@ window.gMapsCallback = function () {
                         label.bindTo('visible', marker);
                         self._labels.push(label);
                     }
+                    // Hide labels when clustering.
+                    // @since 3.2.16 2015-08-10
+                    google.maps.event.addListener(marker, 'map_changed', function () {
+                        if ('function' === typeof label.setMap) {
+                            label.setMap(this.getMap());
+                        }
+                    });
                     // Binding events
                     self.bindEvents(marker, opt.event);
                 }
@@ -2105,7 +2118,7 @@ window.gMapsCallback = function () {
         var instance = {},
             result = [],
             args = arguments,
-            id   = 'tinyMap';
+            id  = 'tinyMap';
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, id);
