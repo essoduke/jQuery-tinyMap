@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.17
+* 修正 marker.icon 可能會產生 setIcon 錯誤的問題。
+
 ###3.2.16
 * 修正若啟用 markerCluster 時，標記的 Label 並不會納入叢集計算的問題。
 
