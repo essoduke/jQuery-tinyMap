@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正若啟用 markerCluster 時，標記的 Label 並不會納入叢集計算的問題。
+ * 修正 marker.icon 可能會產生 setIcon 錯誤的問題。
  *
  * @author essoduke.org
- * @version 3.2.16
+ * @version 3.2.17
  * @license MIT License
- * Last modified: 2015-08-10 11:46:54+08:00
+ * Last modified: 2015-09-09 14:36:01
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.16',
+        'VERSION': '3.2.17',
 
         /**
          * Format to google.maps.Size
@@ -401,7 +401,7 @@ window.gMapsCallback = function () {
                     defOpt
                 );
             }
-            
+
         },
         //#!#END
         //#!#START KML
@@ -771,7 +771,7 @@ window.gMapsCallback = function () {
                                     }
                                 }
                                 if (opt.marker[i].hasOwnProperty('icon')) {
-                                    markers[j].setIcon(opt.marker[i].icon);
+                                    markers[j].setIcon(self.markerIcon(opt.marker[i]));
                                 }
                             // Insert if the forceInsert was true when
                             // id property was not matched.
@@ -899,7 +899,7 @@ window.gMapsCallback = function () {
                 markerOptions.text = content;
                 markerOptions.infoWindow = new google.maps.InfoWindow(iwOpt);
             }
-            
+
             if (!$.isEmptyObject(icons)) {
                 markerOptions.icon = icons;
             }
@@ -1019,8 +1019,8 @@ window.gMapsCallback = function () {
                     if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
                         markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                     }
-                    
-                    markerOptions = $.extend({}, markerOptions, opt);
+
+                    //markerOptions = $.extend({}, opt, markerOptions, opt);
                     marker = 'function' === typeof MarkerWithLabel ?
                              new MarkerWithLabel(markerOptions) :
                              new google.maps.Marker(markerOptions);
@@ -1060,7 +1060,7 @@ window.gMapsCallback = function () {
                             self._clusters.addMarker(marker);
                         }
                     }
-                    
+
                     if (opt.hasOwnProperty('newLabel')) {
                         label = new Label({
                             'text': opt.newLabel,
@@ -1113,7 +1113,7 @@ window.gMapsCallback = function () {
             if (!(opt.hasOwnProperty('from') && opt.hasOwnProperty('to'))) {
                 return false;
             }
-            
+
             var self = this,
                 directionsService = new google.maps.DirectionsService(),
                 directionsDisplay = new google.maps.DirectionsRenderer(),
@@ -1267,7 +1267,7 @@ window.gMapsCallback = function () {
                 cj     = 0,
                 i      = 0,
                 j      = 0;
-                
+
             if (dr) {
                 for (i = 0, ci = dr.length; i < ci; i += 1) {
                     if (
@@ -1324,7 +1324,7 @@ window.gMapsCallback = function () {
                 pano = map.getStreetView();
                 // Apply options
                 pano.setOptions(opts);
-                
+
                 // Events Binding
                 if (opts.hasOwnProperty('event')) {
                     self.bindEvents(pano, opts.event);
@@ -1400,7 +1400,7 @@ window.gMapsCallback = function () {
                         'enableHighAccuracy': false
                     }, opt.geolocation);
                 }
-                
+
                 if (true === opt.autoLocation || 'function' === typeof opt.autoLocation) {
                     geolocation.getCurrentPosition(
                         function (loc) {
@@ -1500,7 +1500,7 @@ window.gMapsCallback = function () {
                         }
                     }
                 }
-                
+
                 if ('function' === typeof callback) {
                     callback.call(this);
                 }
@@ -1536,7 +1536,7 @@ window.gMapsCallback = function () {
             } else {
                 loop = layers;
             }
-            
+
             try {
                 for (obj in loop) {
                     key = '_' + obj.toString().toLowerCase() + 's';
