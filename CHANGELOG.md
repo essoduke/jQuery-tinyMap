@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.18
+* 修正建立或修改 marker 時，原生屬性失效的問題。
+
 ###3.2.17
 * 修正 marker.icon 可能會產生 setIcon 錯誤的問題。
 
