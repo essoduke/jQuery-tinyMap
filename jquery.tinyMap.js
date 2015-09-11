@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 marker.icon 可能會產生 setIcon 錯誤的問題。
+ * 修正建立或修改 marker 時，原生屬性失效的問題。
  *
  * @author essoduke.org
- * @version 3.2.17
+ * @version 3.2.18
  * @license MIT License
- * Last modified: 2015-09-09 14:36:01
+ * Last modified: 2015-09-11 12:49:30
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.17',
+        'VERSION': '3.2.18',
 
         /**
          * Format to google.maps.Size
@@ -906,6 +906,8 @@ window.gMapsCallback = function () {
             if (opt.hasOwnProperty('animation') && 'string' === typeof opt.animation) {
                 markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
             }
+
+            markerOptions = $.extend({}, opt, markerOptions);
             marker = 'function' === typeof MarkerWithLabel ?
                      new MarkerWithLabel(markerOptions) :
                      new google.maps.Marker(markerOptions);
@@ -1020,7 +1022,7 @@ window.gMapsCallback = function () {
                         markerOptions.animation = google.maps.Animation[opt.animation.toUpperCase()];
                     }
 
-                    //markerOptions = $.extend({}, opt, markerOptions, opt);
+                    markerOptions = $.extend({}, opt, markerOptions);
                     marker = 'function' === typeof MarkerWithLabel ?
                              new MarkerWithLabel(markerOptions) :
                              new google.maps.Marker(markerOptions);
