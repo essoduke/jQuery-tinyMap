@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正建立或修改 marker 時，原生屬性失效的問題。
+ * 新增 Direction event.created，觸發於路徑建立時，並回傳 directionsDisplay, response 參數。
  *
  * @author essoduke.org
- * @version 3.2.18
+ * @version 3.2.19
  * @license MIT License
- * Last modified: 2015-09-11 12:49:30
+ * Last modified: 2015-09-24 10:09:39
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.2.18',
+        'VERSION': '3.2.19',
 
         /**
          * Format to google.maps.Size
@@ -1217,6 +1217,13 @@ window.gMapsCallback = function () {
                                 wp.text = waypointsText[i - 1];
                                 self.directionServiceMarker(legs[i].start_location, wp, infoWindow, opt);
                             }
+                        }
+                        // Created event for circle is created.
+                        if (opt.hasOwnProperty('event') &&
+                            opt.event.hasOwnProperty('created') &&
+                            'function' === typeof opt.event.created
+                        ) {
+                            opt.event.created.call(self, directionsDisplay, response);
                         }
                     } catch (ignore) {
                     }
