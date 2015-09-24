@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.2.19
+* 新增 Direction event.created，觸發於路徑建立時，並回傳 directionsDisplay, response 參數。
+
 ###3.2.18
 * 修正建立或修改 marker 時，原生屬性失效的問題。
 
