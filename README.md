@@ -38,6 +38,13 @@ Setting up the container's width and height with CSS:
 }
 ```
 
+And execute.
+```javascript
+$('#map').tinyMap({
+    'center': ['LAT', 'LNG'],
+    'zoom': 15
+});
+```
 ## Usage
 
 Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
