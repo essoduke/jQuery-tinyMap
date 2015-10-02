@@ -47,7 +47,7 @@ $('#map').tinyMap({
 ```
 ## Usage
 
-Complete options: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
+Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
 // Basic
