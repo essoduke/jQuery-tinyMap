@@ -47,7 +47,8 @@ $('#map').tinyMap({
 ```
 ## Usage
 
-Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
+Complete options: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
+
 ```javascript
 // Basic
 $(selector).tinyMap({
@@ -214,10 +215,12 @@ var kml = $(selector).tinyMap('getKML');
 
 // Or using options:
 $(selector).tinyMap('getKML', {
-    'download': true|false,  // TRUE for direct download the KML file.
-    'marker': true|false,    // Include marker overlay
-    'polyline': true|false,  // Include polyline overlay
-    'direction': true|false  // Include direction overlay
+    'download': false,  // TRUE for direct download the KML file.
+    'marker': true,    // Include marker overlay
+    'polyline': true,  // Include polyline overlay
+    'polygon': true,   // Include polygon overlay
+    'circle': true,    // Include circle overlay
+    'direction': true  // Include direction overlay
 });
 ```
 ## Public methods
