@@ -1,4 +1,10 @@
 #jQuery tinyMap Changelog
+###3.3.0
+* 重構 marker 的處理程序。
+* 重構 getKML 的處理程序。
+* 新增 getKML 輸出 polygon, circle 圖層的支援。
+* 新增 marker.infoWindowOptions 的原生事件處理。
+
 ###3.2.19
 * 新增 Direction event.created，觸發於路徑建立時，並回傳 directionsDisplay, response 參數。
 
