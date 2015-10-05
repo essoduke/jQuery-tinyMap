@@ -243,25 +243,6 @@ $.fn.tinyMapQuery({
     // Result: 25.041171,121.565227
 });
 ```
-### tinyMapDistance
-Calculator the duration and distance of multiple location/destination.
-```javascript
-$.fn.tinyMapDistance({
-    'origins': '台北車站', // Origin
-    'destinations': '台北101' // Destination
-}, function (result) {
-    console.dir(result);
-});
-
-// Getting duration/distance of multiple origins and destination.
-$.fn.tinyMapQuery({
-    'origins'  : ['台北市政府', '故宮博物院'],
-    'destinations': ['台北小巨蛋', '台北101']
-}, function (result) {
-    console.dir(result);
-});
-```
-
 ## API Configure
 You could setup the api before using the tinyMap.
 
