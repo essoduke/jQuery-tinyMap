@@ -6,15 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 重構 marker 的處理程序。
- * 重構 getKML 的處理程序。
- * 新增 getKML 輸出 polygon, circle 圖層的支援。
- * 新增 marker.infoWindowOptions 的原生事件處理。
+ * 修正 規劃路徑使用自訂圖示時，起點圖示會同時出現中繼點圖示的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.0
+ * @version 3.3.1
  * @license MIT License
- * Last modified: 2015-10-02 18:43:52+0800
+ * Last modified: 2015-10-05 13:04:11+0800
  */
 /**
  * Call while google maps api loaded
@@ -647,7 +644,7 @@ window.gMapsCallback = function () {
             if (opt.hasOwnProperty('circle') && Array.isArray(opt.circle)) {
                 for (c = 0; c < opt.circle.length; c += 1) {
                     circle = opt.circle[c];
-                    defOpt = $.extend({}, {
+                    defOpt = $.extend({
                         'map': map,
                         'strokeColor': circle.color || '#FF0000',
                         'strokeOpacity': circle.opacity || 0.8,
@@ -917,7 +914,7 @@ window.gMapsCallback = function () {
                     geocoder.geocode({'address': addr}, function (results, status) {
                         // If exceeded, call it later by setTimeout;
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                            window.setTimeout(function () {
+                            setTimeout(function () {
                                 self.placeMarkers(map, opt, source);
                             }, self.interval);
                         } else if (status === google.maps.GeocoderStatus.OK) {
@@ -1090,7 +1087,8 @@ window.gMapsCallback = function () {
                                 }, infoWindow, opt);
                             }
                         }
-                        for (i = 0; i < legs.length; i += 1) {
+                        // @since 3.3.1 Fixed the 1st marker was replaced by waypoint icon.
+                        for (i = 1; i < legs.length; i += 1) {
                             if (opt.hasOwnProperty('icon')) {
                                 if (opt.icon.hasOwnProperty('waypoint') && 'string' === typeof opt.icon.waypoint) {
                                     wp.icon = opt.icon.waypoint;
@@ -1155,8 +1153,7 @@ window.gMapsCallback = function () {
             this.get('direction', function (dr) {
                 dr.forEach(function (dc, i) {
                     var d = dc.getDirections();
-                    if (
-                        d.hasOwnProperty('routes') &&
+                    if (d.hasOwnProperty('routes') &&
                         'undefined' !== typeof d.routes[0] &&
                         'undefined' !== typeof d.routes[0].legs
                     ) {
@@ -1744,8 +1741,8 @@ window.gMapsCallback = function () {
                             j = 0;
                         for (j = 0; j < 65; j += 1) {
                             theta = Math.PI * (j / (points/2));
-                            ey = circle.getCenter().lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta)
-                            ex = circle.getCenter().lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta)
+                            ey = circle.getCenter().lng() + (rlng * Math.cos(theta));
+                            ex = circle.getCenter().lat() + (rlat * Math.sin(theta));
                             latlng += [ey, ex, '0.000000\n'].join(',');
                         }
                         strCircle += templates.polygon.join('')
@@ -1787,8 +1784,7 @@ window.gMapsCallback = function () {
                 }
             });
             // Output KML
-            output = templates.xml
-                              .join('')
+            output = templates.xml.join('')
                               .replace(/#NAME#/gi, '')
                               .replace(
                                   /#PLACEMARKS#/gi,
@@ -1799,7 +1795,7 @@ window.gMapsCallback = function () {
                                   strDirection
                               );
             if (true === opts.download) {
-                window.open(mime + window.btoa(window.decodeURIComponent(window.encodeURIComponent(output))));
+                window.open(mime + window.btoa(decodeURIComponent(encodeURIComponent(output))));
             } else {
                 return output;
             }
@@ -1941,7 +1937,7 @@ window.gMapsCallback = function () {
                     geocoder.geocode({'address': self.options.center}, function (results, status) {
                         try {
                             if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                                window.setTimeout(function () {
+                                setTimeout(function () {
                                     self.init();
                                 }, self.interval);
                             } else if (status === google.maps.GeocoderStatus.OK && Array.isArray(results)) {
