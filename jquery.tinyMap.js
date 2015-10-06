@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 marker modify 時 newLabel, newLabelCSS 無法作用的錯誤。
+ * 修正 modify.direction 無法作用的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.3
+ * @version 3.3.3.1
  * @license MIT License
- * Last modified: 2015-10-06 10:44:49
+ * Last modified: 2015-10-06 15:28:17
  */
 /**
  * Call while google maps api loaded
@@ -242,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.3',
+        'VERSION': '3.3.3.1',
 
         /**
          * Format to google.maps.Size
@@ -365,7 +365,9 @@ window.gMapsCallback = function () {
                     ) {
                         for (i = 0; i < self._markers.length; i += 1) {
                             m = self._markers[i];
-                            if (m.hasOwnProperty('infoWindow') && 'function' === typeof m.infoWindow.close) {
+                            if (m.hasOwnProperty('infoWindow') &&
+                                'function' === typeof m.infoWindow.close
+                            ) {
                                 m.infoWindow.close();
                             }
                         }
@@ -1432,7 +1434,7 @@ window.gMapsCallback = function () {
                                     }
                                 });
                                 self._directionsMarkers.filter(function (n) {
-                                    return undefined !== n;
+                                    return 'undefined' !== typeof n;
                                 });
                             }
                             // Remove from Map
@@ -1447,7 +1449,7 @@ window.gMapsCallback = function () {
                         });
                         // Filter undefined elements
                         self[key] = self[key].filter(function (n) {
-                            return undefined !== n;
+                            return 'undefined' !== typeof n;
                         });
                     }
                 }
@@ -1558,7 +1560,7 @@ window.gMapsCallback = function () {
                 label = [
                     ['kml', 'kml'],
                     ['marker', 'placeMarkers'],
-                    ['direction', 'direction'],
+                    ['direction', 'directionService'],
                     ['polyline', 'drawPolyline'],
                     ['polygon', 'drawPolygon'],
                     ['circle', 'drawCircle'],
@@ -1793,7 +1795,7 @@ window.gMapsCallback = function () {
                                   strDirection
                               );
             if (true === opts.download) {
-                window.open(mime + window.btoa(decodeURIComponent(encodeURIComponent(output))));
+                window.open(mime + window.btoa(window.decodeURIComponent(window.encodeURIComponent(output))));
             } else {
                 return output;
             }
@@ -1992,11 +1994,13 @@ window.gMapsCallback = function () {
             result = null;
 
         $.getJSON(
-            '//maps.googleapis.com/maps/api/geocode/json',
+            'https://maps.googleapis.com/maps/api/geocode/json',
             opt,
             function (data) {
                 if (data.status === 'OK') {
-                    if (data.results && 'undefined' !== typeof data.results[0]) {
+                    if (data.hasOwnProperty('results') &&
+                        'undefined' !== typeof data.results[0]
+                    ) {
                         if (opt.hasOwnProperty('latlng')) {
                             result = data.results[0].formatted_address;
                         } else if (opt.hasOwnProperty('address')) {
