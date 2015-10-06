@@ -1,6 +1,7 @@
 #jQuery tinyMap Changelog
 ###3.3.3
 * 修正 marker modify 時 newLabel, newLabelCSS 無法作用的錯誤。
+
 ###3.3.2
 * 將所有外部 API 都使用 HTTPS 協定載入。
 * 重構 direction 的處理程序。
@@ -10,6 +11,7 @@
  
 ###3.3.1
 * 修正 規劃路徑使用自訂圖示時，起點圖示會同時出現中繼點圖示的錯誤。
+
 ###3.3.0
 * 重構 marker 的處理程序。
 * 重構 getKML 的處理程序。
