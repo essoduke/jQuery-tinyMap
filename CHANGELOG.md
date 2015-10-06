@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.3.1
+* 修正 modify.direction 無法作用的錯誤。
+
 ###3.3.3
 * 修正 marker modify 時 newLabel, newLabelCSS 無法作用的錯誤。
 
