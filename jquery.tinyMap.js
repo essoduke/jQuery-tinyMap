@@ -6,16 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 將所有外部 API 都使用 HTTPS 協定載入。
- * 重構 direction 的處理程序。
- * 移除 $.fn.tinyMapDistance 公用方法。
- * 新增 direction.requestExtra(Object) 參數，以使用 DirectionService Request 的原生參數。
- * 新增 direction.renderAll(bool) 參數，可以繪製單一路徑內的多種走法（須配合原生 provideRouteAlternatives 參數）。
+ * 修正 marker modify 時 newLabel, newLabelCSS 無法作用的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.2
+ * @version 3.3.3
  * @license MIT License
- * Last modified: 2015-10-05 18:08:49+0800
+ * Last modified: 2015-10-06 10:44:49
  */
 /**
  * Call while google maps api loaded
@@ -246,7 +242,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.0',
+        'VERSION': '3.3.3',
 
         /**
          * Format to google.maps.Size
@@ -784,6 +780,7 @@ window.gMapsCallback = function () {
              * @since 2015-10-01 18:20:00
              */
             if (!source) {
+            
                 // Markers cluster
                 if (!marker.hasOwnProperty('cluster') ||
                     (marker.hasOwnProperty('cluster') && true === marker.cluster)
@@ -792,21 +789,22 @@ window.gMapsCallback = function () {
                         self._clusters.addMarker(marker);
                     }
                 }
-                // Create Label
-                if (marker.hasOwnProperty('newLabel')) {
-                    label = new Label({
-                        'text': marker.newLabel,
-                        'map' : map,
-                        'css' : marker.hasOwnProperty('newLabelCSS') ?
-                                marker.newLabelCSS.toString() :
-                                '',
-                        'id'  : marker.id
-                    });
-                    label.bindTo('position', marker);
-                    label.bindTo('visible', marker);
-                    self._labels.push(label);
-                }
             }
+            // Create Label
+            if (marker.hasOwnProperty('newLabel')) {
+                label = new Label({
+                    'text': marker.newLabel,
+                    'map' : map,
+                    'css' : marker.hasOwnProperty('newLabelCSS') ?
+                            marker.newLabelCSS.toString() :
+                            '',
+                    'id'  : marker.id
+                });
+                label.bindTo('position', marker);
+                label.bindTo('visible', marker);
+                self._labels.push(label);
+            }
+            
             // Modify existed label.
             if (marker.hasOwnProperty('id')) {
                 self.get({
@@ -1226,7 +1224,7 @@ window.gMapsCallback = function () {
             var self = this,
                 placesService = {},
                 reqOpt = opt.hasOwnProperty('places') ? opt.places : {},
-                request = $.extend({}, {
+                request = $.extend({
                     'location': map.getCenter(),
                     'radius'  : 100
                 }, reqOpt),
