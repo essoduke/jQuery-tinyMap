@@ -277,7 +277,7 @@ window.gMapsCallback = function () {
             var map = this.map,
                 opt = this.options;
 
-            //try {
+            try {
                 //#!#START ADSENSE
                 // Adsense overlay
                 this.adsense(map, opt);
@@ -316,9 +316,9 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            //} catch (ignore) {
-                //console.error(ignore);
-            //}
+            } catch (ignore) {
+                console.error(ignore);
+            }
         },
         /**
          * Events binding
