@@ -6,12 +6,13 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify.direction 無法作用的錯誤。
+ * 修正 modify marker 時，若該 marker 未存在於地圖上卻不會新增的錯誤。
+ * 移除載入 API 時的 sensor 參數。
  *
  * @author essoduke.org
- * @version 3.3.3.1
+ * @version 3.3.4
  * @license MIT License
- * Last modified: 2015-10-06 15:28:17
+ * Last modified: 2015-11-06 10:32:35
  */
 /**
  * Call while google maps api loaded
@@ -30,7 +31,6 @@ window.gMapsCallback = function () {
         apiClusterLoaded = false,
         apiMarkerWithLabelLoaded = false,
         tinyMapConfigure = {
-            'sensor'   : false,
             'language' : 'zh-TW',
             'callback' : 'gMapsCallback',
             'api'      : 'https://maps.googleapis.com/maps/api/js',
@@ -887,7 +887,8 @@ window.gMapsCallback = function () {
                     self.get({
                         'marker': [id]
                     }, function (ms) {
-                        if (ms.marker) {
+                        // Has found the marker
+                        if (Array.isArray(ms.marker) && ms.marker.length) {
                             if (!(m.hasOwnProperty('forceInsert') && true === m.forceInsert)) {
                                 m = $.extend(ms.marker[0], m);
                                 if ('function' === typeof self._clusters.removeMarker) {
@@ -951,7 +952,6 @@ window.gMapsCallback = function () {
                         if ('function' === typeof m.setPosition) {
                             m.setPosition(addr);
                         }
-
                         mk = m;
                     } else {
                         markerOptions.position = addr;
@@ -1538,11 +1538,12 @@ window.gMapsCallback = function () {
                     }
                     target['map'] = self.map;
                 }
+                
                 if ('function' === typeof callback) {
                     callback.call(this, target);
                 }
             } catch (ignore) {
-                console.error(ignore);
+                console.warn(ignore);
             } finally {
                 return target;
             }
@@ -1888,7 +1889,7 @@ window.gMapsCallback = function () {
                             }
                         }
                     } catch (ignore) {
-                        console.error(ignore);
+                        //console.error(ignore);
                     }
                 };
                 Label.prototype.onRemove = function () {
