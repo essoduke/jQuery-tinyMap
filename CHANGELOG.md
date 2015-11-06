@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.5
+* 修正 modify marker 時，圖示無法修改的錯誤。
+
 ###3.3.4
 * 修正 modify marker 時，若該 marker 未存在於地圖上卻不會新增的錯誤。
 * 移除載入 API 時的 sensor 參數。
