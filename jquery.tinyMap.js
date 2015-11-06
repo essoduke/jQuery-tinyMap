@@ -10,9 +10,9 @@
  * 移除載入 API 時的 sensor 參數。
  *
  * @author essoduke.org
- * @version 3.3.4
+ * @version 3.3.4.1
  * @license MIT License
- * Last modified: 2015-11-06 10:32:35
+ * Last modified: 2015.11.06.114521
  */
 /**
  * Call while google maps api loaded
@@ -25,6 +25,8 @@ window.gMapsCallback = function () {
  * Plugin statements
  */
 ;(function ($, window, document, undefined) {
+
+    'use strict';
 
     // API Configure
     var apiLoaded = false,
@@ -276,7 +278,7 @@ window.gMapsCallback = function () {
             var map = this.map,
                 opt = this.options;
 
-            try {
+            //try {
                 //#!#START ADSENSE
                 // Adsense overlay
                 this.adsense(map, opt);
@@ -315,9 +317,9 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            } catch (ignore) {
-                console.error(ignore);
-            }
+            //} catch (ignore) {
+                //console.error(ignore);
+            //}
         },
         /**
          * Events binding
@@ -734,6 +736,7 @@ window.gMapsCallback = function () {
 
             var self = this,
                 exists = self.get('marker'),
+                label = {},
                 infoWindow = {};
 
             // Apply marker fitbounds
@@ -1813,6 +1816,7 @@ window.gMapsCallback = function () {
                 param    = $.extend({}, tinyMapConfigure),
                 api      = param.api.split('?')[0],
                 msg      = '',
+                vo       = {},
                 o        = {};
 
             try {
