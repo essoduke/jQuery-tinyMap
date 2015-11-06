@@ -6,13 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify marker 時，若該 marker 未存在於地圖上卻不會新增的錯誤。
- * 移除載入 API 時的 sensor 參數。
+ * 修正 modify marker 時，圖示無法修改的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.4.1
+ * @version 3.3.5
  * @license MIT License
- * Last modified: 2015.11.06.114521
+ * Last modified: 2015.11.06.145200
  */
 /**
  * Call while google maps api loaded
@@ -244,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.3.1',
+        'VERSION': '3.3.5',
 
         /**
          * Format to google.maps.Size
@@ -693,9 +692,13 @@ window.gMapsCallback = function () {
             var icons = {};
 
             if (marker.hasOwnProperty('icon')) {
+
+                icons = marker.icon;
+
                 if ('string' === typeof marker.icon) {
                     return marker.icon;
                 }
+                
                 if (marker.icon.hasOwnProperty('url')) {
                     icons.url = marker.icon.url;
                 }
@@ -954,6 +957,7 @@ window.gMapsCallback = function () {
                     if (!insertFlag && markerExisted) {
                         if ('function' === typeof m.setPosition) {
                             m.setPosition(addr);
+                            m.setOptions(markerOptions);
                         }
                         mk = m;
                     } else {
