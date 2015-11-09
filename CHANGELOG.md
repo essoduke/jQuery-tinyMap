@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.6
+* 修正 modify marker 時，Label 會重複產生導致效能降低的錯誤。
+
 ###3.3.5
 * 修正 modify marker 時，圖示無法修改的錯誤。
 
