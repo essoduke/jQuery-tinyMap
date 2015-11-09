@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.7
+* 修正 modify marker 時，移動位置後會閃爍以及事件重複綁定的錯誤。
+
 ###3.3.6
 * 修正 modify marker 時，Label 會重複產生導致效能降低的錯誤。
 
