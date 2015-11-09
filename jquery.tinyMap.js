@@ -6,12 +6,13 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify marker 時，Label 會重複產生導致效能降低的錯誤。
+ * 修正 modify marker 時，移動位置之後會有閃爍的問題。
+ * 修正 modify marker 時，標記事件會重複綁定的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.6
+ * @version 3.3.7
  * @license MIT License
- * Last modified: 2015.11.09.153700
+ * Last modified: 2015.11.09.173815
  */
 /**
  * Call while google maps api loaded
@@ -243,7 +244,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.6',
+        'VERSION': '3.3.7',
 
         /**
          * Format to google.maps.Size
@@ -332,6 +333,7 @@ window.gMapsCallback = function () {
 
             switch (typeof event) {
             case 'function':
+                google.maps.event.clearListeners(target, 'click');
                 google.maps.event.addListener(target, 'click', event);
                 break;
             case 'object':
@@ -340,6 +342,7 @@ window.gMapsCallback = function () {
                         if ('created' === e) {
                             event[e].call(target);
                         } else {
+                            google.maps.event.clearListeners(target, event[e]);
                             google.maps.event.addListener(target, e, event[e]);
                         }
                     } else {
@@ -347,9 +350,11 @@ window.gMapsCallback = function () {
                             if (event[e].hasOwnProperty('once') && true === event[e].once) {
                                 google.maps.event.addListenerOnce(target, e, event[e].func);
                             } else {
+                                google.maps.event.clearListeners(target, event[e]);
                                 google.maps.event.addListener(target, e, event[e].func);
                             }
                         } else if ('function' === typeof event[e]) {
+                            google.maps.event.clearListeners(target, event[e]);
                             google.maps.event.addListener(target, e, event[e]);
                         }
                     }
@@ -357,6 +362,7 @@ window.gMapsCallback = function () {
                 break;
             }
             if (target.hasOwnProperty('infoWindow')) {
+                google.maps.event.clearListeners(target, 'click');
                 google.maps.event.addListener(target, 'click', function () {
                     var i = 0,
                         m = {};
@@ -838,6 +844,7 @@ window.gMapsCallback = function () {
                     }
                 });
             }
+            
             // Binding events
             self.bindEvents(marker, marker.event);
         },
@@ -935,7 +942,13 @@ window.gMapsCallback = function () {
                         } else if (status === google.maps.GeocoderStatus.OK) {
                             if (!insertFlag && markerExisted) {
                                 if ('function' === typeof m.setPosition) {
-                                    m.setPosition(results[0].geometry.location)
+                                    m.setPosition(results[0].geometry.location);
+                                    if (markerOptions.hasOwnProperty('title')) {
+                                        m.setTitle(markerOptions.title);
+                                    }
+                                    if (markerOptions.hasOwnProperty('icon')) {
+                                        m.setIcon(markerOptions.icon);
+                                    }
                                 }
                                 mk = m;
                             } else {
@@ -961,7 +974,12 @@ window.gMapsCallback = function () {
                     if (!insertFlag && markerExisted) {
                         if ('function' === typeof m.setPosition) {
                             m.setPosition(addr);
-                            m.setOptions(markerOptions);
+                            if (markerOptions.hasOwnProperty('title')) {
+                                m.setTitle(markerOptions.title);
+                            }
+                            if (markerOptions.hasOwnProperty('icon')) {
+                                m.setIcon(markerOptions.icon);
+                            }
                         }
                         mk = m;
                     } else {
