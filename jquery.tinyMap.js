@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify marker 時，圖示無法修改的錯誤。
+ * 修正 modify marker 時，Label 會重複產生導致效能降低的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.5
+ * @version 3.3.6
  * @license MIT License
- * Last modified: 2015.11.06.145200
+ * Last modified: 2015.11.09.153700
  */
 /**
  * Call while google maps api loaded
@@ -243,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.5',
+        'VERSION': '3.3.6',
 
         /**
          * Format to google.maps.Size
@@ -740,6 +740,7 @@ window.gMapsCallback = function () {
             var self = this,
                 exists = self.get('marker'),
                 label = {},
+                labelOpt = {},
                 infoWindow = {};
 
             // Apply marker fitbounds
@@ -788,7 +789,6 @@ window.gMapsCallback = function () {
              * @since 2015-10-01 18:20:00
              */
             if (!source) {
-            
                 // Markers cluster
                 if (!marker.hasOwnProperty('cluster') ||
                     (marker.hasOwnProperty('cluster') && true === marker.cluster)
@@ -800,38 +800,41 @@ window.gMapsCallback = function () {
             }
             // Create Label
             if (marker.hasOwnProperty('newLabel')) {
-                label = new Label({
+                labelOpt = {
+                    'id'  : marker.id,
                     'text': marker.newLabel,
                     'map' : map,
                     'css' : marker.hasOwnProperty('newLabelCSS') ?
                             marker.newLabelCSS.toString() :
-                            '',
-                    'id'  : marker.id
-                });
-                label.bindTo('position', marker);
-                label.bindTo('visible', marker);
-                self._labels.push(label);
-            }
-            
-            // Modify existed label.
-            if (marker.hasOwnProperty('id')) {
+                            ''
+                };
                 self.get({
                     'label': [marker.id]
                 }, function (ms) {
-                    ms.label.forEach(function (lb) {
-                        lb.text = marker.newLabel;
-                        $(lb.span).addClass(marker.newLabelCSS);
-                        lb.bindTo('position', marker);
-                        lb.draw();
-                    });
-                });
-            }
-            // Hide labels when clustering.
-            // @since v3.2.16
-            if ('object' === typeof label) {
-                google.maps.event.addListener(marker, 'map_changed', function () {
-                    if ('function' === typeof label.setMap) {
-                        label.setMap(this.getMap());
+                    // Modify existed label if exists.
+                    if (ms.label.length) {
+                        ms.label.forEach(function (lb) {
+                            lb.text = marker.newLabel;
+                            $(lb.span).addClass(marker.newLabelCSS);
+                            lb.bindTo('position', marker);
+                            lb.draw();
+                        });
+                    // Or create the new one.
+                    // @since v3.3.6
+                    } else {
+                        label = new Label(labelOpt);
+                        label.bindTo('position', marker);
+                        label.bindTo('visible', marker);
+                        self._labels.push(label);
+                        // Hide labels when clustering.
+                        // @since v3.2.16
+                        if ('object' === typeof label) {
+                            google.maps.event.addListener(marker, 'map_changed', function () {
+                                if ('function' === typeof label.setMap) {
+                                    label.setMap(map);
+                                }
+                            });
+                        }
                     }
                 });
             }
@@ -876,15 +879,16 @@ window.gMapsCallback = function () {
                 var addr   = parseLatLng(m.addr, true),
                     icons  = self.markerIcon(m),
                     iwOpt  = {},
-                    markerOptions = {
-                        'map': map,
-                        'animation': null
-                    },
                     insertFlag = true,
                     markerExisted = false,
                     marker = {},
                     mk = {},
-                    id = 'undefined' !== typeof m.id ? m.id : false;
+                    id = 'undefined' !== typeof m.id ? m.id : false,
+                    markerOptions = {
+                        'id': id,
+                        'map': map,
+                        'animation': null
+                    };
 
                 markerOptions = $.extend({}, markerOptions, m);
 
