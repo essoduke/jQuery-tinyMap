@@ -6,13 +6,14 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify marker 時，移動位置之後會有閃爍的問題。
- * 修正 modify marker 時，標記事件會重複綁定的錯誤。
+ * 修正 get, clear 方法改為使用模糊比對的方式取得目標物件。
+ * 修正 Label 的程式碼，現在已經支援 text, visible... 等狀態更新。
+ * 新增 markerControl 參數，可輸出 HTMLSelectElement 的標記清單。
  *
  * @author essoduke.org
- * @version 3.3.7
+ * @version 3.3.8
  * @license MIT License
- * Last modified: 2015.11.09.173815
+ * Last modified: 2015.11.13.111912
  */
 /**
  * Call while google maps api loaded
@@ -49,7 +50,8 @@ window.gMapsCallback = function () {
             'notFound': '找不到查詢的地點',
             'zoom': 8
         },
-        styles = {};
+        styles = {},
+        timeout;
     //#!#START STYLES
         styles = {
             // Grey Scale
@@ -61,6 +63,7 @@ window.gMapsCallback = function () {
                 ]
             }]
         };
+
     //#!#END
     /**
      * Parsing the location
@@ -138,6 +141,7 @@ window.gMapsCallback = function () {
 
         var self = this,
             opt = $.extend({}, defaults, options);
+
         /**
          * Map instance
          * @type {Object}
@@ -244,7 +248,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.7',
+        'VERSION': '3.3.8',
 
         /**
          * Format to google.maps.Size
@@ -342,7 +346,7 @@ window.gMapsCallback = function () {
                         if ('created' === e) {
                             event[e].call(target);
                         } else {
-                            google.maps.event.clearListeners(target, event[e]);
+                            google.maps.event.clearListeners(target, e);
                             google.maps.event.addListener(target, e, event[e]);
                         }
                     } else {
@@ -350,17 +354,18 @@ window.gMapsCallback = function () {
                             if (event[e].hasOwnProperty('once') && true === event[e].once) {
                                 google.maps.event.addListenerOnce(target, e, event[e].func);
                             } else {
-                                google.maps.event.clearListeners(target, event[e]);
+                                google.maps.event.clearListeners(target, e);
                                 google.maps.event.addListener(target, e, event[e].func);
                             }
                         } else if ('function' === typeof event[e]) {
-                            google.maps.event.clearListeners(target, event[e]);
+                            google.maps.event.clearListeners(target, e);
                             google.maps.event.addListener(target, e, event[e]);
                         }
                     }
                 }
                 break;
             }
+            // Click for infoWindow
             if (target.hasOwnProperty('infoWindow')) {
                 google.maps.event.clearListeners(target, 'click');
                 google.maps.event.addListener(target, 'click', function () {
@@ -844,9 +849,98 @@ window.gMapsCallback = function () {
                     }
                 });
             }
-            
+
             // Binding events
             self.bindEvents(marker, marker.event);
+        },
+        /**
+         * Markers HTML Control
+         * @since v3.3.8
+         */
+        markerControl: function () {
+
+            var self = this,
+                opt = self.options,
+                mOpt = {
+                    'css': '',
+                    'label': '請選擇&hellip;',
+                    'infoWindow': true,
+                    'panTo': true,
+                    'onChange': ''
+                },
+                controls;
+            
+            if (opt.hasOwnProperty('markerControl')) {
+                // Get container of control list.
+                if ('string' === typeof opt.markerControl) {
+                    controls = $(opt.markerControl.toString());
+                } else {
+                    if (opt.markerControl.hasOwnProperty('container')) {
+                        controls = $(opt.markerControl.container);
+                    } else {
+                        controls = $(opt.markerControl);
+                    }
+                    mOpt = $.extend({}, mOpt, opt.markerControl);
+                }
+                if (controls.length) {
+                    self.get('marker', function (ms) {
+                        // Select list template
+                        var html = [
+                            '<select class="marker-list-control">',
+                            '<option>' + mOpt.label + '</option>'
+                        ];
+                        // Make sure all markers were fetched. (for string addr)
+                        if (ms.length === self.options.marker.length) {
+                            clearInterval(timeout);
+                            // Build the html
+                            ms.forEach(function (m) {
+                                if ('undefined' !== typeof m.infoWindow) {
+                                    m.infoWindow.close();
+                                }
+                                html.push('<option value="' + m.id + '">' + (m.title ? m.title : m.id) + '</option>');
+                            });
+                            html.push('</select>');
+                            // onChange binding
+                            controls.on('change.tinyMap', 'select', function () {
+                                var option = $(this);
+                                self.close('marker');
+                                if (this.value.length) {
+                                    // Get the marker that has selected.
+                                    self.get({'marker': [this.value]}, function (g) {
+                                        var mk = {};
+                                        if (g.marker.length && 'undefined' !== g.marker[0]) {
+                                            mk = g.marker[0];
+                                            if (true === mOpt.infoWindow) {
+                                                if ('undefined' !== typeof mk.infoWindow &&
+                                                    'function' === typeof mk.infoWindow.open
+                                                ) {
+                                                    mk.infoWindow.open(self.map, mk);
+                                                }
+                                            }
+                                            if (true === mOpt.panTo) {
+                                                self.map.panTo(mk.getPosition());
+                                            }
+                                            if ('function' === typeof mOpt.onChange) {
+                                                mOpt.onChange.call(option, mk);
+                                            }
+                                        }
+                                    });
+                                }
+                            })
+                            .html(html.join(''));
+                            // Add Custom CSS Class
+                            if ('string' === typeof mOpt.css) {
+                                controls.find('select').addClass(mOpt.css);
+                            }
+                        } else {
+                            // Run again when if markers count are not matched
+                            timeout = setInterval(function () {
+                                self.markerControl();
+                            }, 1000);
+                        }
+                    });
+                }
+            }
         },
         /**
          * Place markers layer.
@@ -890,7 +984,7 @@ window.gMapsCallback = function () {
                     markerExisted = false,
                     marker = {},
                     mk = {},
-                    id = 'undefined' !== typeof m.id ? m.id : false,
+                    id = 'undefined' !== typeof m.id ? m.id : (m.addr.toString().replace(/\s/g, '')),
                     markerOptions = {
                         'id': id,
                         'map': map,
@@ -999,6 +1093,7 @@ window.gMapsCallback = function () {
                     self.processMarker(map, opt, mk, source);
                 }
             });
+            self.markerControl();
         },
         //#!#END
         //#!#START DIRECTION
@@ -1432,11 +1527,13 @@ window.gMapsCallback = function () {
                 layers   = self.get(layer),
                 loop     = {},
                 item     = {},
-                obj      = '',
-                i        = 0;
+                key      = '',
+                obj      = '';
 
-            if (layers.hasOwnProperty('map')) {
-                delete layers.map;
+            if ('undefined' !== typeof layers &&
+                'undefined' !== typeof layers.map
+            ) {
+                    delete layers.map;
             }
 
             if (Array.isArray(layers)) {
@@ -1450,11 +1547,6 @@ window.gMapsCallback = function () {
                     key = '_' + obj.toString().toLowerCase() + 's';
                     if (Array.isArray(loop[obj])) {
                         loop[obj].forEach(function (item) {
-                            if ('marker' === obj) {
-                                if ('undefined' !== typeof labels[i] && labels.hasOwnProperty('div')) {
-                                    self._labels[i].div.remove();
-                                }
-                            }
                             // Remove the direction icons.
                             if ('direction' === obj) {
                                 dMarkers.forEach(function (dm, j) {
@@ -1474,7 +1566,9 @@ window.gMapsCallback = function () {
                                 item.setMap(null);
                             }
                             // Remove from Array
-                            self[key][i] = undefined;
+                            if (~self[key].indexOf(item)) {
+                                delete self[key][self[key].indexOf(item)];
+                            }
                         });
                         // Filter undefined elements
                         self[key] = self[key].filter(function (n) {
@@ -1557,7 +1651,7 @@ window.gMapsCallback = function () {
                                     if (
                                         0 === layer[obj].length ||
                                         -1 !== layer[obj].indexOf(i) ||
-                                        ('undefined' !== typeof item.id && 0 < item.id.length && (~layer[obj].indexOf(item.id)))
+                                        ('undefined' !== typeof item.id && 0 < item.id.length && (-1 !== item.id.indexOf(layer[obj])))
                                     ) {
                                         target[obj].push(item);
                                     }
@@ -1895,35 +1989,45 @@ window.gMapsCallback = function () {
                 Label.prototype = new google.maps.OverlayView();
                 Label.prototype.onAdd = function () {
                     var self = this;
-                    self.div.appendTo($(self.getPanes().overlayLayer));
-                    self.listeners = [
-                        google.maps.event.addListener(self, 'visible_changed', self.onRemove)
-                    ];
+                    if (null !== self.div) {
+                        self.div.appendTo($(self.getPanes().overlayLayer));
+                        self.listeners = [
+                            google.maps.event.addListener(self, 'visible_changed', function () { self.draw(); }),
+                            google.maps.event.addListener(self, 'position_changed', function () { self.draw(); }),
+                            google.maps.event.addListener(self, 'visible_changed', function () { self.draw(); }),
+                            google.maps.event.addListener(self, 'clickable_changed', function () { self.draw(); }),
+                            google.maps.event.addListener(self, 'text_changed', function () { self.draw(); }),
+                            google.maps.event.addListener(self, 'zindex_changed', function () { self.draw(); })
+                        ];
+                    }
                 };
                 Label.prototype.draw = function () {
-                    var me = this,
-                        projection = me.getProjection(),
+                    var self = this,
+                        projection = self.getProjection(),
                         position   = {};
                     try {
-                        if (projection) {
-                            position = projection.fromLatLngToDivPixel(me.get('position'));
-                            if (position) {
-                                me.div.css({
-                                    'left'    : position.x + 'px',
-                                    'top'     : position.y + 'px',
-                                    'display' : 'block'
-                                });
-                            }
-                            if (me.text) {
-                                me.span.html(me.text.toString());
+                        if (null !== self.div) {
+                            if (projection) {
+                                position = projection.fromLatLngToDivPixel(self.get('position'));
+                                if (position) {
+                                    self.div.css({
+                                        'left'    : position.x + 'px',
+                                        'top'     : position.y + 'px',
+                                        'display' : self.get('visible') ? 'block' : 'none'
+                                    });
+                                }
+                                if (self.text) {
+                                    self.span.html(self.text.toString());
+                                }
                             }
                         }
                     } catch (ignore) {
-                        //console.error(ignore);
+                        console.error(ignore);
                     }
                 };
                 Label.prototype.onRemove = function () {
                     $(this.div).remove();
+                    this.div = null;
                 };
                 //#!#END
                 // Parsing ControlOptions
