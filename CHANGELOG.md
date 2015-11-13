@@ -1,4 +1,9 @@
 #jQuery tinyMap Changelog
+###3.3.8
+* 修正 get, clear 方法改為使用模糊比對的方式取得目標物件。
+* 修正 Label 的程式碼，現在已經支援 text, visible... 等狀態更新。
+* 新增 markerControl 參數，可輸出 HTMLSelectElement 的標記清單。
+ 
 ###3.3.7
 * 修正 modify marker 時，移動位置後會閃爍以及事件重複綁定的錯誤。
 
