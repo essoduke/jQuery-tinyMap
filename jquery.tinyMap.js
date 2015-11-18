@@ -6,14 +6,13 @@
  *
  * Changelog
  * -------------------------------
- * 修正 get, clear 方法改為使用模糊比對的方式取得目標物件。
- * 修正 Label 的程式碼，現在已經支援 text, visible... 等狀態更新。
- * 新增 markerControl 參數，可輸出 HTMLSelectElement 的標記清單。
+ * 因為 Geocoding API 需要 Server Key，所以暫時移除 tinyMapQuery 函數。
+ * 修正程式內部執行的 idle 改為 tilesloaded，避免外部設置 idle 後導致圖層無法正常繪製的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.8
+ * @version 3.3.9
  * @license MIT License
- * Last modified: 2015.11.13.111912
+ * Last modified: 2015.11.18.154546
  */
 /**
  * Call while google maps api loaded
@@ -248,7 +247,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.8',
+        'VERSION': '3.3.9',
 
         /**
          * Format to google.maps.Size
@@ -2079,7 +2078,7 @@ window.gMapsCallback = function () {
                                 if (0 < results.length && results[0].hasOwnProperty('geometry')) {
                                     self.googleMapOptions.center = results[0].geometry.location;
                                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                                    google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                                    google.maps.event.addListenerOnce(self.map, 'tilesloaded', function () {
                                         self.overlay();
                                         google.maps.event.trigger(self.map, 'resize');
                                     });
@@ -2096,7 +2095,7 @@ window.gMapsCallback = function () {
                     });
                 } else {
                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                    google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                    google.maps.event.addListenerOnce(self.map, 'tilesloaded', function () {
                         self.overlay();
                         google.maps.event.trigger(self.map, 'resize');
                     });
@@ -2112,42 +2111,6 @@ window.gMapsCallback = function () {
      */
     $.fn.tinyMapConfigure = function (options) {
         tinyMapConfigure = $.extend(tinyMapConfigure, options);
-    };
-    /**
-     * Quick query latlng/address
-     * @param {Object} options Query params
-     * @param {Function} callback Function for callback
-     * @global
-     */
-    $.fn.tinyMapQuery = function (options, callback) {
-
-        var def = {
-                'key': tinyMapConfigure.hasOwnProperty('key') ? tinyMapConfigure.key : '',
-                'language': 'zh-TW'
-            },
-            opt = $.extend({}, def, options),
-            result = null;
-
-        $.getJSON(
-            'https://maps.googleapis.com/maps/api/geocode/json',
-            opt,
-            function (data) {
-                if (data.status === 'OK') {
-                    if (data.hasOwnProperty('results') &&
-                        'undefined' !== typeof data.results[0]
-                    ) {
-                        if (opt.hasOwnProperty('latlng')) {
-                            result = data.results[0].formatted_address;
-                        } else if (opt.hasOwnProperty('address')) {
-                            result = [
-                                data.results[0].geometry.location.lat,
-                                data.results[0].geometry.location.lng
-                            ].join(',');
-                        }
-                        callback.call(this, result);
-                    }
-                }
-            });
     };
     /**
      * jQuery tinyMap instance
