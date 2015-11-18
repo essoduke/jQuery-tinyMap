@@ -1,4 +1,8 @@
 #jQuery tinyMap Changelog
+###3.3.9
+* 因為 Geocoding API 需要 Server Key，所以暫時移除 tinyMapQuery 函數。
+* 修正程式內部執行的 idle 改為 tilesloaded，避免外部設置 idle 後導致圖層無法正常繪製的錯誤。
+
 ###3.3.8
 * 修正 get, clear 方法改為使用模糊比對的方式取得目標物件。
 * 修正 Label 的程式碼，現在已經支援 text, visible... 等狀態更新。
