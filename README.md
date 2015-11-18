@@ -5,17 +5,6 @@ This plugin will help to create the Google Maps easier on page.
 Online documentation and demonstration:  
 http://app.essoduke.org/tinyMap/ 
 
-## v3.2 features
- 
- * Google Maps API and markerclusterer library won't need to include by yourself anymore.
- * Customize each direction.waypoints icon.
- * Native directions options supports.
- * Native kml options supports.
- * Native markerCluster options supports.
- * Places API supports.
- * More flexible clear method.
- * Minor error fixed.
- 
 ## Install
 
 Include the jQuery library and tinyMap. 
@@ -214,26 +203,6 @@ $(selector).tinyMap('getKML', {
     'polygon': true,   // Include polygon overlay
     'circle': true,    // Include circle overlay
     'direction': true  // Include direction overlay
-});
-```
-## Public methods
-### tinyMapQuery
-Query the Address/LatLng from Address or LatLng.
-```javascript
-// LatLng to addres
-$.fn.tinyMapQuery({
-    'latlng'  : '25.034516521123315,121.56496524810791'
-}, function (result) {
-    console.dir(result);
-    // Result: 110台灣台北市信義區信義連通天橋(臺北101至Att4Fun)
-});
-
-// Address to LatLng
-$.fn.tinyMapQuery({
-    'address'  : '台北市政府'
-}, function (result) {
-    console.dir(result);
-    // Result: 25.041171,121.565227
 });
 ```
 ## API Configure
