@@ -1,6 +1,7 @@
 #jQuery tinyMap Changelog
 ###3.3.11
 * 修正 marker label 在叢集（ MarkerClusterer）計算後不會隨著隱藏或顯示的問題。
+* 修正程式碼以符合 JSHinet 驗證
 
 ###3.3.10
 * 修正 circle, polygon, polyline 的 created 事件重複綁定的錯誤。
