@@ -6,12 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 修正 circle, polygon, polyline 的 created 事件重複綁定的錯誤。
+ * 修正 marker label 在叢集（ MarkerClusterer）計算後不會隨著隱藏或顯示的問題。
  *
  * @author essoduke.org
- * @version 3.3.10
+ * @version 3.3.11
  * @license MIT License
- * Last modified: 2015.11.19.101550
+ * Last modified: 2015.11.19.122914
  */
 /**
  * Call while google maps api loaded
@@ -246,7 +246,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.10',
+        'VERSION': '3.3.11',
 
         /**
          * Format to google.maps.Size
@@ -814,19 +814,18 @@ window.gMapsCallback = function () {
                         label.bindTo('position', marker);
                         label.bindTo('visible', marker);
                         self._labels.push(label);
-                        // Hide labels when clustering.
-                        // @since v3.2.16
-                        if ('object' === typeof label) {
-                            google.maps.event.addListener(marker, 'map_changed', function () {
-                                if ('function' === typeof label.setMap) {
-                                    label.setMap(map);
-                                }
-                            });
-                        }
+                    }
+                    // Hide or show labels when clustering end.
+                    // @since v3.3.11
+                    if ('object' === typeof label && true === opt.markerCluster) {
+                        google.maps.event.addListener(marker, 'map_changed', function () {
+                            if ('function' === typeof label.setMap) {
+                                label.set('visible', null !== marker.getMap());
+                            }
+                        });
                     }
                 });
             }
-
             // Binding events
             self.bindEvents(marker, marker.event);
         },
@@ -954,9 +953,9 @@ window.gMapsCallback = function () {
             // Markers loop
             markers.forEach(function (m) {
 
-                var addr   = parseLatLng(m.addr, true),
-                    icons  = self.markerIcon(m),
-                    iwOpt  = {},
+                var addr = parseLatLng(m.addr, true),
+                    icons = self.markerIcon(m),
+                    iwOpt = {},
                     insertFlag = true,
                     markerExisted = false,
                     marker = {},
