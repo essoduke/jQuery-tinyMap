@@ -6,13 +6,12 @@
  *
  * Changelog
  * -------------------------------
- * 因為 Geocoding API 需要 Server Key，所以暫時移除 tinyMapQuery 函數。
- * 修正程式內部執行的 idle 改為 tilesloaded，避免外部設置 idle 後導致圖層無法正常繪製的錯誤。
+ * 修正 circle, polygon, polyline 的 created 事件重複綁定的錯誤。
  *
  * @author essoduke.org
- * @version 3.3.9
+ * @version 3.3.10
  * @license MIT License
- * Last modified: 2015.11.18.154546
+ * Last modified: 2015.11.19.101550
  */
 /**
  * Call while google maps api loaded
@@ -247,7 +246,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.9',
+        'VERSION': '3.3.10',
 
         /**
          * Format to google.maps.Size
@@ -533,14 +532,6 @@ window.gMapsCallback = function () {
                             }
                         }
 
-                        // Created event for circle is created.
-                        if (polyline && defOpt.hasOwnProperty('event') &&
-                            defOpt.event.hasOwnProperty('created') &&
-                            'function' === typeof defOpt.event.created
-                        ) {
-                            defOpt.event.created.call(polyline, self);
-                        }
-
                         // Events binding
                         if (polylineX.hasOwnProperty('event')) {
                             self.bindEvents(polyline, polylineX.event);
@@ -625,12 +616,6 @@ window.gMapsCallback = function () {
                         polygon.setMap(map);
 
                         // Created event for circle is created.
-                        if (polygon && defOpt.hasOwnProperty('event') &&
-                            defOpt.event.hasOwnProperty('created') &&
-                            'function' === typeof defOpt.event.created
-                        ) {
-                            defOpt.event.created.call(polygon, self);
-                        }
                         if (defOpt.hasOwnProperty('event')) {
                             self.bindEvents(polygon, defOpt.event);
                         }
@@ -677,13 +662,6 @@ window.gMapsCallback = function () {
                         circles = new google.maps.Circle(defOpt);
                         self._circles.push(circles);
 
-                        // Created event for circle is created.
-                        if (circles && defOpt.hasOwnProperty('event') &&
-                            defOpt.event.hasOwnProperty('created') &&
-                            'function' === typeof defOpt.event.created
-                        ) {
-                            defOpt.event.created.call(circles, self);
-                        }
                         if (circle.hasOwnProperty('event')) {
                             self.bindEvents(circles, circle.event);
                         }
