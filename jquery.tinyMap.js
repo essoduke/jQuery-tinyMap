@@ -1,4 +1,4 @@
-/*jshint unused:false */
+/*globals $,google,MarkerClusterer,MarkerWithLabel */
 /**
  * jQuery tinyMap plugin
  * http://app.essoduke.org/tinyMap/
@@ -7,11 +7,11 @@
  * Changelog
  * -------------------------------
  * 修正 marker label 在叢集（ MarkerClusterer）計算後不會隨著隱藏或顯示的問題。
+ * 修正程式碼以符合 JSHinet 驗證
  *
- * @author essoduke.org
+ * @author Essoduke Chang<essoduke@gmail.com>
  * @version 3.3.11
  * @license MIT License
- * Last modified: 2015.11.19.122914
  */
 /**
  * Call while google maps api loaded
@@ -110,7 +110,6 @@ window.gMapsCallback = function () {
      * Label in Maps
      * @param {Object} options Label options
      * @protected
-     * @constructor
      */
     function Label (options) {
         var self = this,
@@ -130,10 +129,9 @@ window.gMapsCallback = function () {
     }
     //#!#END
     /**
-     * tinyMap Constructor
+     * jQuery tinyMap Constructor
      * @param {Object} container HTML element
      * @param {(Object|string)} options User settings
-     * @constructs jQuery.tinyMap
      */
     function TinyMap (container, options) {
 
@@ -407,10 +405,10 @@ window.gMapsCallback = function () {
 
                 defOpt.format = 'undefined' !== google.maps.adsense.AdFormat[defOpt.format] ?
                                 google.maps.adsense.AdFormat[defOpt.format] :
-                                google.maps.adsense.AdFormat['BANNER'];
+                                google.maps.adsense.AdFormat.BANNER;
                 defOpt.position = 'undefined' !== google.maps.ControlPosition[defOpt.position] ?
                                   google.maps.ControlPosition[defOpt.position] :
-                                  google.maps.ControlPosition['TOP_CENTER'];
+                                  google.maps.ControlPosition.TOP_CENTER;
 
                 adUnit = new google.maps.adsense.AdUnit(
                     document.createElement('div'),
@@ -585,7 +583,6 @@ window.gMapsCallback = function () {
                 polygon = {},
                 defOpt = {},
                 coords = [],
-                len = 0,
                 i = 0,
                 j = 0,
                 p = {},
@@ -728,8 +725,7 @@ window.gMapsCallback = function () {
             var self = this,
                 exists = self.get('marker'),
                 label = {},
-                labelOpt = {},
-                infoWindow = {};
+                labelOpt = {};
 
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
@@ -955,7 +951,6 @@ window.gMapsCallback = function () {
 
                 var addr = parseLatLng(m.addr, true),
                     icons = self.markerIcon(m),
-                    iwOpt = {},
                     insertFlag = true,
                     markerExisted = false,
                     marker = {},
@@ -1098,8 +1093,7 @@ window.gMapsCallback = function () {
                         }, opts),
                         waypointsOpts = [],
                         waypointsText = [],
-                        waypointsIcon = [],
-                        renderMultipleRoutes = false;
+                        waypointsIcon = [];
 
                     request.origin = parseLatLng(opts.from, true);
                     request.destination = parseLatLng(opts.to, true);
@@ -1141,19 +1135,16 @@ window.gMapsCallback = function () {
                     // DirectionService
                     directionsService.route(request, function (response, status) {
                         if (status === google.maps.DirectionsStatus.OK) {
-                            
-
-                            response.routes.forEach(function (route, i) {
-                            
+                            response.routes.forEach(function (route, index) {
                                 // @since 3.3.2 Multiple routes render.
                                 if (opts.hasOwnProperty('renderAll') &&
                                     true === opts.renderAll &&
                                     true === request.provideRouteAlternatives
                                 ){
-                                    new google.maps.DirectionsRenderer({
+                                    var dr = new google.maps.DirectionsRenderer({
                                         'map': map,
                                         'directions': response,
-                                        'routeIndex': i
+                                        'routeIndex': index
                                     });
                                 }
 
@@ -1329,8 +1320,7 @@ window.gMapsCallback = function () {
                 request = $.extend({
                     'location': map.getCenter(),
                     'radius'  : 100
-                }, reqOpt),
-                i = 0;
+                }, reqOpt);
 
             request.location = parseLatLng(request.location, true);
 
@@ -1452,10 +1442,8 @@ window.gMapsCallback = function () {
         close: function (layer, callback) {
             var self   = this,
                 layers = self.get(layer),
-                item   = {},
                 loop   = {},
-                obj    = '',
-                i      = 0;
+                obj    = '';
 
             if (layers.hasOwnProperty('map')) {
                 delete layers.map;
@@ -1499,10 +1487,8 @@ window.gMapsCallback = function () {
 
             var self     = this,
                 dMarkers = self._directionsMarkers,
-                labels   = self._labels,
                 layers   = self.get(layer),
                 loop     = {},
-                item     = {},
                 key      = '',
                 obj      = '';
 
@@ -1518,38 +1504,44 @@ window.gMapsCallback = function () {
                 loop = layers;
             }
 
+            function dMarkersLoopCallback (dm, j) {
+                if ('function' === typeof dm.setMap) {
+                    self._directionsMarkers[j].setMap(null);
+                }
+            }
+
+            function loopObjLoopCallback (item) {
+                // Remove the direction icons.
+                if ('direction' === obj) {
+                    dMarkers.forEach(dMarkersLoopCallback);
+                    self._directionsMarkers.filter(function (n) {
+                        return 'undefined' !== typeof n;
+                    });
+                }
+                // Remove from Map
+                if ('function' === typeof item.set) {
+                    item.set('visible', false);
+                }
+                if ('function' === typeof item.setMap) {
+                    item.setMap(null);
+                }
+                // Remove from Array
+                if (-1 !== self[key].indexOf(item)) {
+                    delete self[key][self[key].indexOf(item)];
+                }
+            }
+
+            function keyFilter (n) {
+                return 'undefined' !== typeof n;
+            }
+
             try {
                 for (obj in loop) {
-                    key = '_' + obj.toString().toLowerCase() + 's';
                     if (Array.isArray(loop[obj])) {
-                        loop[obj].forEach(function (item) {
-                            // Remove the direction icons.
-                            if ('direction' === obj) {
-                                dMarkers.forEach(function (dm, j) {
-                                    if ('function' === typeof dm.setMap) {
-                                        self._directionsMarkers[j].setMap(null);
-                                    }
-                                });
-                                self._directionsMarkers.filter(function (n) {
-                                    return 'undefined' !== typeof n;
-                                });
-                            }
-                            // Remove from Map
-                            if ('function' === typeof item.set) {
-                                item.set('visible', false);
-                            }
-                            if ('function' === typeof item.setMap) {
-                                item.setMap(null);
-                            }
-                            // Remove from Array
-                            if (~self[key].indexOf(item)) {
-                                delete self[key][self[key].indexOf(item)];
-                            }
-                        });
+                        key = '_' + obj.toString().toLowerCase() + 's';
+                        loop[obj].forEach(loopObjLoopCallback);
                         // Filter undefined elements
-                        self[key] = self[key].filter(function (n) {
-                            return 'undefined' !== typeof n;
-                        });
+                        self[key] = self[key].filter(keyFilter);
                     }
                 }
                 if ('function' === typeof callback) {
@@ -1570,17 +1562,12 @@ window.gMapsCallback = function () {
         get: function (layer, callback) {
 
             var self     = this,
-                dMarkers = self._directionsMarkers,
-                labels   = self._labels,
                 layers   = [],
-                result   = [],
                 target   = {},
-                item     = {},
                 obj      = {},
                 key      = '',
                 lb       = '',
-                i        = 0,
-                j        = 0;
+                i        = 0;
 
             if ('undefined' === typeof layer) {
                 layer = {
@@ -1596,9 +1583,18 @@ window.gMapsCallback = function () {
                 };
             }
 
+            function keyLoopCallback (item) {
+                if (0 === layer[obj].length ||
+                    -1 !== layer[obj].indexOf(i) ||
+                    ('undefined' !== typeof item.id && 0 < item.id.length && (-1 !== item.id.indexOf(layer[obj])))
+                ) {
+                    target[obj].push(item);
+                }
+            }
+
             try {
                 if ('string' === typeof layer) {
-                    if (~layer.indexOf(',')) {
+                    if (-1 !== layer.indexOf(',')) {
                         layers = layer.replace(/\s/gi, '').split(',');
                         for (i = 0; i < layers.length; i += 1) {
                             lb = layers[i].toString().toLowerCase();
@@ -1623,19 +1619,11 @@ window.gMapsCallback = function () {
                             key = '_' + obj.toString().toLowerCase() + 's';
                             if (Array.isArray(self[key])) {
                                 target[obj] = [];
-                                self[key].forEach(function (item) {
-                                    if (
-                                        0 === layer[obj].length ||
-                                        -1 !== layer[obj].indexOf(i) ||
-                                        ('undefined' !== typeof item.id && 0 < item.id.length && (-1 !== item.id.indexOf(layer[obj])))
-                                    ) {
-                                        target[obj].push(item);
-                                    }
-                                });
+                                self[key].forEach(keyLoopCallback);
                             }
                         }
                     }
-                    target['map'] = self.map;
+                    target.map = self.map;
                 }
                 
                 if ('function' === typeof callback) {
@@ -1836,8 +1824,10 @@ window.gMapsCallback = function () {
                             earthsradius = 6378137,
                             points = 64,
                             rlat = (circle.getRadius() / earthsradius) * r2d,
-                            rlng = rlat / Math.cos(circle.getCenter().lat() * d2r);
+                            rlng = rlat / Math.cos(circle.getCenter().lat() * d2r),
                             theta = 0,
+                            ey = 0,
+                            ex = 0,
                             j = 0;
                         for (j = 0; j < 65; j += 1) {
                             theta = Math.PI * (j / (points/2));
