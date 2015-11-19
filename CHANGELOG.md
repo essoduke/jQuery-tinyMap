@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.10
+* 修正 circle, polygon, polyline 的 created 事件重複綁定的錯誤。
+
 ###3.3.9
 * 因為 Geocoding API 需要 Server Key，所以暫時移除 tinyMapQuery 函數。
 * 修正程式內部執行的 idle 改為 tilesloaded，避免外部設置 idle 後導致圖層無法正常繪製的錯誤。
