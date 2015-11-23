@@ -6,11 +6,10 @@
  *
  * Changelog
  * -------------------------------
- * 修正 marker label 在叢集（ MarkerClusterer）計算後不會隨著隱藏或顯示的問題。
- * 修正程式碼以符合 JSHinet 驗證
+ * 新增 query 方法可查詢地址或座標，取代原本的 $.fn.tinyMapQuery。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.11
+ * @version 3.3.12
  * @license MIT License
  */
 /**
@@ -244,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.11',
+        'VERSION': '3.3.12',
 
         /**
          * Format to google.maps.Size
@@ -1686,6 +1685,48 @@ window.gMapsCallback = function () {
                 }
             }
             return $(this.container);
+        },
+        //#!#END
+        //#!#QUERY
+        /**
+         * Method: Query address or latlng
+         * @param {(string|Array|Object)} addr Address or latlng
+         * @param {Function} callback Function callback
+         */
+        query: function (addr, callback) {
+            var self = this,
+                geocoder = new google.maps.Geocoder(),
+                address = parseLatLng(addr),
+                opt = {};
+
+            if ('string' === typeof address) {
+                opt.address = address;
+            } else {
+                address.lat = parseFloat(address.lat, 10);
+                address.lng = parseFloat(address.lng, 10);
+                opt.location = address;
+            }
+            geocoder.geocode(opt, function (results, status) {
+                try {
+                    if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                        setTimeout(function () {
+                            self.query();
+                        }, self.interval);
+                    } else if (status === google.maps.GeocoderStatus.OK && Array.isArray(results)) {
+                        if (0 < results.length && results[0].hasOwnProperty('geometry')) {
+                            if ('function' === typeof callback) {
+                                callback.call(self, results[0]);
+                            } else {
+                                return results[0];
+                            }
+                        }
+                    } else {
+                        console.error('Geocoder Error Code: ' + status);
+                    }
+                } catch (ignore) {
+                    console.error(ignore);
+                }
+            });
         },
         //#!#END
         //#!#START DESTROY
