@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.12
+* 新增 query 方法可查詢地址或座標，取代原本的 $.fn.tinyMapQuery。
+
 ###3.3.11
 * 修正 marker label 在叢集（ MarkerClusterer）計算後不會隨著隱藏或顯示的問題。
 * 修正程式碼以符合 JSHinet 驗證
