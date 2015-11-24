@@ -3,7 +3,7 @@
 This plugin will help to create the Google Maps easier on page.
 
 Online documentation and demonstration:  
-http://app.essoduke.org/tinyMap/ 
+https://app.essoduke.org/tinyMap/ 
 
 ## Install
 
@@ -29,7 +29,7 @@ Setting up the container's width and height with CSS:
 
 ## Usage
 
-Online documentation: http://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
+Online documentation: https://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
 // Basic
@@ -128,6 +128,22 @@ $(selector).tinyMap('modify', {
     ]
 });
 ```
+###query
+```javascript
+// Query LatLng from Address
+$(selector).tinyMap('query', 'Taipei 101, Taiwan', function (addr) {
+    console.log(addr.geometry.location.lat()); // Latitude
+    console.log(addr.geometry.location.lng()); // Longitude
+});
+// Query Address from LatLng
+$(selector).tinyMap('query', ['25.034516521123315','121.56496524810791'], function (addr) {
+    console.log(addr.formatted_address); //110台灣台北市信義區信義連通天橋(臺北101至Att4Fun)
+});
+// Support multiple format of LatLng
+$(selector).tinyMap('query', {lat: 25.034516521123315, lng: 121.56496524810791}, function...);
+$(selector).tinyMap('query', '25.034516521123315, 121.56496524810791', function...);
+```
+
 ###get
 Get layers on the map.
 ```javascript
