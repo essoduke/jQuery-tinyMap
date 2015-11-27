@@ -6,11 +6,14 @@ Online documentation and demonstration:
 https://app.essoduke.org/tinyMap/ 
 
 ## Install
-
 Include the jQuery library and tinyMap. 
 ```HTML
 <script src="jquery.js"></script>
 <script src="jquery.tinyMap.js"></script>
+```
+###bower
+```
+$bower install jquery-tinyMap
 ```
 
 Create the HTML container.
