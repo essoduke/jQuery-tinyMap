@@ -1,15 +1,15 @@
 /*globals $,google,MarkerClusterer,MarkerWithLabel */
 /**
  * jQuery tinyMap plugin
- * http://app.essoduke.org/tinyMap/
+ * https://app.essoduke.org/tinyMap/
  * Copyright 2015 essoduke.org, Licensed MIT.
  *
  * Changelog
  * -------------------------------
- * 新增 query 方法可查詢地址或座標，取代原本的 $.fn.tinyMapQuery。
+ * 修改 autoLocation 使用的 getCurrentPosition 為 watchPosition。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.12
+ * @version 3.3.13
  * @license MIT License
  */
 /**
@@ -243,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.12',
+        'VERSION': '3.3.13',
 
         /**
          * Format to google.maps.Size
@@ -1371,7 +1371,7 @@ window.gMapsCallback = function () {
                 }
 
                 if (true === opt.autoLocation || 'function' === typeof opt.autoLocation) {
-                    geolocation.getCurrentPosition(
+                    geolocation.watchPosition(
                         function (loc) {
                             if (('undefined' !== typeof loc) &&
                                 ('coords' in loc) &&
@@ -1698,19 +1698,21 @@ window.gMapsCallback = function () {
                 geocoder = new google.maps.Geocoder(),
                 address = parseLatLng(addr),
                 opt = {};
-
             if ('string' === typeof address) {
                 opt.address = address;
             } else {
-                address.lat = parseFloat(address.lat, 10);
-                address.lng = parseFloat(address.lng, 10);
-                opt.location = address;
+                opt = {
+                    'location': {
+                        'lat': parseFloat(address.lat, 10),
+                        'lng': parseFloat(address.lng, 10)
+                    }
+                };
             }
             geocoder.geocode(opt, function (results, status) {
                 try {
                     if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                         setTimeout(function () {
-                            self.query();
+                            self.query(addr, callback);
                         }, self.interval);
                     } else if (status === google.maps.GeocoderStatus.OK && Array.isArray(results)) {
                         if (0 < results.length && results[0].hasOwnProperty('geometry')) {
