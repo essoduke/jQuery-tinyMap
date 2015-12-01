@@ -3,7 +3,7 @@
 This plugin will help to create the Google Maps easier on page.
 
 Online documentation and demonstration:  
-https://app.essoduke.org/tinyMap/ 
+https://code.essoduke.org/tinyMap/ 
 
 ## Install
 Include the jQuery library and tinyMap. 
@@ -32,7 +32,7 @@ Setting up the container's width and height with CSS:
 
 ## Usage
 
-Online documentation: https://app.essoduke.org/tinyMap/docs (Traditional Chinese only)
+Online documentation: https://code.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
 // Basic
