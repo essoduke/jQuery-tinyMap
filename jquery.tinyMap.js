@@ -6,10 +6,11 @@
  *
  * Changelog
  * -------------------------------
- * 修改 autoLocation 使用的 getCurrentPosition 為 watchPosition。
+ * 移除已棄用的 adsense library 相關程式碼。
+ * 修正 markerControl 無限讀取標記的錯誤。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.13
+ * @version 3.3.14
  * @license MIT License
  */
 /**
@@ -243,7 +244,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.13',
+        'VERSION': '3.3.14',
 
         /**
          * Format to google.maps.Size
@@ -278,10 +279,6 @@ window.gMapsCallback = function () {
                 opt = this.options;
 
             try {
-                //#!#START ADSENSE
-                // Adsense overlay
-                this.adsense(map, opt);
-                //#!#END
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -382,39 +379,6 @@ window.gMapsCallback = function () {
                     target.infoWindow.open(self.map, target);
                 });
             }
-        },
-        //#!#START ADSENSE
-        /**
-         * Adsense overlay
-         * @param {Object} map Map instance
-         * @param {Object} opt options
-         */
-        adsense: function (map, opt) {
-
-            var defOpt = {}, adUnit = {};
-
-            if (opt.hasOwnProperty('adsense')) {
-                defOpt = $.extend({}, {
-                    'map': map,
-                    'format': 'BANNER',
-                    'position': 'TOP',
-                    'publisherId': '',
-                    'channelNumber': ''
-                }, opt.adsense);
-
-                defOpt.format = 'undefined' !== google.maps.adsense.AdFormat[defOpt.format] ?
-                                google.maps.adsense.AdFormat[defOpt.format] :
-                                google.maps.adsense.AdFormat.BANNER;
-                defOpt.position = 'undefined' !== google.maps.ControlPosition[defOpt.position] ?
-                                  google.maps.ControlPosition[defOpt.position] :
-                                  google.maps.ControlPosition.TOP_CENTER;
-
-                adUnit = new google.maps.adsense.AdUnit(
-                    document.createElement('div'),
-                    defOpt
-                );
-            }
-
         },
         //#!#END
         //#!#START KML
@@ -781,6 +745,7 @@ window.gMapsCallback = function () {
                     }
                 }
             }
+
             // Create Label
             if (marker.hasOwnProperty('newLabel')) {
                 labelOpt = {
@@ -807,7 +772,7 @@ window.gMapsCallback = function () {
                     } else {
                         label = new Label(labelOpt);
                         label.bindTo('position', marker);
-                        label.bindTo('visible', marker);
+                        //label.bindTo('visible', marker);
                         self._labels.push(label);
                     }
                     // Hide or show labels when clustering end.
@@ -842,6 +807,7 @@ window.gMapsCallback = function () {
                 controls;
             
             if (opt.hasOwnProperty('markerControl')) {
+                
                 // Get container of control list.
                 if ('string' === typeof opt.markerControl) {
                     controls = $(opt.markerControl.toString());
@@ -855,59 +821,52 @@ window.gMapsCallback = function () {
                 }
                 if (controls.length) {
                     self.get('marker', function (ms) {
+                        
                         // Select list template
                         var html = [
                             '<select class="marker-list-control">',
                             '<option>' + mOpt.label + '</option>'
                         ];
-                        // Make sure all markers were fetched. (for string addr)
-                        if (ms.length === self.options.marker.length) {
-                            clearInterval(timeout);
-                            // Build the html
-                            ms.forEach(function (m) {
-                                if ('undefined' !== typeof m.infoWindow) {
-                                    m.infoWindow.close();
-                                }
-                                html.push('<option value="' + m.id + '">' + (m.title ? m.title : m.id) + '</option>');
-                            });
-                            html.push('</select>');
-                            // onChange binding
-                            controls.on('change.tinyMap', 'select', function () {
-                                var option = $(this);
-                                self.close('marker');
-                                if (this.value.length) {
-                                    // Get the marker that has selected.
-                                    self.get({'marker': [this.value]}, function (g) {
-                                        var mk = {};
-                                        if (g.marker.length && 'undefined' !== g.marker[0]) {
-                                            mk = g.marker[0];
-                                            if (true === mOpt.infoWindow) {
-                                                if ('undefined' !== typeof mk.infoWindow &&
-                                                    'function' === typeof mk.infoWindow.open
-                                                ) {
-                                                    mk.infoWindow.open(self.map, mk);
-                                                }
-                                            }
-                                            if (true === mOpt.panTo) {
-                                                self.map.panTo(mk.getPosition());
-                                            }
-                                            if ('function' === typeof mOpt.onChange) {
-                                                mOpt.onChange.call(option, mk);
+                        
+                        // Build the html
+                        ms.forEach(function (m) {
+                            if ('undefined' !== typeof m.infoWindow) {
+                                m.infoWindow.close();
+                            }
+                            html.push('<option value="' + m.id + '">' + (m.title ? m.title : m.id) + '</option>');
+                        });
+                        html.push('</select>');
+                        // onChange binding
+                        controls.on('change.tinyMap', 'select', function () {
+                            var option = $(this);
+                            self.close('marker');
+                            if (this.value.length) {
+                                // Get the marker that has selected.
+                                self.get({'marker': [this.value]}, function (g) {
+                                    var mk = {};
+                                    if (g.marker.length && 'undefined' !== g.marker[0]) {
+                                        mk = g.marker[0];
+                                        if (true === mOpt.infoWindow) {
+                                            if ('undefined' !== typeof mk.infoWindow &&
+                                                'function' === typeof mk.infoWindow.open
+                                            ) {
+                                                mk.infoWindow.open(self.map, mk);
                                             }
                                         }
-                                    });
-                                }
-                            })
-                            .html(html.join(''));
-                            // Add Custom CSS Class
-                            if ('string' === typeof mOpt.css) {
-                                controls.find('select').addClass(mOpt.css);
+                                        if (true === mOpt.panTo) {
+                                            self.map.panTo(mk.getPosition());
+                                        }
+                                        if ('function' === typeof mOpt.onChange) {
+                                            mOpt.onChange.call(option, mk);
+                                        }
+                                    }
+                                });
                             }
-                        } else {
-                            // Run again when if markers count are not matched
-                            timeout = setInterval(function () {
-                                self.markerControl();
-                            }, 1000);
+                        })
+                        .html(html.join(''));
+                        // Add Custom CSS Class
+                        if ('string' === typeof mOpt.css) {
+                            controls.find('select').addClass(mOpt.css);
                         }
                     });
                 }
@@ -920,7 +879,7 @@ window.gMapsCallback = function () {
          * @param {string} source Mode
          */
         placeMarkers: function (map, opt, source) {
-
+            
             var self   = this,
                 geocoder = {},
                 clusterOptions = {
@@ -1073,7 +1032,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Direction options
          */
         directionService: function (map, opt) {
-
+            
             var self = this,
                 directionsService = new google.maps.DirectionsService();
 
@@ -1312,7 +1271,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Options
          */
         places: function (map, opt) {
-
+            
             var self = this,
                 placesService = {},
                 reqOpt = opt.hasOwnProperty('places') ? opt.places : {},
