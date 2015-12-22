@@ -1,4 +1,11 @@
 #jQuery tinyMap Changelog
+###3.3.14
+* 移除已棄用的 adsense library 相關程式碼。
+* 修正 markerControl 無限讀取標記的錯誤。
+
+###3.3.13
+* 修改 autoLocation 使用的 getCurrentPosition 為 watchPosition。
+
 ###3.3.12
 * 新增 query 方法可查詢地址或座標，取代原本的 $.fn.tinyMapQuery。
 
