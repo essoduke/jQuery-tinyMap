@@ -10,7 +10,7 @@
  * 修正 markerControl 無限讀取標記的錯誤。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.14
+ * @version 3.3.14 pre-test
  * @license MIT License
  */
 /**
