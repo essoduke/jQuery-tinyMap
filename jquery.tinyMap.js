@@ -6,11 +6,10 @@
  *
  * Changelog
  * -------------------------------
- * 移除已棄用的 adsense library 相關程式碼。
- * 修正 markerControl 無限讀取標記的錯誤。
+ * 新增 marker.showLabel（default true） 屬性，可設置 label 預設是否顯示。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.14 pre-test
+ * @version 3.3.15
  * @license MIT License
  */
 /**
@@ -244,7 +243,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.14',
+        'VERSION': '3.3.15',
 
         /**
          * Format to google.maps.Size
@@ -772,9 +771,10 @@ window.gMapsCallback = function () {
                     } else {
                         label = new Label(labelOpt);
                         label.bindTo('position', marker);
-                        //label.bindTo('visible', marker);
                         self._labels.push(label);
                     }
+                    // @since 3.3.15
+                    label.set('visible', marker.showLabel);
                     // Hide or show labels when clustering end.
                     // @since v3.3.11
                     if ('object' === typeof label && true === opt.markerCluster) {
@@ -917,7 +917,8 @@ window.gMapsCallback = function () {
                     markerOptions = {
                         'id': id,
                         'map': map,
-                        'animation': null
+                        'animation': null,
+                        'showLabel': true
                     };
 
                 markerOptions = $.extend({}, markerOptions, m);
