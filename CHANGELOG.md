@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.15
+* 新增 marker.showLabel（default true） 屬性，可設置 label 預設是否顯示。
+
 ###3.3.14
 * 移除已棄用的 adsense library 相關程式碼。
 * 修正 markerControl 無限讀取標記的錯誤。
