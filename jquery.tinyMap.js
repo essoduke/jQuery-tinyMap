@@ -1,15 +1,19 @@
 /*globals $,google,MarkerClusterer,MarkerWithLabel */
 /**
  * jQuery tinyMap plugin
- * https://app.essoduke.org/tinyMap/
- * Copyright 2015 essoduke.org, Licensed MIT.
+ * https://code.essoduke.org/tinyMap/
+ * Copyright 2016 essoduke.org, Licensed MIT.
  *
  * Changelog
  * -------------------------------
- * 新增 marker.showLabel（default true） 屬性，可設置 label 預設是否顯示。
+ * 修改 marker 對於 infoWindow 事件的處理程序：
+ * 當設置 marker.text 且未設置 marker.event 的情況下，marker click 預設會綁定為開啟 infoWindow。
+ * 反之，當設置了 marker.event 時，infoWindow.open 就需要由使用者自行呼叫。
+ *
+ * 修正無法傳入 google.maps constants 的問題，現在只需以字串型態 'google.maps.constants' 傳入即可轉換。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.15
+ * @version 3.3.16
  * @license MIT License
  */
 /**
@@ -17,6 +21,7 @@
  * @callback
  */
 window.gMapsCallback = function () {
+    console.log('loaded');
     $(window).trigger('gMapsCallback');
 };
 /**
@@ -62,6 +67,30 @@ window.gMapsCallback = function () {
         };
 
     //#!#END
+    /**
+     * Recursively iterate for replace google.maps constants
+     * @param {Mixed} obj Object
+     * @since 3.3.16
+     */
+    function scan (obj) {
+        var i = 0, prop, m;
+        if (obj instanceof Array) {
+            for (i = 0; i < obj.length; i += 1) {
+                scan(obj[i]);
+            }
+        } else if ('object' === typeof obj) {
+            for (prop in obj) {
+                if (!('string' === typeof obj[prop])) {
+                    scan(obj[prop]);
+                } else {
+                    m = obj[prop].split('.');
+                    if (4 === m.length) {
+                        obj[prop] = google.maps[m[2]][m[3]];
+                    }
+                }
+            }
+        }
+    }
     /**
      * Parsing the location
      * @param {(string|string[]|number[]|Object)} loc Location
@@ -132,11 +161,12 @@ window.gMapsCallback = function () {
      * @param {Object} container HTML element
      * @param {(Object|string)} options User settings
      */
-    function TinyMap (container, options) {
+    function TinyMap (container, options, preload) {
 
         var self = this,
             opt = $.extend({}, defaults, options);
 
+        self.const = {};
         /**
          * Map instance
          * @type {Object}
@@ -226,12 +256,12 @@ window.gMapsCallback = function () {
          * Binding callback event for API async
          */
         $(window).on('gMapsCallback', function () {
-            self.init();
+            self.init(preload);
         });
         // Append loading string
         $(this.container).html(opt.loading);
         // Call initialize
-        self.init();
+        return self.init(preload);
     }
     /**
      * TinyMap prototype
@@ -243,7 +273,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.15',
+        'VERSION': '3.3.16',
 
         /**
          * Format to google.maps.Size
@@ -277,7 +307,7 @@ window.gMapsCallback = function () {
             var map = this.map,
                 opt = this.options;
 
-            try {
+            //try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -312,9 +342,9 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            } catch (ignore) {
-                console.error(ignore);
-            }
+            //} catch (ignore) {
+            //    console.error(ignore);
+            //}
         },
         /**
          * Events binding
@@ -357,7 +387,7 @@ window.gMapsCallback = function () {
                 break;
             }
             // Click for infoWindow
-            if (target.hasOwnProperty('infoWindow')) {
+            if (target.hasOwnProperty('defaultInfoWindow')) {
                 google.maps.event.clearListeners(target, 'click');
                 google.maps.event.addListener(target, 'click', function () {
                     var i = 0,
@@ -645,7 +675,7 @@ window.gMapsCallback = function () {
                 if ('string' === typeof marker.icon) {
                     return marker.icon;
                 }
-                
+
                 if (marker.icon.hasOwnProperty('url')) {
                     icons.url = marker.icon.url;
                 }
@@ -673,7 +703,6 @@ window.gMapsCallback = function () {
             }
             return icons;
         },
-
         /**
          * Post process of Marker
          * @since v3.3.0
@@ -684,10 +713,11 @@ window.gMapsCallback = function () {
          */
         processMarker: function (map, opt, marker, source) {
 
-            var self = this,
-                exists = self.get('marker'),
-                label = {},
-                labelOpt = {};
+            var self     = this,
+                exists   = self.get('marker'),
+                label    = {},
+                labelOpt = {},
+                infoOpt  = {};
 
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
@@ -704,29 +734,36 @@ window.gMapsCallback = function () {
                 }
             }
             // InfoWindow
-            if (marker.hasOwnProperty('text') && marker.text.length) {
-                if (
-                    marker.hasOwnProperty('infoWindow') &&
-                    'function' === typeof marker.infoWindow.setContent
+            if (marker.hasOwnProperty('text')) {
+
+                marker.infoWindow = new google.maps.InfoWindow({
+                    'content': marker.text
+                });
+                marker.infoWindow.close();
+
+                if (!marker.hasOwnProperty('event') ||
+                    !marker.event.hasOwnProperty('click')
                 ) {
-                    marker.infoWindow.setContent(marker.text);
-                } else {
-                    marker.infoWindow = new google.maps.InfoWindow(
-                        marker.hasOwnProperty('infoWindowOptions') ?
-                        marker.infoWindowOptions :
-                        {
-                            'content': marker.text
-                        }
-                    );
+                    marker.defaultInfoWindow = true;
+                }
+
+                self.bindEvents(marker, marker.event);
+
+                // @since 3.3.16
+                if (marker.hasOwnProperty('infoWindowOptions')) {
+                    infoOpt = $.extend({}, {
+                        'content': marker.infoWindowOptions.hasOwnProperty('content') ?
+                                   marker.infoWindowOptions.content :
+                                   marker.text
+                    }, marker.infoWindowOptions);
+                    marker.infoWindow.setOptions(infoOpt);
+                    console.dir(infoOpt);
                     // infoWindow events binding.
-                    if (marker.hasOwnProperty('infoWindowOptions') &&
-                        'undefined' !== typeof marker.infoWindowOptions.event
-                    ) {
-                        self.bindEvents(marker.infoWindow, marker.infoWindowOptions.event);
+                    if (infoOpt.hasOwnProperty('event') && 'undefined' !== typeof infoOpt.event) {
+                        self.bindEvents(marker.infoWindow, infoOpt.event);
                     }
                 }
             }
-
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
@@ -759,30 +796,42 @@ window.gMapsCallback = function () {
                     'label': [marker.id]
                 }, function (ms) {
                     // Modify existed label if exists.
-                    if (ms.label.length) {
+                    var i   = 0,
+                        len = ms.label.length,
+                        lb = {};
+                    if (len) {
+                        for (i = 0; i < len; i += 1) {
+                            lb = ms.label[i];
+                            lb.text = marker.newLabel;
+                            $(lb.span).addClass(marker.newLabelCSS);
+                            lb.bindTo('position', marker);
+                            lb.draw();
+                        }
+                        /*
                         ms.label.forEach(function (lb) {
                             lb.text = marker.newLabel;
                             $(lb.span).addClass(marker.newLabelCSS);
                             lb.bindTo('position', marker);
                             lb.draw();
                         });
+                        */
                     // Or create the new one.
                     // @since v3.3.6
                     } else {
                         label = new Label(labelOpt);
                         label.bindTo('position', marker);
                         self._labels.push(label);
-                    }
-                    // @since 3.3.15
-                    label.set('visible', marker.showLabel);
-                    // Hide or show labels when clustering end.
-                    // @since v3.3.11
-                    if ('object' === typeof label && true === opt.markerCluster) {
-                        google.maps.event.addListener(marker, 'map_changed', function () {
-                            if ('function' === typeof label.setMap) {
-                                label.set('visible', null !== marker.getMap());
-                            }
-                        });
+                        // @since 3.3.15
+                        label.set('visible', marker.showLabel);
+                        // Hide or show labels when clustering end.
+                        // @since v3.3.11
+                        if ('object' === typeof label && true === opt.markerCluster) {
+                            google.maps.event.addListener(marker, 'map_changed', function () {
+                                if ('function' === typeof label.setMap) {
+                                    label.set('visible', null !== marker.getMap());
+                                }
+                            });
+                        }
                     }
                 });
             }
@@ -805,9 +854,9 @@ window.gMapsCallback = function () {
                     'onChange': ''
                 },
                 controls;
-            
+
             if (opt.hasOwnProperty('markerControl')) {
-                
+
                 // Get container of control list.
                 if ('string' === typeof opt.markerControl) {
                     controls = $(opt.markerControl.toString());
@@ -821,13 +870,13 @@ window.gMapsCallback = function () {
                 }
                 if (controls.length) {
                     self.get('marker', function (ms) {
-                        
+
                         // Select list template
                         var html = [
                             '<select class="marker-list-control">',
                             '<option>' + mOpt.label + '</option>'
                         ];
-                        
+
                         // Build the html
                         ms.forEach(function (m) {
                             if ('undefined' !== typeof m.infoWindow) {
@@ -879,11 +928,11 @@ window.gMapsCallback = function () {
          * @param {string} source Mode
          */
         placeMarkers: function (map, opt, source) {
-            
-            var self   = this,
-                geocoder = {},
+
+            var self           = this,
+                geocoder       = {},
                 clusterOptions = {
-                    'maxZoom': null,
+                    'maxZoom' : null,
                     'gridSize': 60
                 },
                 markers = Array.isArray(opt.marker) ? opt.marker : [];
@@ -1033,7 +1082,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Direction options
          */
         directionService: function (map, opt) {
-            
+
             var self = this,
                 directionsService = new google.maps.DirectionsService();
 
@@ -1060,7 +1109,7 @@ window.gMapsCallback = function () {
                     request.travelMode = opts.hasOwnProperty('travel') && google.maps.TravelMode[opts.travel.toString().toUpperCase()] ?
                                          google.maps.TravelMode[opts.travel.toString().toUpperCase()] :
                                          google.maps.TravelMode.DRIVING;
-                    
+
                     // Info Panel
                     if (opts.hasOwnProperty('panel') && $(opts.panel).length) {
                         renderOpts.panel = $(opts.panel).get(0);
@@ -1090,7 +1139,7 @@ window.gMapsCallback = function () {
                         });
                         request.waypoints = waypointsOpts;
                     }
-                    
+
                     // DirectionService
                     directionsService.route(request, function (response, status) {
                         if (status === google.maps.DirectionsStatus.OK) {
@@ -1272,7 +1321,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Options
          */
         places: function (map, opt) {
-            
+
             var self = this,
                 placesService = {},
                 reqOpt = opt.hasOwnProperty('places') ? opt.places : {},
@@ -1315,9 +1364,9 @@ window.gMapsCallback = function () {
 
             try {
 
-                var self = this,
-                    geolocation = navigator.geolocation,
-                    geoOpt = {};
+                var self        = this,
+                    geoOpt      = {},
+                    geolocation = navigator.geolocation;
 
                 if (!geolocation) {
                     return;
@@ -1363,8 +1412,8 @@ window.gMapsCallback = function () {
          */
         panTo: function (addr) {
 
-            var m = this.map,
-                loc = {},
+            var m        = this.map,
+                loc      = {},
                 geocoder = {};
 
             if (null !== m && 'undefined' !== typeof m) {
@@ -1395,7 +1444,7 @@ window.gMapsCallback = function () {
         //#!#END
         //#!#START CLOSE
         /**
-         * Method: Close all infoWindow on map
+         * Method: Close all of infoWindows on map
          * @param {string} type Layer type
          */
         close: function (layer, callback) {
@@ -1426,7 +1475,6 @@ window.gMapsCallback = function () {
                         });
                     }
                 }
-
                 if ('function' === typeof callback) {
                     callback.call(this);
                 }
@@ -1440,7 +1488,7 @@ window.gMapsCallback = function () {
         //#!#START CLEAR
         /**
          * Method: Google Maps clear the specificed layer
-         * @param {string} type Layer type
+         * @param {string} type Layer's type
          */
         clear: function (layer, callback) {
 
@@ -1469,7 +1517,7 @@ window.gMapsCallback = function () {
                 }
             }
 
-            function loopObjLoopCallback (item) {
+            function loopObjCallback (item) {
                 // Remove the direction icons.
                 if ('direction' === obj) {
                     dMarkers.forEach(dMarkersLoopCallback);
@@ -1498,7 +1546,7 @@ window.gMapsCallback = function () {
                 for (obj in loop) {
                     if (Array.isArray(loop[obj])) {
                         key = '_' + obj.toString().toLowerCase() + 's';
-                        loop[obj].forEach(loopObjLoopCallback);
+                        loop[obj].forEach(loopObjCallback);
                         // Filter undefined elements
                         self[key] = self[key].filter(keyFilter);
                     }
@@ -1584,12 +1632,12 @@ window.gMapsCallback = function () {
                     }
                     target.map = self.map;
                 }
-                
                 if ('function' === typeof callback) {
                     callback.call(this, target);
                 }
+                return target;
             } catch (ignore) {
-                console.warn(ignore);
+                console.error(ignore);
             } finally {
                 return target;
             }
@@ -1897,7 +1945,7 @@ window.gMapsCallback = function () {
         /**
          * tinyMap initialize
          */
-        init: function Initialize () {
+        init: function Initialize (preload) {
 
             var self     = this,
                 script   = {},
@@ -1916,7 +1964,7 @@ window.gMapsCallback = function () {
             } catch (ignore) {
             }
 
-            // Asynchronous load the Google Maps API
+            // Asynchronous loading Google Maps API
             if (!apiLoaded && 'undefined' === typeof window.google) {
                 script = document.createElement('script');
                 script.setAttribute('src', [api, param].join('?'));
@@ -1927,6 +1975,9 @@ window.gMapsCallback = function () {
 
             // Make sure Google maps API is loaded.
             if ('object' === typeof window.google) {
+
+                scan(self.options);
+                console.dir(self.options);
 
                 // Load MarkerClusterer library
                 if (!apiClusterLoaded &&
@@ -2089,9 +2140,9 @@ window.gMapsCallback = function () {
      */
     $.fn.tinyMap = function (options) {
         var instance = {},
-            result = [],
-            args = arguments,
-            id  = 'tinyMap';
+            result   = [],
+            args     = arguments,
+            id       = 'tinyMap';
         if ('string' === typeof options) {
             this.each(function () {
                 instance = $.data(this, id);
