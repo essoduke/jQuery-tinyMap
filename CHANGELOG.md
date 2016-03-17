@@ -1,4 +1,10 @@
 #jQuery tinyMap Changelog
+###3.3.16
+* 修改 marker 對於 infoWindow 事件的處理程序：
+當設置 marker.text 且未設置 marker.event 的情況下，marker click 預設會綁定為開啟 infoWindow。
+反之，當設置了 marker.event 時，infoWindow.open 就需要由使用者自行呼叫。
+* 修正無法傳入 google.maps constants 的問題，現在只需以字串型態 'google.maps.constants' 傳入即可轉換。
+
 ###3.3.15
 * 新增 marker.showLabel（default true） 屬性，可設置 label 預設是否顯示。
 
