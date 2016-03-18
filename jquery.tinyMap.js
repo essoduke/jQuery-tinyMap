@@ -6,14 +6,10 @@
  *
  * Changelog
  * -------------------------------
- * 修改 marker 對於 infoWindow 事件的處理程序：
- * 當設置 marker.text 且未設置 marker.event 的情況下，marker click 預設會綁定為開啟 infoWindow。
- * 反之，當設置了 marker.event 時，infoWindow.open 就需要由使用者自行呼叫。
- *
- * 修正無法傳入 google.maps constants 的問題，現在只需以字串型態 'google.maps.constants' 傳入即可轉換。
+ * 將圖層處理的流程移出 Map tilesloaded，避免綁定其他地圖事件時發生衝突。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.16
+ * @version 3.3.17
  * @license MIT License
  */
 /**
@@ -21,7 +17,6 @@
  * @callback
  */
 window.gMapsCallback = function () {
-    console.log('loaded');
     $(window).trigger('gMapsCallback');
 };
 /**
@@ -82,7 +77,7 @@ window.gMapsCallback = function () {
             for (prop in obj) {
                 if (!('string' === typeof obj[prop])) {
                     scan(obj[prop]);
-                } else {
+                } else if (/^google\.map/gi.test(obj[prop])) {
                     m = obj[prop].split('.');
                     if (4 === m.length) {
                         obj[prop] = google.maps[m[2]][m[3]];
@@ -161,7 +156,7 @@ window.gMapsCallback = function () {
      * @param {Object} container HTML element
      * @param {(Object|string)} options User settings
      */
-    function TinyMap (container, options, preload) {
+    function TinyMap (container, options) {
 
         var self = this,
             opt = $.extend({}, defaults, options);
@@ -256,12 +251,12 @@ window.gMapsCallback = function () {
          * Binding callback event for API async
          */
         $(window).on('gMapsCallback', function () {
-            self.init(preload);
+            self.init();
         });
         // Append loading string
         $(this.container).html(opt.loading);
         // Call initialize
-        return self.init(preload);
+        return self.init();
     }
     /**
      * TinyMap prototype
@@ -273,7 +268,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.16',
+        'VERSION': '3.3.17',
 
         /**
          * Format to google.maps.Size
@@ -307,7 +302,7 @@ window.gMapsCallback = function () {
             var map = this.map,
                 opt = this.options;
 
-            //try {
+            try {
                 //#!#START KML
                 // kml overlay
                 this.kml(map, opt);
@@ -342,9 +337,11 @@ window.gMapsCallback = function () {
                 //#!#END
                 // GeoLocation
                 this.geoLocation(map, opt);
-            //} catch (ignore) {
-            //    console.error(ignore);
-            //}
+            } catch (ignore) {
+                console.error(ignore);
+            } finally {
+                google.maps.event.trigger(map, 'resize');
+            }
         },
         /**
          * Events binding
@@ -757,7 +754,6 @@ window.gMapsCallback = function () {
                                    marker.text
                     }, marker.infoWindowOptions);
                     marker.infoWindow.setOptions(infoOpt);
-                    console.dir(infoOpt);
                     // infoWindow events binding.
                     if (infoOpt.hasOwnProperty('event') && 'undefined' !== typeof infoOpt.event) {
                         self.bindEvents(marker.infoWindow, infoOpt.event);
@@ -1044,6 +1040,7 @@ window.gMapsCallback = function () {
 
                 } else {
                     // For LatLng type
+                    // When Marker was existed.
                     if (!insertFlag && markerExisted) {
                         if ('function' === typeof m.setPosition) {
                             m.setPosition(addr);
@@ -1945,7 +1942,7 @@ window.gMapsCallback = function () {
         /**
          * tinyMap initialize
          */
-        init: function Initialize (preload) {
+        init: function Initialize () {
 
             var self     = this,
                 script   = {},
@@ -1977,7 +1974,6 @@ window.gMapsCallback = function () {
             if ('object' === typeof window.google) {
 
                 scan(self.options);
-                console.dir(self.options);
 
                 // Load MarkerClusterer library
                 if (!apiClusterLoaded &&
@@ -2099,10 +2095,7 @@ window.gMapsCallback = function () {
                                 if (0 < results.length && results[0].hasOwnProperty('geometry')) {
                                     self.googleMapOptions.center = results[0].geometry.location;
                                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                                    google.maps.event.addListenerOnce(self.map, 'tilesloaded', function () {
-                                        self.overlay();
-                                        google.maps.event.trigger(self.map, 'resize');
-                                    });
+                                    self.overlay();
                                     self.bindEvents(self.map, self.options.event);
                                 }
                             } else {
@@ -2116,10 +2109,7 @@ window.gMapsCallback = function () {
                     });
                 } else {
                     self.map = new google.maps.Map(self.container, self.googleMapOptions);
-                    google.maps.event.addListenerOnce(self.map, 'tilesloaded', function () {
-                        self.overlay();
-                        google.maps.event.trigger(self.map, 'resize');
-                    });
+                    self.overlay();
                     self.bindEvents(self.map, self.options.event);
                 }
             }
