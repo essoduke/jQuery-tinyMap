@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.17
+* 將圖層處理的流程移出 Map tilesloaded，避免綁定其他地圖事件時發生衝突。
+
 ###3.3.16
 * 修改 marker 對於 infoWindow 事件的處理程序：
 當設置 marker.text 且未設置 marker.event 的情況下，marker click 預設會綁定為開啟 infoWindow。
