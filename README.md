@@ -32,7 +32,8 @@ Setting up the container's width and height with CSS:
 
 ## Usage
 
-Online documentation: https://code.essoduke.org/tinyMap/docs (Traditional Chinese only)
+Online documentation:  
+https://code.essoduke.org/tinyMap/docs (Traditional Chinese only)
 
 ```javascript
 // Basic
@@ -225,15 +226,13 @@ $(selector).tinyMap('getKML', {
 });
 ```
 ## API Configure
-You could setup the api before using the tinyMap.
+You could setup the API before using the tinyMap.
 
 ```javascript
 // Set up before tinyMap executes.
 $.fn.tinyMapConfigure({
     // Google Maps API location
     'api': '//maps.google.com/maps/api/js',
-    // Device sensor control
-    'sensor': false,
     // Map Lanuguage
     'language': 'zh-TW',
     // Google Maps API Libraries
