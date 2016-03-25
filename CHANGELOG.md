@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.18
+* 修正 direction.optimize 無效的錯誤。
+
 ###3.3.17
 * 將圖層處理的流程移出 Map tilesloaded，避免綁定其他地圖事件時發生衝突。
 
