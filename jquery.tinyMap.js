@@ -6,10 +6,10 @@
  *
  * Changelog
  * -------------------------------
- * 將圖層處理的流程移出 Map tilesloaded，避免綁定其他地圖事件時發生衝突。
+ * 修正 direction.optimize 無效的錯誤。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.17
+ * @version 3.3.18
  * @license MIT License
  */
 /**
@@ -268,7 +268,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.17',
+        'VERSION': '3.3.18',
 
         /**
          * Format to google.maps.Size
@@ -1102,6 +1102,7 @@ window.gMapsCallback = function () {
 
                     request.origin = parseLatLng(opts.from, true);
                     request.destination = parseLatLng(opts.to, true);
+
                     // TravelMode
                     request.travelMode = opts.hasOwnProperty('travel') && google.maps.TravelMode[opts.travel.toString().toUpperCase()] ?
                                          google.maps.TravelMode[opts.travel.toString().toUpperCase()] :
@@ -1113,6 +1114,9 @@ window.gMapsCallback = function () {
                     }
                     if (opts.hasOwnProperty('requestExtra') && opts.requestExtra) {
                         request = $.extend({}, request, opts.requestExtra);
+                    }
+                    if (opts.hasOwnProperty('optimize')) {
+                        request.optimizeWaypoints = opts.optimize;
                     }
                     // Waypoints
                     if (opts.hasOwnProperty('waypoint') && Array.isArray(opts.waypoint)) {
