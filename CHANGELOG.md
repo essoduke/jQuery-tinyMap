@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.19
+* 修正 marker.markerFitBounds 無法作用的問題。
+
 ###3.3.18
 * 修正 direction.optimize 無效的錯誤。
 
