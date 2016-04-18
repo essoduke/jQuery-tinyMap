@@ -6,10 +6,9 @@
  *
  * Changelog
  * -------------------------------
- * 修正 direction.optimize 無效的錯誤。
+ * 修正 marker.markerFitBounds 無法作用的問題。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
- * @version 3.3.18
  * @license MIT License
  */
 /**
@@ -268,7 +267,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.18',
+        'VERSION': '3.3.19',
 
         /**
          * Format to google.maps.Size
@@ -725,7 +724,7 @@ window.gMapsCallback = function () {
                     true === opt.markerFitBounds
                 ) {
                     // Make sure fitBounds call after the last marker created.
-                    if (exists.marker.length === opt.marker.length) {
+                    if (exists.length === opt.marker.length) {
                         map.fitBounds(self._bounds);
                     }
                 }
