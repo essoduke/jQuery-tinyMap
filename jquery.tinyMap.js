@@ -6,7 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 修正 marker.markerFitBounds 無法作用的問題。
+ * 修正 center 傳入的地址若不存在會導致 innerHTML 的 JS 錯誤。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -267,7 +267,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.3.19',
+        'VERSION': '3.3.20',
 
         /**
          * Format to google.maps.Size
@@ -2103,7 +2103,7 @@ window.gMapsCallback = function () {
                                 }
                             } else {
                                 msg = (self.options.notFound || status).toString();
-                                self.container.innerHTML($('<div/>').text(msg).html());
+                                self.container.innerHTML = $('<div/>').text(msg).html();
                                 console.error('Geocoder Error Code: ' + status);
                             }
                         } catch (ignore) {
