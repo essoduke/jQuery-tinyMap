@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.3.20
+* 修正 center 傳入的地址若不存在會導致 innerHTML 的 JS 錯誤。
+
 ###3.3.19
 * 修正 marker.markerFitBounds 無法作用的問題。
 
