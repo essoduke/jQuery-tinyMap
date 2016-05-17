@@ -1,4 +1,10 @@
 #jQuery tinyMap Changelog
+###3.4.0
+* 修正使用 modify 方法時，部份參數無法沿用原始地圖設定而必須重新傳入的問題。
+* 修正使用 modify 方法時，若帶入的參數包含圖層，會導致帶入的原生參數無法生效的錯誤。
+* 修正異步載入 Googl Maps API 時，可能導致 withLabel, clusterer 無法正常使用的錯誤。
+* 將 tinyMapConfigure.clusterer, withlabel 的預設網址修改為 Cloudflare CDN。
+
 ###3.3.20
 * 修正 center 傳入的地址若不存在會導致 innerHTML 的 JS 錯誤。
 
