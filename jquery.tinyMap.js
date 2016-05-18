@@ -6,7 +6,6 @@
  *
  * Changelog
  * -------------------------------
- * 修正使用 modify 方法時，部份參數無法沿用原始地圖設定而必須重新傳入的問題。
  * 修正使用 modify 方法時，若帶入的參數包含圖層，會導致帶入的原生參數無法生效的錯誤。
  * 修正異步載入 Googl Maps API 時，可能導致 withLabel, clusterer 無法正常使用的錯誤。
  * 將 tinyMapConfigure.clusterer, withlabel 的預設網址修改為 Cloudflare CDN。
@@ -2145,14 +2144,22 @@ window.gMapsCallback = function () {
             if (se.hasOwnProperty('idle')) {
                 if ('undefined' !== se.idle.func &&
                     'function' === typeof se.idle.func &&
-                    'undefined' !== typeof se.idle.once &&
-                    true === se.idle.once
+                    'undefined' !== typeof se.idle.once
                 ) {
-                    google.maps.event.addListenerOnce(self.map, 'idle', function () {
-                        self.overlay();
-                        se.idle.func.apply(this, arguments);
-                        self.bindEvents(self.map, se);
-                    });
+                    if (true === se.idle.once) {
+                        google.maps.event.addListenerOnce(self.map, 'idle', function () {
+                            self.overlay();
+                            se.idle.func.apply(this, arguments);
+                            delete se.idle;
+                            self.bindEvents(self.map, se);
+                        });
+                    } else {
+                        google.maps.event.addListener(self.map, 'idle', function () {
+                            self.overlay();
+                            se.idle.func.apply(this, arguments);
+                            self.bindEvents(self.map, se);
+                        });
+                    }
                 } else {
                     if ('function' === typeof se.idle) {
                         google.maps.event.addListener(self.map, 'idle', function () {
