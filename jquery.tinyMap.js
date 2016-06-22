@@ -6,9 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 修正使用 modify 方法時，若帶入的參數包含圖層，會導致帶入的原生參數無法生效的錯誤。
- * 修正異步載入 Googl Maps API 時，可能導致 withLabel, clusterer 無法正常使用的錯誤。
- * 將 tinyMapConfigure.clusterer, withlabel 的預設網址修改為 Cloudflare CDN。
+ * 因為 modify 方法有一些問題，所以回復為 v3.3.20 使用的 modify。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -1673,12 +1671,11 @@ window.gMapsCallback = function () {
                     ['places', 'places']
                 ],
                 i = 0,
-                m = self.map,
-                o = $.extend({}, self.googleMapOptions, options);
+                m = self.map;
 
-            if ('undefined' !== typeof o) {
+            if ('undefined' !== typeof options) {
                 for (i = 0; i < label.length; i += 1) {
-                    if (o.hasOwnProperty(label[i][0])) {
+                    if (options.hasOwnProperty(label[i][0])) {
                         func.push(label[i][1]);
                     }
                 }
@@ -1687,16 +1684,17 @@ window.gMapsCallback = function () {
                         for (i = 0; i < func.length; i += 1) {
                             if ('function' === typeof self[func[i]]) {
                                 if ('streetView' === func[i]) {
-                                    o.streetViewObj = o.streetView;
-                                    delete o.streetView;
+                                    options.streetViewObj = options.streetView;
+                                    delete options.streetView;
                                 }
-                                self[func[i]](m, o, 'modify');
+                                self[func[i]](m, options, 'modify');
                             }
                         }
+                    } else {
+                        m.setOptions(options);
                     }
-                    m.setOptions(o);
-                    if (o.hasOwnProperty('event')) {
-                        self.bindEvents(m, o.event);
+                    if (options.hasOwnProperty('event')) {
+                        self.bindEvents(m, options.event);
                     }
                     google.maps.event.trigger(m, 'resize');
                 }
