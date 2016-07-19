@@ -6,7 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 因為 modify 方法有一些問題，所以回復為 v3.3.20 使用的 modify。
+ * 修正 標記使用字串地址造成 Geocoding OVER_LIMIT_QUERY 變成無限循環的問題。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -928,7 +928,7 @@ window.gMapsCallback = function () {
          * @param {Object} opt Markers options
          * @param {string} source Mode
          */
-        placeMarkers: function (map, opt, source) {
+        placeMarkers: function (map, opt, source, mks) {
 
             var self           = this,
                 geocoder       = {},
@@ -936,7 +936,13 @@ window.gMapsCallback = function () {
                     'maxZoom' : null,
                     'gridSize': 60
                 },
-                markers = Array.isArray(opt.marker) ? opt.marker : [];
+                markers = Array.isArray(opt.marker) ? opt.marker : [],
+                tmks = [],
+                tOut;
+
+            if ('undefined' !== typeof mks && Array.isArray(mks) && mks.length) {
+                markers = mks;
+            }
 
             /**
              * Apply marker cluster.
@@ -955,7 +961,7 @@ window.gMapsCallback = function () {
             }
 
             // Markers loop
-            markers.forEach(function (m) {
+            markers.forEach(function (m, index) {
 
                 var addr = parseLatLng(m.addr, true),
                     icons = self.markerIcon(m),
@@ -1008,11 +1014,15 @@ window.gMapsCallback = function () {
                     // For string address
                     geocoder = new google.maps.Geocoder();
                     geocoder.geocode({'address': addr}, function (results, status) {
-                        // If exceeded, call it later by setTimeout;
+                        // If exceeded, create later.
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                            setTimeout(function () {
-                                self.placeMarkers(map, opt, source);
-                            }, self.interval);
+                            // OVER_QUERY_LIMIT redo.
+                            // @since 3.4.2
+                            tOut = setTimeout(function () {
+                                clearTimeout(tOut);
+                                //console.info(['Marker[', index, '] query failed at (', addr, ').'].join(''));
+                                self.placeMarkers(map, opt, source, [m]);
+                            }, self.interval * (index + 1));
                         } else if (status === google.maps.GeocoderStatus.OK) {
                             if (!insertFlag && markerExisted) {
                                 if ('function' === typeof m.setPosition) {
