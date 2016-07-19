@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.4.2
+* 修正標記使用字串地址造成 Geocoding OVER_LIMIT_QUERY 變成無限循環的問題。
+
 ###3.4.1
 * 暫時回復為 v3.3.20 使用的 modify 方法。
 
