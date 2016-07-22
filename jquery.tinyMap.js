@@ -6,7 +6,9 @@
  *
  * Changelog
  * -------------------------------
- * 修正 標記使用字串地址造成 Geocoding OVER_LIMIT_QUERY 變成無限循環的問題。
+ * 修正 modify 時 marker.text 無法作用的問題（若 marker.text 原本未設定，modify 之後會自動建立）。
+ * 修正 modify 時若未帶入 marker.addr 會造成標記消失的錯誤（移動至 0,0）。
+ * 修正 get 無法正確取得物件的錯誤。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -735,13 +737,18 @@ window.gMapsCallback = function () {
                     }
                 }
             }
-            // InfoWindow
-            if (marker.hasOwnProperty('text')) {
 
+            // InfoWindow
+            if ('undefined' === typeof marker.infoWindow) {
                 marker.infoWindow = new google.maps.InfoWindow({
                     'content': marker.text
                 });
-                marker.infoWindow.close();
+            }
+
+
+            if (marker.hasOwnProperty('text')) {
+
+                marker.infoWindow.setContent(marker.text);
 
                 if (!marker.hasOwnProperty('event') ||
                     !marker.event.hasOwnProperty('click')
@@ -883,7 +890,7 @@ window.gMapsCallback = function () {
                             if ('undefined' !== typeof m.infoWindow) {
                                 m.infoWindow.close();
                             }
-                            html.push('<option value="' + m.id + '">' + (m.title ? m.title : m.id) + '</option>');
+                            html.push('<option value="' + m.id + '" data-marker-id="' + m.id + '">' + (m.title ? m.title : m.id) + '</option>');
                         });
                         html.push('</select>');
                         // onChange binding
@@ -1053,19 +1060,20 @@ window.gMapsCallback = function () {
                             self.processMarker(map, opt, mk, source);
                         }
                     });
-
                 } else {
                     // For LatLng type
                     // When Marker was existed.
                     if (!insertFlag && markerExisted) {
                         if ('function' === typeof m.setPosition) {
-                            m.setPosition(addr);
-                            if (markerOptions.hasOwnProperty('title')) {
-                                m.setTitle(markerOptions.title);
+                            if (addr.lat() && addr.lng()) {
+                                m.setPosition(addr);
                             }
-                            if (markerOptions.hasOwnProperty('icon')) {
-                                m.setIcon(markerOptions.icon);
-                            }
+                        }
+                        if (markerOptions.hasOwnProperty('title')) {
+                            m.setTitle(markerOptions.title);
+                        }
+                        if (markerOptions.hasOwnProperty('icon')) {
+                            m.setIcon(markerOptions.icon);
                         }
                         mk = m;
                     } else {
@@ -1608,8 +1616,9 @@ window.gMapsCallback = function () {
             }
 
             function keyLoopCallback (item) {
+                var index = self[key].indexOf(item);
                 if (0 === layer[obj].length ||
-                    -1 !== layer[obj].indexOf(i) ||
+                    -1 !== layer[obj].indexOf(index)  ||
                     ('undefined' !== typeof item.id && 0 < item.id.length && (-1 !== item.id.indexOf(layer[obj])))
                 ) {
                     target[obj].push(item);
