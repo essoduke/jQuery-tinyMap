@@ -6,9 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 修正 modify 時 marker.text 無法作用的問題（若 marker.text 原本未設定，modify 之後會自動建立）。
- * 修正 modify 時若未帶入 marker.addr 會造成標記消失的錯誤（移動至 0,0）。
- * 修正 get 無法正確取得物件的錯誤。
+ * 試做以亂數 offset 標記，避免相同位置的標記會造成無法分辨的問題。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -123,6 +121,12 @@ window.gMapsCallback = function () {
                 result.lng = loc.lng;
             }
         }
+
+        // Location offset
+        // @since v3.4.4
+        result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 10000);
+        result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 10000);
+
         if (true === formatting) {
             return new google.maps.LatLng(result.lat, result.lng);
         }
