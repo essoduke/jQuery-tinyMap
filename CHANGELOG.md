@@ -1,4 +1,12 @@
 #jQuery tinyMap Changelog
+###3.4.4
+* 試做以亂數 offset 標記，避免相同位置的標記會造成無法分辨的問題。
+
+###3.4.3
+* 修正 modify 時 marker.text 無法作用的問題（若 marker.text 原本未設定，modify 之後會自動建立）。
+* 修正 modify 時若未帶入 marker.addr 會造成標記消失的錯誤（移動至 0,0）。
+* 修正 get 無法正確取得物件的錯誤。
+
 ###3.4.2
 * 修正標記使用字串地址造成 Geocoding OVER_LIMIT_QUERY 變成無限循環的問題。
 
