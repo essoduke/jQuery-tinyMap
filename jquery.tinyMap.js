@@ -6,7 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 試做以亂數 offset 標記，避免相同位置的標記會造成無法分辨的問題。
+ * 修正使用字串地址建立標記時，若標記數量 > 10 個以上，會導致之後的標記消失的問題。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -276,7 +276,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.4.0',
+        'VERSION': '3.4.5',
 
         /**
          * Format to google.maps.Size
@@ -1028,9 +1028,8 @@ window.gMapsCallback = function () {
                         // If exceeded, create later.
                         if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
                             // OVER_QUERY_LIMIT redo.
-                            // @since 3.4.2
-                            tOut = setTimeout(function () {
-                                clearTimeout(tOut);
+                            // @since 3.4.5
+                            setTimeout(function () {
                                 //console.info(['Marker[', index, '] query failed at (', addr, ').'].join(''));
                                 self.placeMarkers(map, opt, source, [m]);
                             }, self.interval * (index + 1));
