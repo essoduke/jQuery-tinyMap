@@ -6,7 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 修正使用字串地址建立標記時，若標記數量 > 10 個以上，會導致之後的標記消失的問題。
+ * 修正使用字串地址建立標記時，若標記數量 > 10 個以上，會導致之後的標記消失的問題。(By Abraham)
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
