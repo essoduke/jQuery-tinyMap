@@ -3,7 +3,7 @@
 This plugin will help to create the Google Maps easier on page.
 
 Online documentation and demonstration:  
-https://code.essoduke.org/tinyMap/ 
+https://code.essoduke.org/tinyMap/ (Traditional Chinese only)
 
 ## Install
 Include the jQuery library and tinyMap. 
@@ -259,7 +259,7 @@ var map = instance.map;
 var markers = instance._markers;
 // Or access via `get` method.
 var markers = instance.get('marker');
-// You cloud browse all availables methods by
+// browse all available methods:
 console.log(instance);
 ```
 
