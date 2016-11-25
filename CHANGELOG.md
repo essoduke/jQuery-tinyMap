@@ -1,4 +1,7 @@
 #jQuery tinyMap Changelog
+###3.4.6
+* markerWithLabel 參數可支援整數，表示只顯示以地圖中心為圓心的半徑範圍的 label。（需配合 Geometry libraries）
+
 ###3.4.5
 * 修正使用字串地址建立標記時，若標記數量 > 10 個以上，會導致之後的標記消失的問題。(By Abraham)
 
