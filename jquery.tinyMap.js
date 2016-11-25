@@ -6,7 +6,7 @@
  *
  * Changelog
  * -------------------------------
- * 修正使用字串地址建立標記時，若標記數量 > 10 個以上，會導致之後的標記消失的問題。(By Abraham)
+ * markerWithLabel 參數可支援整數，表示只顯示以地圖中心為圓心的半徑範圍的 label。（需配合 Geometry libraries）
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -29,12 +29,14 @@ window.gMapsCallback = function () {
     var apiLoaded = false,
         apiClusterLoaded = false,
         apiMarkerWithLabelLoaded = false,
+        apiOMSLoaded = false,
         tinyMapConfigure = {
             'language' : 'zh-TW',
             'callback' : 'gMapsCallback',
             'api'      : 'https://maps.googleapis.com/maps/api/js',
             'clusterer': 'https://cdn.essoduke.org/js/tinyMap/markerclusterer.js',
-            'withLabel': 'https://cdn.essoduke.org/js/tinyMap/markerwithlabel.js'
+            'withLabel': 'https://cdn.essoduke.org/js/tinyMap/markerwithlabel.js',
+            'OMS'      : 'https://cdn.essoduke.org/js/tinyMap/oms.min.js'
         },
     // Default plugin settings
         defaults = {
@@ -124,8 +126,8 @@ window.gMapsCallback = function () {
 
         // Location offset
         // @since v3.4.4
-        result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 10000);
-        result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 10000);
+        result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 5000);
+        result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 5000);
 
         if (true === formatting) {
             return new google.maps.LatLng(result.lat, result.lng);
@@ -276,7 +278,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.4.5',
+        'VERSION': '3.4.6',
 
         /**
          * Format to google.maps.Size
@@ -719,13 +721,14 @@ window.gMapsCallback = function () {
          * @param {Object} marker Marker object
          * @param {Object} m Marker option
          */
-        processMarker: function (map, opt, marker, source) {
+        processMarker: function (mc, map, opt, marker, source) {
 
             var self     = this,
                 exists   = self.get('marker'),
                 label    = {},
                 labelOpt = {},
-                infoOpt  = {};
+                infoOpt  = {},
+                oms      = {};
 
             // Apply marker fitbounds
             if (marker.hasOwnProperty('position')) {
@@ -748,7 +751,6 @@ window.gMapsCallback = function () {
                     'content': marker.text
                 });
             }
-
 
             if (marker.hasOwnProperty('text')) {
 
@@ -795,7 +797,9 @@ window.gMapsCallback = function () {
             }
 
             // Create Label
-            if (marker.hasOwnProperty('newLabel')) {
+            if ((opt.hasOwnProperty('markerWithLabel') && true === opt.markerWithLabel) &&
+                marker.hasOwnProperty('newLabel')
+            ) {
                 labelOpt = {
                     'id'  : marker.id,
                     'text': marker.newLabel,
@@ -804,6 +808,7 @@ window.gMapsCallback = function () {
                             marker.newLabelCSS.toString() :
                             ''
                 };
+
                 self.get({
                     'label': [marker.id]
                 }, function (ms) {
@@ -812,6 +817,7 @@ window.gMapsCallback = function () {
                         len = ms.label.length,
                         lb = {};
                     if (len) {
+                        /*
                         for (i = 0; i < len; i += 1) {
                             lb = ms.label[i];
                             lb.text = marker.newLabel;
@@ -819,16 +825,17 @@ window.gMapsCallback = function () {
                             lb.bindTo('position', marker);
                             lb.draw();
                         }
-                        /*
+                        */
                         ms.label.forEach(function (lb) {
                             lb.text = marker.newLabel;
                             $(lb.span).addClass(marker.newLabelCSS);
                             lb.bindTo('position', marker);
                             lb.draw();
                         });
-                        */
+
                     // Or create the new one.
                     // @since v3.3.6
+
                     } else {
                         label = new Label(labelOpt);
                         label.bindTo('position', marker);
@@ -846,6 +853,7 @@ window.gMapsCallback = function () {
                         }
                     }
                 });
+
             }
             // Binding events
             self.bindEvents(marker, marker.event);
@@ -948,8 +956,13 @@ window.gMapsCallback = function () {
                     'gridSize': 60
                 },
                 markers = Array.isArray(opt.marker) ? opt.marker : [],
-                tmks = [],
-                tOut;
+                tmks   = [],
+                oms    = {},
+                hasOMS = false,
+                tOut,
+                iconWithColor = function(color) {
+                    return 'https://chart.googleapis.com/chart?chst=d_map_xpin_letter&chld=pin|+|' + color + '|000000|ffff00';
+                };
 
             if ('undefined' !== typeof mks && Array.isArray(mks) && mks.length) {
                 markers = mks;
@@ -971,6 +984,38 @@ window.gMapsCallback = function () {
                 }
             }
 
+            if (self.options.hasOwnProperty('enableOMS') && 'function' === typeof OverlappingMarkerSpiderfier) {
+                hasOMS = true;
+            }
+
+            if (hasOMS) {
+
+                oms = new OverlappingMarkerSpiderfier(map, {
+                    'markersWontHide': true
+                });
+                oms.addListener('click', function (marker) {
+                        if (marker.hasOwnProperty('oms')) {
+                            marker.infoWindow.setContent(marker.oms);
+                        }
+                        marker.infoWindow.open(map, marker);
+
+                });
+
+                oms.addListener('spiderfy', function (markers) {
+                    var i = 0;
+                    //for (; i < markers.length; i += 1) {
+                        //markers[i].infoWindow.close();
+                    //}
+                });
+
+                oms.addListener('unspiderfy', function (markers) {
+                    var i = 0;
+                    //for (i; i < markers.length; i += 1) {
+                        //markers[i].infoWindow.close();
+                    //}
+                });
+            }
+            var mc = markers.length;
             // Markers loop
             markers.forEach(function (m, index) {
 
@@ -1031,7 +1076,7 @@ window.gMapsCallback = function () {
                             // @since 3.4.5
                             setTimeout(function () {
                                 //console.info(['Marker[', index, '] query failed at (', addr, ').'].join(''));
-                                self.placeMarkers(map, opt, source, [m]);
+                                self.placeMarkers(mc, map, opt, source, [m]);
                             }, self.interval * (index + 1));
                         } else if (status === google.maps.GeocoderStatus.OK) {
                             if (!insertFlag && markerExisted) {
@@ -1051,16 +1096,18 @@ window.gMapsCallback = function () {
                                     marker = 'function' === typeof MarkerWithLabel ?
                                              new MarkerWithLabel(markerOptions) :
                                              new google.maps.Marker(markerOptions);
-
                                 } else {
                                     marker = new google.maps.Marker(markerOptions);
                                 }
                                 self._markers.push(marker);
                                 mk = marker;
                             }
+                            if (hasOMS) {
+                                oms.addMarker(mk);
+                            }
                             // Post process of marker
                             // @since v3.3.0
-                            self.processMarker(map, opt, mk, source);
+                            self.processMarker(mc, map, opt, mk, source);
                         }
                     });
                 } else {
@@ -1090,12 +1137,58 @@ window.gMapsCallback = function () {
                         }
                         self._markers.push(marker);
                         mk = marker;
+                        if (hasOMS) {
+                            oms.addMarker(mk);
+                        }
                     }
                     // Post process of marker
                     // @since v3.3.0
-                    self.processMarker(map, opt, mk, source);
+                    self.processMarker(mc, map, opt, mk, source);
                 }
             });
+
+            /**
+             * markerWithLabel radius
+             * @since v3.4.6
+             */
+            if (opt.hasOwnProperty('markerWithLabel') && $.isNumeric(opt.markerWithLabel)) {
+                var rebuildLabelsOnIdle = {
+                    'idle': {
+                        'func': function () {
+                            self.clear('label');
+                            var loc = map.getCenter(),
+                                pool = [];
+                            self.get('marker', function (ms) {
+                                ms.forEach(function (marker) {
+                                    var meters = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), loc);
+                                    if (meters < 1000) {
+                                        pool.push(marker);
+                                    }
+                                });
+                                if (pool) {
+                                    pool.forEach(function (marker) {
+                                        var lblOpt = {
+                                                'id'  : marker.id,
+                                                'text': marker.newLabel,
+                                                'map' : map,
+                                                'css' : marker.hasOwnProperty('newLabelCSS') ?
+                                                        marker.newLabelCSS.toString() :
+                                                        ''
+                                            },
+                                            label = new Label(lblOpt);
+                                        label.bindTo('position', marker);
+                                        label.set('visible', marker.showLabel);
+                                        self._labels.push(label);
+                                    });
+                                }
+                            });
+                        },
+                        'once': false
+                    }
+                };
+                rebuildLabelsOnIdle.idle.func.apply(self, arguments);
+                self.mapIdleEvent(rebuildLabelsOnIdle);
+            }
             self.markerControl();
         },
         //#!#END
@@ -1563,6 +1656,7 @@ window.gMapsCallback = function () {
                 // Remove from Array
                 if (-1 !== self[key].indexOf(item)) {
                     delete self[key][self[key].indexOf(item)];
+
                 }
             }
 
@@ -2022,6 +2116,7 @@ window.gMapsCallback = function () {
                     script = null;
                 }
 
+
                 // Load MarkerWithLabel library
                 if (!apiMarkerWithLabelLoaded &&
                     self.options.hasOwnProperty('markerWithLabel') &&
@@ -2032,6 +2127,18 @@ window.gMapsCallback = function () {
                     script.setAttribute('src', tinyMapConfigure.withLabel);
                     (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
                     apiMarkerWithLabelLoaded = true;
+                    script = null;
+                }
+
+                // Load OMS library
+                if (!apiOMSLoaded &&
+                    self.options.hasOwnProperty('enableOMS') &&
+                    'undefined' === typeof OverlappingMarkerSpiderfier
+                ) {
+                    script = document.createElement('script');
+                    script.setAttribute('src', tinyMapConfigure.OMS);
+                    (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(script);
+                    apiOMSLoaded = true;
                     script = null;
                 }
 
