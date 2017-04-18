@@ -11,7 +11,7 @@ Include the jQuery library and tinyMap.
 <script src="jquery.js"></script>
 <script src="jquery.tinyMap.js"></script>
 ```
-###bower
+### bower
 ```
 $bower install jquery-tinyMap
 ```
@@ -98,7 +98,7 @@ $(selector).tinyMap({
 ```
 
 ## Methods
-###panTo
+### panTo
 ```javascript
 // Methods
 // e.g. Move map center to the location.
@@ -106,7 +106,7 @@ $(selector).tinyMap('panTo', 'Address string');
 $(selector).tinyMap('panTo', ['Lat', 'Lng']);
 $(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
 ```
-###modify
+### modify
 ```javascript
 // Dynamic setting up
 // e.g. Disable draggable
@@ -132,7 +132,7 @@ $(selector).tinyMap('modify', {
     ]
 });
 ```
-###query
+### query
 ```javascript
 // Query LatLng from Address
 $(selector).tinyMap('query', 'Taipei 101, Taiwan', function (addr) {
@@ -148,7 +148,7 @@ $(selector).tinyMap('query', {lat: 25.034516521123315, lng: 121.56496524810791},
 $(selector).tinyMap('query', '25.034516521123315, 121.56496524810791', function...);
 ```
 
-###get
+### get
 Get layers on the map.
 ```javascript
 // Get specified layer
@@ -171,7 +171,7 @@ $(selector).tinyMap('get', 'marker', function (items) {
     console.dir(items);
 });
 ```
-###clear
+### clear
 Clear specitied items of layers.
 ```javascript
 // Clear overlayers
@@ -190,7 +190,7 @@ $(selector).tinyMap('clear', {
 $(selector).tinyMap('clear'); 
 ```
 
-###close
+### close
 Close all opened infoWindow of layers.
 ```javascript
 // Close all infoWindows of layers
@@ -209,7 +209,7 @@ $(selector).tinyMap('close', {
 $(selector).tinyMap('close'); 
 ```
 
-###getKML
+### getKML
 ```javascript
 // Overlays KML output
 // Get the kml string.
