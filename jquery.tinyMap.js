@@ -2,11 +2,11 @@
 /**
  * jQuery tinyMap plugin
  * https://code.essoduke.org/tinyMap/
- * Copyright 2016 essoduke.org, Licensed MIT.
+ * Copyright 2017 essoduke.org, Licensed MIT.
  *
  * Changelog
  * -------------------------------
- * markerWithLabel 參數可支援整數，表示只顯示以地圖中心為圓心的半徑範圍的 label。（需配合 Geometry libraries）
+ * 修正繪製 polyline, polygon, circle 時，經緯座標會位移的問題。
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -92,7 +92,7 @@ window.gMapsCallback = function () {
      * @param {boolean} formatting Format to Google Maps LatLng object
      * @private
      */
-    function parseLatLng (loc, formatting) {
+    function parseLatLng (loc, formatting, offset) {
 
         var result = {
                 'lat': '',
@@ -126,8 +126,11 @@ window.gMapsCallback = function () {
 
         // Location offset
         // @since v3.4.4
-        result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 5000);
-        result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 5000);
+
+        if ('undefined' === typeof offset) {
+            result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 5000);
+            result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 5000);
+        }
 
         if (true === formatting) {
             return new google.maps.LatLng(result.lat, result.lng);
@@ -506,7 +509,7 @@ window.gMapsCallback = function () {
                         coords = new google.maps.MVCArray();
                         for (i = 0; i < polylineX.coords.length; i += 1) {
                             p = polylineX.coords[i];
-                            c = parseLatLng(p, true);
+                            c = parseLatLng(p, true, false);
                             if ('function' === typeof c.lat) {
                                 coords.push(c);
                             }
@@ -596,7 +599,7 @@ window.gMapsCallback = function () {
                     if (opt.polygon[i].hasOwnProperty('coords')) {
                         for (j = 0; j < opt.polygon[i].coords.length; j += 1) {
                             p = opt.polygon[i].coords[j];
-                            c = parseLatLng(p, true);
+                            c = parseLatLng(p, true, false);
                             if ('function' === typeof c.lat) {
                                 coords.push(c);
                             }
@@ -653,7 +656,7 @@ window.gMapsCallback = function () {
                         'id' : circle.hasOwnProperty('id') ? circle.id : ''
                     }, circle);
                     if (circle.hasOwnProperty('center')) {
-                        loc = parseLatLng(circle.center, true);
+                        loc = parseLatLng(circle.center, true, false);
                         defOpt.center = loc;
                     }
                     if ('function' === typeof loc.lat) {
@@ -1186,8 +1189,9 @@ window.gMapsCallback = function () {
                         'once': false
                     }
                 };
+                //console.dir('qwe');
                 rebuildLabelsOnIdle.idle.func.apply(self, arguments);
-                self.mapIdleEvent(rebuildLabelsOnIdle);
+                //self.mapIdleEvent(rebuildLabelsOnIdle);
             }
             self.markerControl();
         },
@@ -1220,8 +1224,10 @@ window.gMapsCallback = function () {
                         waypointsText = [],
                         waypointsIcon = [];
 
-                    request.origin = parseLatLng(opts.from, true);
-                    request.destination = parseLatLng(opts.to, true);
+                    request.origin = parseLatLng(opts.from, true, false);
+                    request.destination = parseLatLng(opts.to, true, false);
+                    // request.origin = new google.maps.LatLng(opts.from[0], opts.from[1]);
+                    // request.destination = new google.maps.LatLng(opts.to[0], opts.to[1]);
 
                     // TravelMode
                     request.travelMode = opts.hasOwnProperty('travel') && google.maps.TravelMode[opts.travel.toString().toUpperCase()] ?
@@ -1238,6 +1244,7 @@ window.gMapsCallback = function () {
                     if (opts.hasOwnProperty('optimize')) {
                         request.optimizeWaypoints = opts.optimize;
                     }
+                    // console.dir(request);
                     // Waypoints
                     if (opts.hasOwnProperty('waypoint') && Array.isArray(opts.waypoint)) {
                         opts.waypoint.forEach(function (waypoint) {
@@ -1263,8 +1270,11 @@ window.gMapsCallback = function () {
 
                     // DirectionService
                     directionsService.route(request, function (response, status) {
+                        // console.dir(status);
                         if (status === google.maps.DirectionsStatus.OK) {
                             response.routes.forEach(function (route, index) {
+                                // console.info(route.legs[0].start_location.lat(), route.legs[0].start_location.lng());
+                                // console.info(route.legs[0].end_location.lat(), route.legs[0].end_location.lng());
                                 // @since 3.3.2 Multiple routes render.
                                 if (opts.hasOwnProperty('renderAll') &&
                                     true === opts.renderAll &&
@@ -1408,7 +1418,7 @@ window.gMapsCallback = function () {
             if ('function' === typeof map.getStreetView) {
                 // Default position of streetView
                 if (opts.hasOwnProperty('position')) {
-                    loc = parseLatLng(opts.position, true);
+                    loc = parseLatLng(opts.position, true, false);
                     opts.position = 'object' === typeof loc ? map.getCenter() : loc;
                 } else {
                     opts.position = map.getCenter();
@@ -1451,7 +1461,7 @@ window.gMapsCallback = function () {
                     'radius'  : 100
                 }, reqOpt);
 
-            request.location = parseLatLng(request.location, true);
+            request.location = parseLatLng(request.location, true, false);
 
             if ('undefined' !== typeof google.maps.places) {
                 placesService = new google.maps.places.PlacesService(map);
@@ -1538,7 +1548,7 @@ window.gMapsCallback = function () {
                 geocoder = {};
 
             if (null !== m && 'undefined' !== typeof m) {
-                loc = parseLatLng(addr, true);
+                loc = parseLatLng(addr, true, false);
                 if ('string' === typeof loc) {
                     geocoder = new google.maps.Geocoder();
                     geocoder.geocode({'address': loc}, function (results, status) {
@@ -1827,7 +1837,7 @@ window.gMapsCallback = function () {
         query: function (addr, callback) {
             var self = this,
                 geocoder = new google.maps.Geocoder(),
-                address = parseLatLng(addr),
+                address = parseLatLng(addr, false, true),
                 opt = {};
             if ('string' === typeof address) {
                 opt.address = address;
@@ -2211,7 +2221,7 @@ window.gMapsCallback = function () {
                 }
 
                 // Center location parse
-                self.googleMapOptions.center = parseLatLng(self.options.center, true);
+                self.googleMapOptions.center = parseLatLng(self.options.center, true, false);
 
                 //#!#START STYLES
                 // Map styles apply
