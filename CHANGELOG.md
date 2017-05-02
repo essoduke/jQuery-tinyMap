@@ -1,4 +1,7 @@
 # jQuery tinyMap Changelog
+### 3.4.7
+* 修正繪製 polyline, polygon, circle 時，經緯座標會位移的問題。
+
 ### 3.4.6
 * markerWithLabel 參數可支援整數，表示只顯示以地圖中心為圓心的半徑範圍的 label。（需配合 Geometry libraries）
 
