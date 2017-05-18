@@ -6,7 +6,8 @@
  *
  * Changelog
  * -------------------------------
- * 修正繪製 polyline, polygon, circle 時，經緯座標會位移的問題。
+ * modify 目前可以支援即時修改 autoLocation。
+ * 修正 map event 綁定的錯誤
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -1511,7 +1512,7 @@ window.gMapsCallback = function () {
                 }
 
                 if (true === opt.autoLocation || 'function' === typeof opt.autoLocation) {
-                    geolocation.watchPosition(
+                    this.watchid = geolocation.watchPosition(
                         function (loc) {
                             if (('undefined' !== typeof loc) &&
                                 ('coords' in loc) &&
@@ -1532,6 +1533,8 @@ window.gMapsCallback = function () {
                         },
                         geoOpt
                     );
+                } else {
+                    geolocation.clearWatch(this.watchid);
                 }
             } catch (ignore) {
             }
@@ -1794,7 +1797,8 @@ window.gMapsCallback = function () {
                     ['circle', 'drawCircle'],
                     ['streetView', 'streetView'],
                     ['markerFitBounds', 'markerFitBounds'],
-                    ['places', 'places']
+                    ['places', 'places'],
+                    ['autoLocation', 'geoLocation']
                 ],
                 i = 0,
                 m = self.map;
@@ -2288,29 +2292,28 @@ window.gMapsCallback = function () {
                             self.overlay();
                             se.idle.func.apply(this, arguments);
                             delete se.idle;
-                            self.bindEvents(self.map, se);
                         });
                     } else {
                         google.maps.event.addListener(self.map, 'idle', function () {
                             self.overlay();
                             se.idle.func.apply(this, arguments);
-                            self.bindEvents(self.map, se);
                         });
                     }
+                    self.bindEvents(self.map, se);
                 } else {
                     if ('function' === typeof se.idle) {
                         google.maps.event.addListener(self.map, 'idle', function () {
                             self.overlay();
                             se.idle.apply(this, arguments);
-                            self.bindEvents(self.map, se);
                         });
                     }
+                    self.bindEvents(self.map, se);
                 }
             } else {
                 google.maps.event.addListenerOnce(self.map, 'idle', function () {
                     self.overlay();
-                    self.bindEvents(self.map, se);
                 });
+                self.bindEvents(self.map, se);
             }
         }
     };
