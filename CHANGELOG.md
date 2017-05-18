@@ -1,4 +1,8 @@
 # jQuery tinyMap Changelog
+### 3.4.8
+* modify 目前可以支援即時修改 autoLocation。
+* 修正 map event 綁定的錯誤
+
 ### 3.4.7
 * 修正繪製 polyline, polygon, circle 時，經緯座標會位移的問題。
 
