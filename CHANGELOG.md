@@ -1,4 +1,7 @@
 # jQuery tinyMap Changelog
+### 3.4.9
+* 修正 newLabel, newLabelCSS 失效的問題
+
 ### 3.4.8
 * modify 目前可以支援即時修改 autoLocation。
 * 修正 map event 綁定的錯誤
