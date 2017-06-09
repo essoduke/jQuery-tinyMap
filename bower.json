@@ -1,7 +1,7 @@
 {
 	"name": "jquery-tinyMap",
 	"homepage": "https://code.essoduke.org/tinyMap/",
-    "version": "3.4.8",
+    "version": "3.4.9",
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/essoduke/jQuery-tinyMap.git"
