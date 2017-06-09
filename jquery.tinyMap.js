@@ -4,11 +4,6 @@
  * https://code.essoduke.org/tinyMap/
  * Copyright 2017 essoduke.org, Licensed MIT.
  *
- * Changelog
- * -------------------------------
- * modify 目前可以支援即時修改 autoLocation。
- * 修正 map event 綁定的錯誤
- *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
  */
@@ -801,8 +796,8 @@ window.gMapsCallback = function () {
             }
 
             // Create Label
-            if ((opt.hasOwnProperty('markerWithLabel') && true === opt.markerWithLabel) &&
-                marker.hasOwnProperty('newLabel')
+            if ((opt.hasOwnProperty('markerWithLabel') && true === opt.markerWithLabel) ||
+                (marker.hasOwnProperty('newLabel') && marker.newLabel)
             ) {
                 labelOpt = {
                     'id'  : marker.id,
@@ -1189,10 +1184,8 @@ window.gMapsCallback = function () {
                         },
                         'once': false
                     }
-                };
-                //console.dir('qwe');
-                rebuildLabelsOnIdle.idle.func.apply(self, arguments);
-                //self.mapIdleEvent(rebuildLabelsOnIdle);
+                };                
+                rebuildLabelsOnIdle.idle.func.apply(self, arguments);                
             }
             self.markerControl();
         },
