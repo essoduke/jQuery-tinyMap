@@ -277,7 +277,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.4.6',
+        'VERSION': '3.4.10',
 
         /**
          * Format to google.maps.Size
@@ -312,6 +312,7 @@ window.gMapsCallback = function () {
                 opt = this.options;
 
             try {
+
                 if (!this.idleOnceCount) {
                     //#!#START KML
                     // kml overlay
@@ -780,18 +781,17 @@ window.gMapsCallback = function () {
             /**
              * Apply marker cluster.
              * Require markerclusterer.js
-             * Only affect in INSERT mode.
+             *
              * @see {@link http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/}
              * @since 2015-10-01 18:20:00
+             * @fix 2017-11-21
              */
-            if (!source) {
-                // Markers cluster
-                if (!marker.hasOwnProperty('cluster') ||
-                    (marker.hasOwnProperty('cluster') && true === marker.cluster)
-                ) {
-                    if ('function' === typeof self._clusters.addMarker) {
-                        self._clusters.addMarker(marker);
-                    }
+            // Markers cluster
+            if (!marker.hasOwnProperty('cluster') ||
+                (marker.hasOwnProperty('cluster') && true === marker.cluster)
+            ) {
+                if ('function' === typeof self._clusters.addMarker) {
+                    self._clusters.addMarker(marker);
                 }
             }
 
@@ -966,7 +966,6 @@ window.gMapsCallback = function () {
             if ('undefined' !== typeof mks && Array.isArray(mks) && mks.length) {
                 markers = mks;
             }
-
             /**
              * Apply marker cluster.
              * Require markerclustererplus.js
@@ -1015,6 +1014,7 @@ window.gMapsCallback = function () {
                 });
             }
             var mc = markers.length;
+
             // Markers loop
             markers.forEach(function (m, index) {
 
@@ -1111,7 +1111,7 @@ window.gMapsCallback = function () {
                     });
                 } else {
                     // For LatLng type
-                    // When Marker was existed.
+                    // When Marker was existed.                    );
                     if (!insertFlag && markerExisted) {
                         if ('function' === typeof m.setPosition) {
                             if (addr.lat() && addr.lng()) {
@@ -1184,8 +1184,10 @@ window.gMapsCallback = function () {
                         },
                         'once': false
                     }
-                };                
-                rebuildLabelsOnIdle.idle.func.apply(self, arguments);                
+                };
+                //console.dir('qwe');
+                rebuildLabelsOnIdle.idle.func.apply(self, arguments);
+                //self.mapIdleEvent(rebuildLabelsOnIdle);
             }
             self.markerControl();
         },
@@ -1331,6 +1333,7 @@ window.gMapsCallback = function () {
                                     }
                                 }
                             });
+console.log(renderOpts);
                             self.bindEvents(directionsDisplay, opts.event);
                             directionsDisplay.setOptions(renderOpts);
                             directionsDisplay.setDirections(response);
@@ -1537,9 +1540,10 @@ window.gMapsCallback = function () {
          * Method: Google Maps PanTo
          * @param {(string|string[]|number[]|Object)} addr Location
          */
-        panTo: function (addr) {
+        panTo: function (addr, error) {
 
-            var m        = this.map,
+            var self     = this,
+                m        = this.map,
                 loc      = {},
                 geocoder = {};
 
@@ -1557,7 +1561,11 @@ window.gMapsCallback = function () {
                                 m.panTo(results[0].geometry.location);
                             }
                         } else {
-                            console.error(status);
+                            if ('function' === typeof error) {
+                                error.call(this, status);
+                            } else {
+                                console.error(status);
+                            }
                         }
                     });
                 } else {
@@ -1737,6 +1745,7 @@ window.gMapsCallback = function () {
                             if ('map' === lb) {
                                 target[lb] = self.map;
                             } else {
+                                console.log(lb);
                                 key = '_' + lb + 's';
                                 target[lb] = self[key];
                             }
