@@ -105,6 +105,10 @@ $(selector).tinyMap({
 $(selector).tinyMap('panTo', 'Address string');
 $(selector).tinyMap('panTo', ['Lat', 'Lng']);
 $(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'});
+// Error handler
+$(selector).tinyMap('panTo', {lat: 'Lat', lng: 'Lng'}, function (status) {
+    console.log(status);
+});
 ```
 ### modify
 ```javascript
