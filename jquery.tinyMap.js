@@ -2,7 +2,7 @@
 /**
  * jQuery tinyMap plugin
  * https://code.essoduke.org/tinyMap/
- * Copyright 2017 essoduke.org, Licensed MIT.
+ * Copyright 2018 essoduke.org, Licensed MIT.
  *
  * @author Essoduke Chang<essoduke@gmail.com>
  * @license MIT License
@@ -42,7 +42,8 @@ window.gMapsCallback = function () {
             'interval': 200,
             'loading': '讀取中&hellip;',
             'notFound': '找不到查詢的地點',
-            'zoom': 8
+            'zoom': 8,
+            'markerOffset': false // 3.4.11 位置偏移
         },
         styles = {},
         timeout;
@@ -123,7 +124,7 @@ window.gMapsCallback = function () {
         // Location offset
         // @since v3.4.4
 
-        if ('undefined' === typeof offset) {
+        if ('undefined' === typeof offset || true === offset) {
             result.lat = parseFloat(result.lat, 10) + ((Math.random() - 0.5) / 5000);
             result.lng = parseFloat(result.lng, 10) + ((Math.random() - 0.5) / 5000);
         }
@@ -277,7 +278,7 @@ window.gMapsCallback = function () {
          * @type {string}
          * @constant
          */
-        'VERSION': '3.4.10',
+        'VERSION': '3.4.11',
 
         /**
          * Format to google.maps.Size
@@ -1018,7 +1019,8 @@ window.gMapsCallback = function () {
             // Markers loop
             markers.forEach(function (m, index) {
 
-                var addr = parseLatLng(m.addr, true),
+                var offset = Boolean(opt.markerOffset),
+                    addr = parseLatLng(m.addr, true, offset),
                     icons = self.markerIcon(m),
                     insertFlag = true,
                     markerExisted = false,
@@ -1201,6 +1203,7 @@ window.gMapsCallback = function () {
         directionService: function (map, opt) {
 
             var self = this,
+                offset = Boolean(opt.markerOffset),
                 directionsService = new google.maps.DirectionsService();
 
             if (Array.isArray(opt.direction)) {
@@ -1248,9 +1251,9 @@ window.gMapsCallback = function () {
                                 'stopover': true
                             };
                             if ('string' === typeof waypoint || Array.isArray(waypoint)) {
-                                waypointOpt.location = parseLatLng(waypoint, true);
+                                waypointOpt.location = parseLatLng(waypoint, true, offset);
                             } else if (waypoint.hasOwnProperty('location')) {
-                                waypointOpt.location = parseLatLng(waypoint.location, true);
+                                waypointOpt.location = parseLatLng(waypoint.location, true, offset);
                                 waypointOpt.stopover = waypoint.hasOwnProperty('stopover') ?
                                                        waypoint.stopover :
                                                        true;
@@ -1843,7 +1846,7 @@ console.log(renderOpts);
         query: function (addr, callback) {
             var self = this,
                 geocoder = new google.maps.Geocoder(),
-                address = parseLatLng(addr, false, true),
+                address = parseLatLng(addr, false, false),
                 opt = {};
             if ('string' === typeof address) {
                 opt.address = address;
