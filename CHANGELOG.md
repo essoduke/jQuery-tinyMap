@@ -1,4 +1,7 @@
 # jQuery tinyMap Changelog
+### 3.4.11
+* 新增 markerOffset 參數（預設 false），可控制是否要將標記座標進行微調位移。
+
 ### 3.4.9
 * 修正 newLabel, newLabelCSS 失效的問題
 
