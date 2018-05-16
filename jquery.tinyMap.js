@@ -1479,7 +1479,7 @@ console.log(renderOpts);
                             });
                         }
                         if (request.hasOwnProperty('callback') && 'function' === typeof request.callback) {
-                            request.callback.call(results);
+                            request.callback.call(results, placesService);
                         }
                     }
                 });
